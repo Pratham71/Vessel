@@ -156,7 +156,7 @@ vessel/
 │   │
 │
 ├── target/
-├── pom.xml   ← Required for Maven build
+├── pom.xml   ← Required for Maven build (Right click on it and select '+add as maven project.')
 ├── README.md
 └── .gitignore
 ```
