@@ -225,3 +225,5 @@ You don’t need to use terminal commands — IntelliJ can handle Maven automati
     - **Use classpath of module:** select your module (`vessel`)
 
 ---
+## Running the App
+![img.gif](readme.meta/tut.gif)
