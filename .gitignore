@@ -1,0 +1,70 @@
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+
+# IntelliJ output directories
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# IntelliJ project configuration files
+.idea/modules.xml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/libraries/
+.idea/shelf/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.ids
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/gradle.xml
+.idea/misc.xml
+.idea/compiler.xml
+.idea/jarRepositories.xml
+.idea/modules/
+.idea/runConfigurations/
+.idea/.name
+.idea/vcs.xml
+.idea/inspectionProfiles/
+
+# IntelliJ build and analysis outputs
+out/
+build/
+
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+### Logs ###
+logs/
+*.log
+
+### OS / Misc ###
+.DS_Store
+Thumbs.db
+
+### Eclipse (for safety if anyone imports) ###
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### Visual Studio Code ###
+.vscode/
+
+### Kotlin ###
+.kotlin/

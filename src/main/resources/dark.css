@@ -1,0 +1,207 @@
+/* Dark theme */
+
+/* The .root selector targets the base container of the entire scene graph. */
+.root {
+    /* Sets the primary background color for the application to a deep dark gray. */
+    -fx-background-color: #1e1e1e;
+    /* Sets the default text color to white for better contrast on the dark background. */
+    -fx-text-fill: #ffffff;
+    /* Defines the preferred font family for the application. */
+    -fx-font-family: "Segoe UI", "Tahoma", "Arial";
+}
+
+/* Base Label and Icon Styling */
+
+/* Targets all Label components within the application. */
+.label {
+    /* Ensures all general labels default to white text. */
+    -fx-text-fill: #ffffff;
+}
+
+/* Targets elements styled with the 'font-icon' class (from Ikonli library). */
+.font-icon {
+    /* Sets the color/fill of the icons to white for visibility. */
+    -fx-fill: white;
+}
+
+/* --- Header (MenuBar & ToolBar) Styling --- */
+
+/* Targets both the MenuBar and ToolBar components in the header VBox. */
+.menu-bar, .tool-bar {
+    /* Sets the background of the entire header area to a slightly lighter dark gray. */
+    -fx-background-color: #2b2b2b;
+}
+
+/* 1. Main Menu Labels (File, Edit, View, etc.) */
+
+/* Targets the text labels specifically within the MenuBar. */
+.menu-bar .label {
+    /* Ensures the top-level menu titles are white. */
+    -fx-text-fill: white;
+}
+
+/* --- Menu Dropdowns (Context Menus) --- */
+
+/* Targets the ContextMenu component, which is used for the dropdowns. */
+.menu-bar .context-menu {
+    /* Sets the background of the dropdown box itself to a medium dark gray. */
+    -fx-background-color: #3c3c3c;
+    /* Adds a subtle border around the dropdown box. */
+    -fx-border-color: #555555;
+}
+
+/* 2. Dropdown Options (MenuItems) */
+
+/* Targets the text labels inside the MenuItems (the options like "Open", "Undo"). */
+.menu-item .label {
+    /* Sets text to white for readability on the dark dropdown background. */
+    -fx-text-fill: #ffffff;
+}
+
+/* 3. Menu Item Hover State (Interaction Feedback) */
+
+/* Targets a MenuItem when the mouse is hovering over it. */
+.menu-item:hover {
+    /* Sets the background to a contrasting blue color on hover. */
+    -fx-background-color: #0078d7;
+}
+
+/* Explicitly target the text when the item is hovered. */
+.menu-item:hover .label {
+    /* Ensures the text remains white (or a consistent color) on the blue background. */
+    -fx-text-fill: #ffffff;
+}
+
+/* Styling for the separator line within a menu dropdown. */
+.menu-item .separator {
+    /* Sets the color of the separator line. */
+    -fx-background-color: #555555;
+}
+
+/* --- Buttons Styling --- */
+
+/* Targets all Button components. */
+.button {
+    /* Sets the default background color for toolbar buttons. */
+    -fx-background-color: #333333;
+    /* Sets the button text to white. */
+    -fx-text-fill: #ffffff;
+    /* Ensures no default border is shown. */
+    -fx-border-color: transparent;
+}
+
+/* Targets a Button when the mouse is hovering over it. */
+.button:hover {
+    /* Lightens the background slightly for visual feedback. */
+    -fx-background-color: #4a4a4a;
+}
+
+/* --- ChoiceBox (Language Dropdown) Styling --- */
+
+/* Targets the ChoiceBox component (fx:id="languageChoice"). */
+.choice-box {
+    /* Sets the background for the dropdown box itself. */
+    -fx-background-color: #333333;
+    /* Sets the color of the dropdown arrow/mark to white. */
+    -fx-mark-color: white;
+}
+
+/* Targets the label displaying the currently selected item in the ChoiceBox. */
+.choice-box .label {
+    /* Ensures the selected option text is white. */
+    -fx-text-fill: #ffffff;
+}
+
+/* --- Center Content Area (ScrollPane & Code Cells) --- */
+
+/* Targets the ScrollPane (fx:id="codeCellArea"). */
+.scroll-pane {
+    /* Sets the scroll pane's background (useful if content doesn't fill it). */
+    -fx-background-color: #1e1e1e;
+}
+
+/* Targets the 'viewport' (inner container) of the ScrollPane. */
+.scroll-pane .viewport {
+    /* Ensures the viewable area background matches the root/app background. */
+    -fx-background-color: #1e1e1e;
+}
+
+/* Targets the VBox holding all the cells (fx:id="codeCellContainer"). */
+#codeCellContainer {
+    /* Explicitly sets the background for the cell container. */
+    -fx-background-color: #1e1e1e;
+}
+
+/* Implied Text/Code Cell Editor Styles (for content that would be dynamically loaded) */
+
+/* Targets TextArea and TextField components, used for input/code editing. */
+.text-area, .text-field {
+    -fx-background-color: #212225; /* IntelliJ dark bg */
+    -fx-control-inner-background: #212225;
+    -fx-text-fill: #ECECEC;
+    -fx-font-family: 'Consolas', monospace;
+    -fx-font-size: 15px;
+    -fx-border-color: #555555;
+    -fx-highlight-fill: #1756b6;
+    -fx-highlight-text-fill: #fff;
+}
+
+/* SYNTAX HIGHLIGHTING WOOOOO */
+.code-area {
+    -fx-background-color: #212225;
+    -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
+    -fx-font-size: 15px;
+    -fx-border-color: #555555;
+    -fx-border-width: 1.5px;
+    -fx-highlight-fill: #1756b6;
+    -fx-highlight-text-fill: #fff;
+    -fx-min-height: 120px;
+    -fx-padding: 10 12 10 16;
+}
+.code-area .caret {
+    -fx-stroke: #ECECEC;
+}
+.lineno {
+    -fx-text-fill: #676e95;
+}
+.keyword   { -fx-fill: #c792ea;   -fx-font-weight: bold; }
+.comment   { -fx-fill: #676e95;   -fx-font-style: italic;  }
+.string    { -fx-fill: #ecc48d; }
+.char      { -fx-fill: #ffa657; }
+.number    { -fx-fill: #a3be8c; }
+.paren, .brace, .bracket { -fx-fill: #ffffff; }
+.semicolon { -fx-fill: #ffcb8b; }
+.code-area .plain { -fx-fill: #ECECEC; } /*plain text -> white*/
+
+/* --- CodeCell output --- */
+/* Code cell output area style */
+
+.output-area {
+    -fx-border-width: 0 1.5px 1.5px 1.5px;
+    -fx-border-color: transparent #555555 #555555 #555555;
+    -fx-background-color: #212121; /* match textarea bg */
+    -fx-padding: 8 14 10 14;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 15px;
+    -fx-min-height: 0px;
+    -fx-pref-height: -1;
+    -fx-effect: null; /* Disable shadow by default */
+    /*-fx-opacity: 0; !* Start hidden, fade in with animation *!*/
+}
+
+/* Make the output area selectable but read-only: use a TextArea inside it, styled as output */
+.read-only-output {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-width: 0;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 15px;
+    -fx-control-inner-background: transparent;
+    -fx-highlight-fill: #555555;
+    -fx-highlight-text-fill: white;
+}
+/* Spinner styling */
+.output-spinner {
+    -fx-fill: #d4d4d4; /* match text edit color */
+    -fx-padding: 0 8 0 0;
+}

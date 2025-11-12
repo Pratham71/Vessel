@@ -1,0 +1,20 @@
+/* Light theme */
+.root {
+    -fx-background-color: #dce3e3;
+    -fx-text-fill: #000000;
+}
+
+/* MenuBar, ToolBar, Buttons */
+.menu-bar, .tool-bar {
+    -fx-background-color: #edf3f3;
+}
+
+.button {
+    -fx-background-color: #d6d6d6;
+    -fx-text-fill: #000000;
+}
+
+/* Icons black in light mode */
+.font-icon {
+    -fx-fill: black;
+}

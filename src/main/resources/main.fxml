@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<!--imported all classes of JavaFX required for main.fxml -->
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.vessel.UIController">
+    <!-- borderpane is layout with top,bottom, right,center; some predefined syntax to link FXML features, also adding fx controller ie form com.vessel.UIController-->
+
+    <!-- Top: MenuBar + Toolbar -->
+  <top> <!--  top region of borderpane-->
+         <VBox> <!--Vbox is vertical container to stack options like menubar or toolbar-->
+
+<!--MenuBar at the top of your app which has some options like file, edit, view, help...-->
+            <MenuBar>
+
+                <!-- File Menu -->
+                <Menu text="File"> <!--text="<label shown to user>", onAction="#openProject" // it calls openProject method in UIController when clicked-->
+                    <MenuItem text="Open" onAction="#openProject"/>
+                    <MenuItem text="Save Project" onAction="#saveProject"/>
+                    <MenuItem text="Export as PDF" onAction="#exportPDF"/>
+                </Menu>
+
+                <!-- Edit Menu -->
+                <Menu text="Edit">
+                    <MenuItem text="Undo" onAction="#undoAction"/>
+                    <MenuItem text="Redo" onAction="#redoAction"/>
+                    <MenuItem text="Cut" onAction="#cutCell"/>
+                    <MenuItem text="Copy" onAction="#copyCell"/>
+                    <MenuItem text="Paste" onAction="#pasteCell"/>
+                </Menu>
+
+                <!-- View Menu -->
+                <Menu text="View">
+                    <MenuItem text="Toggle Toolbar" onAction="#toggleToolbar"/>
+                    <MenuItem text="Zoom In" onAction="#zoomIn"/>
+                    <MenuItem text="Zoom Out" onAction="#zoomOut"/>
+                </Menu>
+
+                <!-- Insert Menu -->
+                <Menu text="Insert">
+                    <MenuItem text="Add Code Cell" onAction="#addCell"/>
+                    <MenuItem text="Add Markdown Cell" onAction="#addMarkdownCell"/>
+                </Menu>
+
+                <!-- Cell Menu -->
+                <Menu text="Cell">
+                    <MenuItem text="Run" onAction="#runCell"/>
+                    <MenuItem text="Pause" onAction="#pauseCell"/>
+                    <MenuItem text="Refresh" onAction="#refreshCell"/>
+                </Menu>
+
+                <!-- Help Menu -->
+                <Menu text="Help">
+                    <MenuItem text="About" onAction="#showAbout"/>
+                    <MenuItem text="Documentation" onAction="#showDocs"/>
+                </Menu>
+
+            </MenuBar>
+
+
+            <ToolBar fx:id="actionToolbar">
+                <!-- this toolbar has buttons so each button has some onAction which trigger some method in the controller; also some ikonli library properties which is inside <graphic>-->
+                <!-- tooltip here shows small cursor hover text to users as in what this button do-->
+                <Button onAction="#addCell">
+                    <graphic><FontIcon iconLiteral="fas-plus" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Add Cell"/></tooltip>
+                </Button>
+
+                <Button onAction="#cutCell">
+                    <graphic><FontIcon iconLiteral="fas-cut" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Cut"/></tooltip>
+                </Button>
+
+                <Button onAction="#copyCell">
+                    <graphic><FontIcon iconLiteral="fas-copy" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Copy"/></tooltip>
+                </Button>
+
+                <Button onAction="#pasteCell">
+                    <graphic><FontIcon iconLiteral="fas-paste" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Paste"/></tooltip>
+                </Button>
+
+                <Button onAction="#moveUpCell">
+                    <graphic><FontIcon iconLiteral="fas-arrow-up" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Move Up"/></tooltip>
+                </Button>
+
+                <Button onAction="#moveDownCell">
+                    <graphic><FontIcon iconLiteral="fas-arrow-down" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Move Down"/></tooltip>
+                </Button>
+
+                <Button onAction="#runCell">
+                    <graphic><FontIcon iconLiteral="fas-play" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Run"/></tooltip>
+                </Button>
+
+                <Button onAction="#pauseCell">
+                    <graphic><FontIcon iconLiteral="fas-pause" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Pause"/></tooltip>
+                </Button>
+
+                <Button onAction="#refreshCell">
+                    <graphic><FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Refresh"/></tooltip>
+                </Button>
+
+                <Region HBox.hgrow="ALWAYS"/>
+                <!-- HBox is flexible empty space to push items to right side of the toolbar-->
+                <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->
+                <ChoiceBox fx:id="languageChoice">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="Java Code"/>
+                            <String fx:value="Markdown"/>
+                            <String fx:value="Plain Text"/>
+                        </FXCollections>
+                    </items>
+                </ChoiceBox>
+
+                <!-- Theme toggle button -->
+                <Button onAction="#toggleTheme">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-adjust" iconSize="16" styleClass="font-icon"/>
+                    </graphic>
+                    <tooltip><Tooltip text="Toggle Light/Dark Theme"/></tooltip>
+                </Button>
+
+                <!-- Java version display -->
+                <Label fx:id="javaVersionLabel">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-info-circle" iconSize="16" styleClass="font-icon"/>
+                    </graphic>
+                </Label>
+
+            </ToolBar>
+
+        </VBox>
+    </top>
+
+    <!-- Center: Scrollable dynamic code cell container -->
+    <center>
+        <ScrollPane fx:id="codeCellArea" fitToWidth="true">
+            <VBox fx:id="codeCellContainer" spacing="5" alignment="TOP_CENTER">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
