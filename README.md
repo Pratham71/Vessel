@@ -39,7 +39,7 @@ Open command prompt and use ``` mvn --version ```
 2. Paste the repository URL:
 
    ```
-   https://github.com/prxcode/vessel.git
+   https://github.com/Pratham71/Vessel.git
    ```
 3. Choose a destination folder and click **Clone**.
 4. If prompted, log in with your GitHub credentials or personal access token.
