@@ -113,14 +113,8 @@
                 <Region HBox.hgrow="ALWAYS"/>
                 <!-- HBox is flexible empty space to push items to right side of the toolbar-->
                 <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->
-                <ChoiceBox fx:id="languageChoice">
-                    <items>
-                        <FXCollections fx:factory="observableArrayList">
-                            <String fx:value="Java Code"/>
-                            <String fx:value="Markdown"/>
-                            <String fx:value="Plain Text"/>
-                        </FXCollections>
-                    </items>
+                <ChoiceBox fx:id="cellLanguage">
+                    <!-- Will be filled by initialize() in UIController later-->
                 </ChoiceBox>
 
                 <!-- Theme toggle button -->

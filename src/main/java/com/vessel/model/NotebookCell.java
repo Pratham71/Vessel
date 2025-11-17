@@ -22,7 +22,8 @@ import java.time.LocalDateTime;
 
 public class NotebookCell {
 
-    public enum CellType { CODE, MARKDOWN }
+//    public enum CellType { CODE, MARKDOWN }
+//    Using public CellType enum instead
 
     public static class Output {
         public enum Type { STDOUT, STDERR }
@@ -36,7 +37,7 @@ public class NotebookCell {
     }
 
     private final String id = UUID.randomUUID().toString();
-    private CellType type;
+    private CellType cellType;
     private String content;
     private int executionCount = 0;
     private List<Output> outputs = new ArrayList<>();
@@ -44,8 +45,8 @@ public class NotebookCell {
     private LocalDateTime lastModifiedAt = LocalDateTime.now();
 
     public String getId() { return id; }
-    public CellType getType() { return type; }
-    public void setType(CellType type) { this.type = type; }
+    public CellType getType() { return cellType; }
+    public void setType(CellType type) { this.cellType = type; }
 
     public String getContent() { return content; }
     public void setContent(String content) {

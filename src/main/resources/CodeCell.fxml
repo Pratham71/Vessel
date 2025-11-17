@@ -17,13 +17,7 @@
 
     <HBox spacing="8">
         <ChoiceBox fx:id="cellLanguage">
-            <items>
-                <FXCollections fx:factory="observableArrayList">
-                    <String fx:value="Java Code"/>
-                    <String fx:value="Markdown"/>
-                    <String fx:value="Plain Text"/>
-                </FXCollections>
-            </items>
+            <!-- Will be filled by initialize() in CodeCellController later-->
         </ChoiceBox>
         <Button fx:id="runBtn">
             <graphic>

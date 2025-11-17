@@ -1,29 +1,31 @@
+/*#TODO: Migrate syntax highlighting to helper class/file (looks v messy atm)*/
+
 package com.vessel.frontendhelpers;
 
+import com.vessel.model.CellType;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.concurrent.Task;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
-import javafx.collections.ListChangeListener;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
 import java.util.regex.*;
 import java.util.Collection;
 import java.util.Collections;
-import org.fxmisc.richtext.LineNumberFactory;
+
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 public class CodeCellController {
-    @FXML private ChoiceBox<String> cellLanguage;
+    @FXML private ChoiceBox<CellType> cellLanguage;
     @FXML private Button runBtn;
     @FXML private Button deleteBtn;
     @FXML private Button clearBtn;
@@ -74,7 +76,8 @@ public class CodeCellController {
     @FXML
     private void initialize() {
         // prevents NullPointer crashes
-        cellLanguage.setValue("Java Code");
+        cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
+        cellLanguage.setValue(CellType.CODE);
 
 //        EL PROBLEMO - this new RichTextFX CodeArea doesnt have prompt text support
 //        cellLanguage.setOnAction(e -> codeArea.setPromptText(getPromptForType(cellLanguage.getValue())));
@@ -241,7 +244,7 @@ public class CodeCellController {
         fade.play();
     }
 
-    public void setLanguage(String type) {
+    public void setCellType(CellType type) {
         cellLanguage.setValue(type);
     }
 
