@@ -3,6 +3,7 @@ package com.vessel;
 import com.vessel.frontendhelpers.CodeCellController;
 import com.vessel.frontendhelpers.SystemThemeDetector;
 import com.vessel.model.CellType;
+import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in main.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
@@ -57,13 +58,16 @@ public class UIController {
 
     // it creates a new cell container with proper formatting and light border
      private void createCodeCell(CellType initialType) {
+         NotebookCell cellModel = new NotebookCell();
+         cellModel.setType(initialType);
+
          try {
              FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
              VBox cell = loader.load();
              CodeCellController cellController = loader.getController();
+             cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
              cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
              cellController.setRoot(cell); // pass root for removal
-
              cellController.setCellType(initialType); //Init language
              codeCellContainer.getChildren().add(cell);
          } catch (Exception e) {

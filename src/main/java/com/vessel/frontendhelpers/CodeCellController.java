@@ -3,6 +3,7 @@
 package com.vessel.frontendhelpers;
 
 import com.vessel.model.CellType;
+import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
@@ -34,7 +35,7 @@ public class CodeCellController {
     @FXML private VBox root; // This is the root of the cell
 
     private VBox parentContainer; // The notebook VBox (set by UIController on creation)
-    private Region codeContent; // .content region inside TextArea
+    private NotebookCell cellModel;
 
     /**
      * This is called by the UIController after loading the cell.
@@ -46,6 +47,24 @@ public class CodeCellController {
     public void setRoot(VBox root) {
         this.root = root;
     }
+
+    public void setNotebookCell(NotebookCell cell) {
+        this.cellModel = cell;
+
+        // Only set default text if the cell is empty (not re-loading output)
+        if (cell.getContent() == null || cell.getContent().isBlank()) {
+            String initText = "// Enter Java code here\nSystem.out.println(\"Hello, world!\");";
+
+            // Set both UI and model content
+            codeArea.replaceText(initText);
+            cell.setContent(initText);
+        } else {
+            // Fill UI from whatever the model contains (e.g. on loading)
+            codeArea.replaceText(cell.getContent());
+        }
+        cellLanguage.setValue(cell.getType());
+    }
+
 
     private static final String[] JAVA_KEYWORDS = new String[] {
             "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while"
@@ -87,6 +106,17 @@ public class CodeCellController {
         codeArea.textProperty().addListener((obs, oldText, newText) ->
                 codeArea.setStyleSpans(0, computeHighlighting(newText))
         );
+
+        // Listener for updating cell model's content field
+        codeArea.textProperty().addListener((obs, old, newText) -> {
+            if (cellModel != null) cellModel.setContent(newText);
+        });
+
+        // Listener for setting cell model's "type" on type change (in the dropbox)
+        cellLanguage.setOnAction(e -> {
+            if (cellModel != null) cellModel.setType(cellLanguage.getValue());
+        });
+
 //        codeArea.getParagraphs().addListener((ListChangeListener<? super Object>) change -> {
 //            Platform.runLater(() -> {
 //                var flowNode = codeArea.lookup(".virtual-flow");
@@ -104,74 +134,78 @@ public class CodeCellController {
 //         codeArea.setPrefHeight(flow.getHeight() + fudge);
 //     }
 // });
-            codeArea.replaceText("// Enter Java code here\npublic class Hello {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}");
-            codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
+
+        codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
 
-            // Button handlers
+        // Button handlers
 
-            runBtn.setOnAction(e -> {
-                outputBox.setVisible(true);
+        runBtn.setOnAction(e -> {
+            outputBox.setVisible(true);
+            outputBox.getChildren().clear();
+
+            // --- Increment execution count ---
+            cellModel.incrementExecutionCount();
+
+            // --- Add spinner ---
+            HBox spinnerBox = new HBox(8);
+            FontIcon spinnerIcon = new FontIcon("fas-spinner");
+            spinnerIcon.getStyleClass().add("output-spinner");
+            RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
+            spin.setByAngle(360);
+            spin.setCycleCount(RotateTransition.INDEFINITE);
+            spin.play();
+            Label loadingText = new Label("Executing...");
+            loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
+            spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
+            outputBox.getChildren().add(spinnerBox);
+            outputBox.applyCss();
+            outputBox.layout();
+            fadeIn(spinnerBox);
+
+            // --- Simulate background execution ---
+            Task<Void> fakeTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    Thread.sleep(1000); // Simulate work, replace with JShell code later
+                    return null;
+                }
+            };
+
+            fakeTask.setOnSucceeded(ev -> {
+                spin.stop();
                 outputBox.getChildren().clear();
-
-                // --- Add spinner ---
-                HBox spinnerBox = new HBox(8);
-                FontIcon spinnerIcon = new FontIcon("fas-spinner");
-                spinnerIcon.getStyleClass().add("output-spinner");
-                RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
-                spin.setByAngle(360);
-                spin.setCycleCount(RotateTransition.INDEFINITE);
-                spin.play();
-                Label loadingText = new Label("Executing...");
-                loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
-                spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
-                outputBox.getChildren().add(spinnerBox);
-                outputBox.applyCss();
-                outputBox.layout();
-                fadeIn(spinnerBox);
-
-                // --- Simulate background execution ---
-                Task<Void> fakeTask = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        Thread.sleep(1000); // Simulate work, replace with JShell code later
-                        return null;
-                    }
-                };
-
-                fakeTask.setOnSucceeded(ev -> {
-                    spin.stop();
-                    outputBox.getChildren().clear();
 
 //              THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
 //              Currently just prints whatever is in the box as output
-                    String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
+                String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
 
-                    if (shellOutput.trim().isEmpty()) {
-                        Label noOutputLabel = new Label("(No output to print)");
-                        noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
-                        outputBox.getChildren().add(noOutputLabel);
-                        fadeIn(noOutputLabel);
-                    } else {
-                        TextArea resultArea = new TextArea(shellOutput.trim());
-                        resultArea.getStyleClass().add("read-only-output");
-                        resultArea.setEditable(false);
-                        resultArea.setWrapText(true);
-                        resultArea.setFocusTraversable(false);
-                        resultArea.setMaxWidth(1000);
-                        // Auto-resize resultArea by line count
-                        int lineCount = resultArea.getText().split("\n", -1).length;
-                        resultArea.setPrefRowCount(Math.max(1, lineCount));
-                        resultArea.setWrapText(true);
-                        Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
-                        resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
-                        outputBox.getChildren().add(resultArea);
-                        fadeIn(resultArea);
-                    }
-                    outputBox.setPrefHeight(-1); // reset container sizing
-                });
-                new Thread(fakeTask).start();
+                if (shellOutput.trim().isEmpty()) {
+                    Label noOutputLabel = new Label("(No output to print)");
+                    noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
+                    outputBox.getChildren().add(noOutputLabel);
+                    fadeIn(noOutputLabel);
+                } else {
+                    TextArea resultArea = new TextArea(shellOutput.trim());
+                    resultArea.getStyleClass().add("read-only-output");
+                    resultArea.setEditable(false);
+                    resultArea.setWrapText(true);
+                    resultArea.setFocusTraversable(false);
+                    resultArea.setMaxWidth(1000);
+                    // Auto-resize resultArea by line count
+                    int lineCount = resultArea.getText().split("\n", -1).length;
+                    resultArea.setPrefRowCount(Math.max(1, lineCount));
+                    resultArea.setWrapText(true);
+                    Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
+                    resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
+                    outputBox.getChildren().add(resultArea);
+                    fadeIn(resultArea);
+                }
+                outputBox.setPrefHeight(-1); // reset container sizing
             });
+            new Thread(fakeTask).start();
+            cellModel.dumpContent(); // temp debug print
+        });
 
             deleteBtn.setOnAction(e -> {
                 if (parentContainer != null && root != null) {
