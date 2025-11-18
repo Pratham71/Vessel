@@ -2,6 +2,8 @@ package com.vessel;
 // importing all required javafx classes
 import com.vessel.frontendhelpers.CodeCellController;
 import com.vessel.frontendhelpers.SystemThemeDetector;
+import com.vessel.model.CellType;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in main.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene; // UI scene
@@ -17,7 +19,7 @@ import java.io.*; // reading and writing project files
 public class UIController {
 // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
-    @FXML private ChoiceBox<String> languageChoice; // dropdown with 3 lang choices
+    @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
 
 //    private boolean darkMode = false; // default theme is light mode
@@ -33,35 +35,36 @@ public class UIController {
 
     @FXML
     private void initialize() { // called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
-        languageChoice.setValue("Java Code");
+        cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
+        cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
 
         // Create default code cell on startup
-        createCodeCell("Java Code");
+        createCodeCell(CellType.CODE);
     }
 
     // -------------------- Cell Creation --------------------
 
     @FXML
     private void addCell() {
-        createCodeCell(languageChoice.getValue());
+        createCodeCell(cellLanguage.getValue());
     }
 
     @FXML
     private void addMarkdownCell() {
-        createCodeCell("Markdown");
+        createCodeCell(CellType.MARKDOWN);
     }
 
     // it creates a new cell container with proper formatting and light border
-     private void createCodeCell(String initialType) {
+     private void createCodeCell(CellType initialType) {
          try {
              FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
              VBox cell = loader.load();
              CodeCellController cellController = loader.getController();
              cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
              cellController.setRoot(cell); // pass root for removal
-//             cellController.cellLanguage.setValue(initialType); // initialize language choice in cell
-             cellController.setLanguage(initialType);
+
+             cellController.setCellType(initialType); //Init language
              codeCellContainer.getChildren().add(cell);
          } catch (Exception e) {
              e.printStackTrace();
@@ -77,15 +80,14 @@ public class UIController {
         btn.setTooltip(new Tooltip(tooltipText));
         return btn;
     }
-    // gives place holder text
-    private String getPromptForType(String type) {
-        return switch (type) {
-            case "Java Code" -> "Enter Java code here...";
-            case "Markdown" -> "Enter Markdown content...";
-            case "Plain Text" -> "Enter plain text...";
-            default -> "";
-        };
-    }
+//    // gives place holder text - ive updated it to use new enum for the sake of later use
+//    private String getPromptForType(CellType type) {
+//        return switch (type) {
+//            case CODE -> "Enter Java code here...";
+//            case MARKDOWN -> "Enter Markdown content...";
+//            case TEXT -> "Enter plain text...";
+//        };
+//    }
 
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
