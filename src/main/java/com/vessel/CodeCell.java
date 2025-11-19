@@ -40,7 +40,8 @@ public class CodeCell {
         notebookCell.setContent(code);
         notebookCell.clearOutputs();
 
-        String output = engine.execute(code);
+        String output = engine.execute(code).output();
+        String error = engine.execute(code).error();
 
         notebookCell.incrementExecutionCount();
         notebookCell.addOutput(NotebookCell.Output.Type.STDOUT, output);

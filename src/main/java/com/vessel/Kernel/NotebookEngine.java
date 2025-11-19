@@ -1,68 +1,66 @@
-/*
-TODO: Backend Execution Engine
-
-1) Persistent JShell kernel
-   - JShell should be created once per notebook, not per cell
-   - Maintain state of variables/classes across cells
-
-2) runCell(NotebookCell cell)
-   - Increment cell.executionCount
-   - Detect if code contains `class`, `interface`, `enum`, or `record`
-   - If YES:
-       > Write code to TemporaryFile.java
-       > Run `javac` to compile
-       > Add output directory to JShell classpath
-   - If NO:
-       > Evaluate using JShell.eval(...)
-   - Capture:
-       > stdout (success output)
-       > stderr / diagnostics (errors)
-       > execution time (System.nanoTime())
-
-3) Save / Load Notebook to JSON
-   - saveNotebook(Notebook notebook)
-     → Convert notebook object into JSON
-     → Write to /notebooks/<name>.json
-
-   - loadNotebook(String name)
-     → Read JSON and reconstruct Notebook + Cells
-
-4) Logging + Safety
-   - Add Logger (java.util.logging or slf4j)
-   - log compile errors, JShell errors, runtime exceptions
-   - Timeout protection (cancel execution if infinite loop)
-   - Catch OutOfMemoryError on huge allocations
-
-Nice-to-have:
-- Support stdin push (future feature)
-- Colored output for UI (stdout=green, stderr=red)
-*/
+/**
+ * TODO - Implement NotebookEnigne to frontend via Notebook Class
+ * TODO - Link to Notebook.Json
+ */
 
 
 
 package com.vessel.Kernel;
-
 import com.vessel.core.log;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jdk.jshell.JShell;
 import jdk.jshell.SnippetEvent;
 
 public class NotebookEngine {
-    private final JShell jshell; // persistent kernel
-    private final ByteArrayOutputStream outputbuffer;
-    private final PrintStream outputstream;
-    private final log engine = log.get("engine");
+    // === Persistent Jshell ===
+    private final JShell jshell;
 
-    // Some basic defaults for jsh.
-    private static final List<String> IMPORT_SNIPPETS = List.of(
-            "import java.io.*;",
-            "import java.util.*;",
-            "import java.lang.Math.*;"
+    // === Thread-Safety ===
+    private final ReentrantLock executionLock = new ReentrantLock(); // Locks the execution thread.
+    private volatile boolean isExecuting = false;
+    private volatile String currentExectionCellId = "001"; // to be implemented
+
+    // === Timeouts ===
+    private static final long EXECUTION_TIMEOUT_MS = 5_000; // 5s
+    private final ExecutorService executorService; // A Java thread-pool interface used to run tasks asynchronously.
+
+    // === Loggers ===
+    private final log engine = log.get("engine"); // looging
+
+    // === Security ===
+    private static final List<String> DANGEROUS_PATTERNS = List.of(
+            "System.exit",
+            "Runtime.getRuntime().exec",
+            "ProcessBuilder",
+            "Runtime.getRuntime().halt",
+            "sun.misc.Unsafe"
     );
 
+    // === Stats ===
+    private int totalExecutions = 0;
+    private long totalExecutionTime = 0;
+    private final LinkedList<ExecutionRecord> history = new LinkedList<>();
+    private static final int MAX_HISTORY = 50;
+
+
+    // === Init Scripts ===
+    private static final List<String> IMPORT_SNIPPETS = List.of(
+
+            // basic
+            "import java.io.*;",
+            "import java.util.*;",
+
+            // math
+            "import java.lang.Math.*;",
+            "import java.math.*;"
+
+    );
 
     private static final List<String> METHOD_SNIPPETS = List.of(
             "static void print(boolean b) { System.out.print(b); }",
@@ -89,7 +87,6 @@ public class NotebookEngine {
             "static void printf(String format, Object... args) { System.out.printf(format, args); }"
     );
 
-
     private static final List<String> EXTRA_SNIPPETS = List.of(
             "static String now() { return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern(\"HH:mm:ss\")); }",
             "static String date() { return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern(\"dd-MM-yyyy\")); }",
@@ -99,7 +96,6 @@ public class NotebookEngine {
             "static long TimeThis(Runnable r) { long t = System.nanoTime(); r.run(); return (System.nanoTime() - t) / 1_000_000; }"
     );
 
-
     private static final List<String> INIT_SNIPPETS = List.of(
             // expands METHOD_SNIPPETS, IMPORT_SNIPPETS and EXTRA_SNIPPETS into one list
             METHOD_SNIPPETS,
@@ -107,119 +103,448 @@ public class NotebookEngine {
             EXTRA_SNIPPETS
     ).stream().flatMap(List::stream).toList();
 
+    private void loadInitSnippets(JShell jshell, List<String> INIT_SNIPPETS) {
+        executionLock.lock();
+        try {
+            for (String snippet : INIT_SNIPPETS) {
+                jshell.eval(snippet);
 
-    private void SetInitSnippets(JShell jshell, List<String> INIT_SNIPPETS) {
-        for (String snippet : INIT_SNIPPETS) {
-            jshell.eval(snippet);
-
+            }
+            engine.info(" All init snippets loaded into JShell.");
+        } finally {
+            executionLock.unlock();
         }
-        engine.info("All Init-Snippets were loaded into jshell.");
     }
 
-    public NotebookEngine(){
+    // === Constructor ===
 
-        // Init. outputbuffer and outputstream
-        outputbuffer = new ByteArrayOutputStream();
-        outputstream = new PrintStream(outputbuffer);
+    public NotebookEngine() {
 
+        // Thread Safe executor for timeout handling
+        executorService = Executors.newCachedThreadPool(
+                r -> {
+                    Thread t = new Thread(r);
 
-        // Auto Importing Commonly used Pkgs
+                    // Make the thread a daemon so it won't block JVM shutdown
+                    t.setDaemon(true);
 
-        jshell = JShell.builder()
-                .out(outputstream) // Can be replaced by UI output capture.
-                .err(outputstream)
-                .build();
+                    // Give each thread a readable name based on the current cell
+                    t.setName("Jshell-Executor-" + currentExectionCellId);
 
-        // Loading imports + helpers
-        SetInitSnippets(jshell,  INIT_SNIPPETS);
-        engine.info("Notebook Engine Initialized");
+                    engine.severe(" Jshell thread started: " + "`" + t.getName() + "`");
+                    return t;
+                }
+        );
+
+        // Init. JShell with output streams
+        this.jshell = JShell.builder().build();
+
+        // Load Init Snippets
+        loadInitSnippets(jshell, INIT_SNIPPETS);
+        engine.info(" NotebookEngine initialized with persistent JShell kernel");
+    }
+
+    // Thread safe execution.
+    public ExecutionResult execute(String code) {
+
+        // Vallidation
+        if (code == null || code.trim().isEmpty()) {
+            return new ExecutionResult("", "Empty Code Cell", 0, false);
+        }
+
+        // checking for any dangeorus pattern which may cause the program to crashout.
+        for (String pattern : DANGEROUS_PATTERNS) {
+            if (code.contains(pattern)) {
+                engine.warn(" Blocked dangerous pattern: " + pattern);
+
+                return new ExecutionResult("", "Blocked dangerous operation: " + pattern, -1, false);
+            }
+        }
+
+        // Try to get the execution lock (non-blocking)
+        if (!executionLock.tryLock()) {
+            engine.warning(" Execution blocked: Another cell is running.");
+            return new ExecutionResult("", "Execution blocked: Another cell is running.\nPlease wait or interrupt it.", -1, false);
+        }
+
+        try {
+            isExecuting = true;
+            engine.info(" Executing code");
+
+            // Submit execution with timeout
+            Future<ExecutionResult> future = executorService.submit(() -> executeInternal(code));
+
+            try {
+
+                // Wait for the task to finish, but only up to EXECUTION_TIMEOUT_MS
+                ExecutionResult result = future.get(EXECUTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+                // Updating Stats
+                totalExecutions++;
+                totalExecutionTime += result.executionTimeMs();
+                addToHistory(code, result);
+
+                engine.info(" Code Execution complete");
+                return result;
+
+            } catch (TimeoutException e) {
+
+                engine.debug(" Execution timed out.");
+
+                // Cancel the running task
+                future.cancel(true);
+
+                // Reset the JShell session
+                jshell.stop();
+
+                // Return a timeout result
+                return new ExecutionResult("", " TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
+                        " Possible infinite loop or recursion."
+                        , EXECUTION_TIMEOUT_MS, false);
+
+            } catch (InterruptedException ie) {
+
+                // Cancel the running task
+                future.cancel(true);
+
+                // Restore the interrupt status
+                Thread.currentThread().interrupt();
+
+                engine.error(" Execution interrupted", ie);
+
+                // Return an interrupted result
+                return new ExecutionResult("", "Execution interrupted by user", -1, false);
+
+            } catch (ExecutionException e) {
+                engine.error(" Execution failed with exception: ", e);
+
+                // Get the underlying cause of the exception
+                Throwable cause = e.getCause();
+                if (cause == null) cause = e;
+
+                // Return a fatal error result
+                return new ExecutionResult("", " FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false);
+            }
+
+        } finally {
+            isExecuting = false;
+            executionLock.unlock();
+            engine.debug(" Execution lock Released.");
+        }
+    }
+
+    // Internal Execution (Runs in executor thread)
+    private ExecutionResult executeInternal(String code) {
+        // Start timer
+        long startTime = System.nanoTime();
+
+        // Buffer for capturing System.out and System.err
+        ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
+        PrintStream outputStream = new PrintStream(outputBuffer);
+
+        // Save original print streams
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+
+        // Redirect output to buffer
+        System.setOut(outputStream);
+        System.setErr(outputStream);
+
+        // Output builder and success flag
+        StringBuilder output = new StringBuilder();
+        StringBuilder errors = new StringBuilder();
+        final boolean[] success = {true};
+
+        try {
+            // Check memory usage
+            Runtime runtime = Runtime.getRuntime();
+            long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+            long maxMemory = runtime.maxMemory();
+            double memoryUserPercentage = (usedMemory * 100.0 / maxMemory);
+
+            if (memoryUserPercentage > 65) {
+                engine.warning(" Memory usage high");
+                errors.append(" Warning: Memory Usage at ")
+                        .append(String.format("%.1f", memoryUserPercentage))
+                        .append("%\n\n");
+            }
+
+            // Execute JShell snippet
+            //outputStream.flush();
+            List<SnippetEvent> events = jshell.eval(code);
+
+            if (events.isEmpty()) {
+                errors.append(" No output (empty snippet)");
+            }
+
+            // Process each event
+            for (SnippetEvent event : events) {
+
+                // Snippet status handling
+                switch (event.status()) {
+                    case REJECTED:
+                        errors.append(" REJECTED: Code could not be Compiled\n");
+                        success[0] = false;
+                        break;
+                    case OVERWRITTEN:
+                        errors.append(" Previous definition overwritten\n");
+                        break;
+                    case VALID:
+                        break;
+                    case RECOVERABLE_DEFINED:
+                        errors.append(" Defined with recoverable errors\n");
+                        break;
+                    case RECOVERABLE_NOT_DEFINED:
+                        errors.append(" Defined with recoverable errors\n");
+                        break;
+                }
+
+                // Compilation diagnostics
+                jshell.diagnostics(event.snippet()).forEach(diag -> {
+                    errors.append("Compilation Error at line: ")
+                            .append(diag.getStartPosition()).append(": ")
+                            .append(diag.getMessage(null)).append("\n");
+                    engine.severe(" Compilation error: " + diag.getMessage(null));
+                    success[0] = false;
+                });
+
+                // Runtime exception
+                if (event.exception() != null) {
+                    Exception exception = event.exception();
+                    errors.append(" Runtime Exception: ")
+                            .append(exception.getClass().getSimpleName())
+                            .append(": ").append(exception.getMessage())
+                            .append("\n");
+
+                    // First stack frame
+                    StackTraceElement[] stackTrace = exception.getStackTrace();
+                    if (stackTrace.length > 0) {
+                        errors.append("   at ").append(stackTrace[0]).append("\n");
+                    }
+
+                    engine.error("Runtime exception caught: ", exception);
+                    success[0] = false;
+                }
+
+                // Expression result
+                if (event.value() != null && !event.value().isEmpty()) {
+                    output.append("Expressions value: ")
+                            .append(event.value()).append("\n");
+                    engine.debug("Expressions value: " + event.value());
+                }
+            }
+
+            // Capture printed output
+            outputStream.flush();
+            String printed = outputBuffer.toString();
+
+            if (!printed.isEmpty()) {
+                output.append(printed);
+                if (!printed.endsWith("\n")) output.append("\n");
+                engine.debug("Stdout captured: " + printed.length() + " chars");
+            }
+
+        } catch (OutOfMemoryError e) {
+            // Out-of-memory handler
+            engine.severe("OutOfMemoryError: " + e.getMessage());
+            output.append("FATAL: Out of memory!\n")
+                    .append("The kernel will be reset.\n");
+            success[0] = false;
+
+            // Reset kernel async
+            CompletableFuture.runAsync(this::resetKernel);
+
+        } catch (StackOverflowError e) {
+            // Stack overflow handler
+            engine.severe("StackOverflowError: " + e.getMessage());
+            errors.append("FATAL: Stack overflow!\n")
+                    .append("Likely infinite recursion.\n");
+            success[0] = false;
+
+        } catch (Exception e) {
+            // General error handler
+            engine.error("Unexpected error", e);
+            errors.append(" UNEXPECTED ERROR: ")
+                    .append(e.getClass().getSimpleName()).append(": ")
+                    .append(e.getMessage()).append("\n");
+            success[0] = false;
+
+        } finally {
+            // Restore stdout/stderr
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+
+        // Compute execution time
+        long executionTime = (System.nanoTime() - startTime) / 1_000_000;
+
+        // Append time
+        output.append("\n Execution time: ")
+                .append(executionTime).append(" ms\n");
+
+        // Return result
+        return new ExecutionResult(output.toString(), errors.toString(), executionTime, success[0]);
     }
 
     // Clears Kernel, Useful for 'Restart Kernel' button in front end.
-    public void resetKernel(){
-        jshell.snippets().forEach(jshell::drop);
-        SetInitSnippets(jshell,  INIT_SNIPPETS);
-        outputbuffer.reset();
-        engine.severe("kernel reset");
-    }
+    public void resetKernel() {
+        // Lock to prevent concurrent resets/executions
+        executionLock.lock();
 
-    // let front end interrupt Kernel
-    public void interrupt() {
-        jshell.stop();
-        engine.severe("kernel interrupt");
-    }
-
-    // Store Variables Between Cells and exposes listing
-    public List<String> vars() {
-        return jshell.variables()
-                .map(v -> v.name() + " : " + v.typeName())
-                .toList();
-    }
-
-    // Capture Imports: Let user add imports through cells and persist.
-    public List<String> imports() {
-        return jshell.imports()
-                .map(i -> i.fullname())
-                .toList();
-    }
-
-    // Execute java Code using JShell
-    public String execute(String code) {
-        engine.debug("Execute was invoked");
         try {
+            engine.info("Resetting kernel...");
 
-            outputbuffer.reset(); // clear stdout buffer each run
+            // Drop all user-defined snippets
+            jshell.snippets().forEach(snippet -> jshell.drop(snippet));
 
-            StringBuilder sb = new StringBuilder();
+            // Reload initial snippets
+            loadInitSnippets(jshell, INIT_SNIPPETS);
 
-            List<SnippetEvent> events = jshell.eval(code);
+            // Clear stats and history
+            totalExecutions = 0;
+            totalExecutionTime = 0;
+            history.clear();
 
-            long start = System.nanoTime();
-
-            for(SnippetEvent event : events) {
-
-                // Capture any Syntax or Compilation Error
-                jshell.diagnostics(event.snippet()).forEach(diag -> {
-                    sb.append("ERROR: ").append(diag.getMessage(null));
-                    engine.severe("Jshell.diagnostic caught an error: " + diag.getMessage(null));
-                });
-
-                // Any runtime exception.
-                if(event.exception() != null) {
-                    sb.append("Exception: ").append(event.exception().getMessage()).append('\n');
-                    engine.error("Runtime Error was caught: ", event.exception());
-
-                }
-
-                // Output
-                if( (event.value() != null)) {
-                    sb.append("OUTPUT: ").append(event.value().toString());
-                    engine.debug("Execution was successful: Output( " + event.value() + " )");
-                }
-            }
-
-            // capture println / stdout / stderr
-            String printed = outputbuffer.toString();
-            if (!printed.isEmpty()){
-                sb.append(printed);
-                engine.debug("Stdout / Stderr was caught: " + printed);
-            }
-
-            long time = (System.nanoTime() - start) / 1_000_000;
-            sb.append("\nExecution time: ").append(time).append(" ms\n");
-            engine.debug("Execution time: " + time + " ms");
-
-            return sb.toString();
-        } catch (Exception e){
-
-            engine.error("Error executing jshell: ", e);
-            return "Execution Failed: " + e.getMessage();
+            engine.info("Kernel Reset Complete.");
+        } finally {
+            // Release lock
+            executionLock.unlock();
         }
     }
 
-    public static void main(String[] args) {
-        NotebookEngine engine = new NotebookEngine();
-        System.out.println(engine.execute("for (int i = 0; i < 10; i++) { print(i); }"));
+
+    // let front end interrupt Kernel
+    // Interrupt the currently running execution
+    public void interrupt() {
+
+        // Check if a cell is currently executing
+        if (isExecuting) {
+
+            // Stop the JShell session
+            jshell.stop();
+
+            // Log interruption
+            engine.warning("Kernel Interrupted by User.");
+
+        } else {
+
+            // No active execution
+            engine.info("No execution in progress to interrupt.");
+        }
     }
 
+
+    public List<String> getVariables() {
+        executionLock.lock();
+        try {
+            return jshell.variables()
+                    .map(v -> v.name() + " : " + v.typeName() + " = " +
+                            (v.typeName().equals("String") ? ("\"" + jshell.varValue(v).describeConstable().orElse("null") + "\"") :
+                                    jshell.varValue(v).describeConstable().orElse("null"))
+                    ).toList();
+        } finally {
+            executionLock.unlock();
+        }
+    }
+
+
+    // Getters.
+    public List<String> getImports() {
+        executionLock.lock();
+        try {
+            return jshell.imports()
+                    .map(i -> i.fullname())
+                    .toList();
+        } finally {
+            executionLock.unlock();
+        }
+    }
+
+    public List<String> getMethods() {
+        executionLock.lock();
+        try {
+            return jshell.methods()
+                    .map(m -> m.signature() + " " + m.name() + "(" + m.parameterTypes() + ")")
+                    .toList();
+        } finally {
+            executionLock.unlock();
+        }
+    }
+
+    public Map<String, Object> getStatistics() {
+        Runtime runtime = Runtime.getRuntime();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        long maxMemory = runtime.maxMemory();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalExecutions", totalExecutions);
+        stats.put("averageExecutionTimeMs", totalExecutions > 0 ? totalExecutionTime / totalExecutions : 0);
+        stats.put("totalExecutionTime", totalExecutionTime);
+        stats.put("variableCount", getVariables().size());
+        stats.put("methodCount", getMethods().size());
+        stats.put("importsCount", getImports().size());
+        stats.put("classCount", jshell.types().count());
+        stats.put("isExecuting", isExecuting);
+        stats.put("memoryTotalMB", usedMemory / 1024 / 1024);
+        stats.put("memoryUsedMB", usedMemory / 1024 / 1024);
+        stats.put("memoryMaxMB", maxMemory / 1024 / 1024);
+        stats.put("memoryUsagePercent", String.format("%.1f", (usedMemory * 100.0 / maxMemory)));
+
+        return stats;
+    }
+
+    private void addToHistory(String code, ExecutionResult result) {
+        history.add(new ExecutionRecord(
+                code,
+                result.output(),
+                result.executionTimeMs(),
+                result.success()
+        ));
+
+        engine.info(" Adding " + code + " to history");
+
+        if (history.size() > MAX_HISTORY) {
+            history.removeFirst();
+        }
+    }
+
+    public List<ExecutionRecord> getHistory() {
+        return new ArrayList<ExecutionRecord>(history);
+    }
+
+    public void clearHistory() {
+        history.clear();
+        engine.info(" Clearing history...");
+    }
+
+    // Cleanup and close jshell safely
+    public void shutdown() {
+        engine.info(" Shutting down NotebookEngine...");
+
+        // Shutdown executor service
+        executorService.shutdownNow();
+        try {
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                engine.warning(" Executor service did not terminate cleanly.");
+            }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            engine.error(" Shutting down interrupted", ie);
+        }
+
+        // close jshell
+        if (jshell != null) {
+            jshell.close();
+            engine.info(" Shutting down JShell...");
+        }
+
+        clearHistory();
+
+        engine.info(" NotebookEngine shutdown complete.");
+    }
+
+    // === Utilities ===
+    public boolean isExecuting() {
+        return isExecuting;
+    }
 }
