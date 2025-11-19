@@ -5,16 +5,17 @@
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<!--imported all classes of JavaFX required for main.fxml -->
+<!-- imported all classes of JavaFX required for main.fxml -->
+
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.vessel.UIController">
     <!-- borderpane is layout with top,bottom, right,center; some predefined syntax to link FXML features, also adding fx controller ie form com.vessel.UIController-->
 
     <!-- Top: MenuBar + Toolbar -->
-  <top> <!--  top region of borderpane-->
-         <VBox> <!--Vbox is vertical container to stack options like menubar or toolbar-->
+    <top> <!--  top region of borderpane-->
+        <VBox> <!--Vbox is vertical container to stack options like menubar or toolbar-->
 
-<!--MenuBar at the top of your app which has some options like file, edit, view, help...-->
+            <!--MenuBar at the top of your app which has some options like file, edit, view, help...-->
             <MenuBar>
 
                 <!-- File Menu -->
@@ -50,7 +51,7 @@
                 <Menu text="Cell">
                     <MenuItem text="Run" onAction="#runCell"/>
                     <MenuItem text="Pause" onAction="#pauseCell"/>
-                    <MenuItem text="Refresh" onAction="#refreshCell"/>
+                    <MenuItem text="Clear" onAction="#clearCell"/>
                 </Menu>
 
                 <!-- Help Menu -->
@@ -61,15 +62,15 @@
 
             </MenuBar>
 
-
+            <!-- Toolbar with buttons -->
             <ToolBar fx:id="actionToolbar">
-                <!-- this toolbar has buttons so each button has some onAction which trigger some method in the controller; also some ikonli library properties which is inside <graphic>-->
-                <!-- tooltip here shows small cursor hover text to users as in what this button do-->
+                <!-- Add Cell -->
                 <Button onAction="#addCell">
                     <graphic><FontIcon iconLiteral="fas-plus" iconSize="16" styleClass="font-icon"/></graphic>
                     <tooltip><Tooltip text="Add Cell"/></tooltip>
                 </Button>
 
+                <!-- Cut, Copy, Paste -->
                 <Button onAction="#cutCell">
                     <graphic><FontIcon iconLiteral="fas-cut" iconSize="16" styleClass="font-icon"/></graphic>
                     <tooltip><Tooltip text="Cut"/></tooltip>
@@ -85,6 +86,7 @@
                     <tooltip><Tooltip text="Paste"/></tooltip>
                 </Button>
 
+                <!-- Move Up/Down -->
                 <Button onAction="#moveUpCell">
                     <graphic><FontIcon iconLiteral="fas-arrow-up" iconSize="16" styleClass="font-icon"/></graphic>
                     <tooltip><Tooltip text="Move Up"/></tooltip>
@@ -95,24 +97,26 @@
                     <tooltip><Tooltip text="Move Down"/></tooltip>
                 </Button>
 
-                <Button onAction="#runCell">
-                    <graphic><FontIcon iconLiteral="fas-play" iconSize="16" styleClass="font-icon"/></graphic>
-                    <tooltip><Tooltip text="Run"/></tooltip>
+                <!-- Run / Pause toolbar button -->
+                <Button fx:id="runPauseButton" onAction="#toggleRunPause">
+                    <graphic>
+                        <FontIcon fx:id="runPauseIcon" iconLiteral="fas-play" iconSize="16" styleClass="font-icon"/>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip fx:id="runPauseTooltip" text="Run"/>
+                    </tooltip>
                 </Button>
 
-                <Button onAction="#pauseCell">
-                    <graphic><FontIcon iconLiteral="fas-pause" iconSize="16" styleClass="font-icon"/></graphic>
-                    <tooltip><Tooltip text="Pause"/></tooltip>
-                </Button>
-
-                <Button onAction="#refreshCell">
-                    <graphic><FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon"/></graphic>
-                    <tooltip><Tooltip text="Refresh"/></tooltip>
+                <!-- Clear all cells toolbar button -->
+                <Button onAction="#clearCell">
+                    <graphic><FontIcon iconLiteral="fas-eraser" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Clear all cells"/></tooltip>
                 </Button>
 
                 <Region HBox.hgrow="ALWAYS"/>
                 <!-- HBox is flexible empty space to push items to right side of the toolbar-->
-                <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->
+
+                <!-- Language dropdown -->
                 <ChoiceBox fx:id="cellLanguage">
                     <!-- Will be filled by initialize() in UIController later-->
                 </ChoiceBox>

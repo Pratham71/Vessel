@@ -16,16 +16,26 @@ import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
+import java.util.ArrayList;
+import java.util.List;
 
 public class UIController {
-// these are those fxml elements labelled via fx:id in main.fxml file
+    // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
 
-//    private boolean darkMode = false; // default theme is light mode
+    @FXML private Button runPauseButton; // Run/Pause toggle button for all cells
+    @FXML private FontIcon runPauseIcon;   // icon inside Run/Pause button
+    @FXML private Tooltip runPauseTooltip; // tooltip inside Run/Pause button
+
+    @FXML private Button clearButton; // Clear/Delete button for all cells
+
+    //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
+
+    private boolean isRunningAll = false; // state for toolbar run all button
 
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
@@ -57,23 +67,23 @@ public class UIController {
     }
 
     // it creates a new cell container with proper formatting and light border
-     private void createCodeCell(CellType initialType) {
-         NotebookCell cellModel = new NotebookCell();
-         cellModel.setType(initialType);
+    private void createCodeCell(CellType initialType) {
+        NotebookCell cellModel = new NotebookCell();
+        cellModel.setType(initialType);
 
-         try {
-             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
-             VBox cell = loader.load();
-             CodeCellController cellController = loader.getController();
-             cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
-             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
-             cellController.setRoot(cell); // pass root for removal
-             cellController.setCellType(initialType); //Init language
-             codeCellContainer.getChildren().add(cell);
-         } catch (Exception e) {
-             e.printStackTrace();
-         }
-     }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
+            VBox cell = loader.load();
+            CodeCellController cellController = loader.getController();
+            cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
+            cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
+            cellController.setRoot(cell); // pass root for removal
+            cellController.setCellType(initialType); //Init language
+            codeCellContainer.getChildren().add(cell);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     // creates button icon
     private Button makeIconButton(String iconLiteral, String tooltipText) {
@@ -84,28 +94,74 @@ public class UIController {
         btn.setTooltip(new Tooltip(tooltipText));
         return btn;
     }
-//    // gives place holder text - ive updated it to use new enum for the sake of later use
-//    private String getPromptForType(CellType type) {
-//        return switch (type) {
-//            case CODE -> "Enter Java code here...";
-//            case MARKDOWN -> "Enter Markdown content...";
-//            case TEXT -> "Enter plain text...";
-//        };
-//    }
 
-    // -------------------- Toolbar Actions --------------------
-    // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
+    // -------------------- Toolbar Run/Pause --------------------
+    @FXML
+    private void toggleRunPause() {
+        if (!isRunningAll) {
+            // Start execution of all cells
+            runPauseIcon.setIconLiteral("fas-pause"); // change icon
+            runPauseTooltip.setText("Pause");         // change tooltip
+            isRunningAll = true;
+
+            for (var node : codeCellContainer.getChildren()) {
+                if (node instanceof VBox cellBox) {
+                    HBox header = (HBox) cellBox.getChildren().get(0);
+                    Button runBtn = (Button) header.getChildren().get(1); // assuming run button is at index 1
+                    FontIcon icon = (FontIcon) runBtn.getGraphic();
+                    Tooltip tip = runBtn.getTooltip();
+
+                    icon.setIconLiteral("fas-pause");
+                    tip.setText("Pause");
+
+                    // Trigger run logic if needed
+                    runCell();
+                }
+            }
+        } else {
+            // Pause execution of all cells
+            runPauseIcon.setIconLiteral("fas-play");
+            runPauseTooltip.setText("Run");
+            isRunningAll = false;
+
+            for (var node : codeCellContainer.getChildren()) {
+                if (node instanceof VBox cellBox) {
+                    HBox header = (HBox) cellBox.getChildren().get(0);
+                    Button runBtn = (Button) header.getChildren().get(1); // assuming run button is at index 1
+                    FontIcon icon = (FontIcon) runBtn.getGraphic();
+                    Tooltip tip = runBtn.getTooltip();
+
+                    icon.setIconLiteral("fas-play");
+                    tip.setText("Run");
+
+                    // Trigger pause logic if needed
+                    pauseCell();
+                }
+            }
+        }
+    }
+
     @FXML private void cutCell() { System.out.println("Cut cell"); }
     @FXML private void copyCell() { System.out.println("Copy cell"); }
     @FXML private void pasteCell() { System.out.println("Paste cell"); }
     @FXML private void moveUpCell() { System.out.println("Move cell up"); }
     @FXML private void moveDownCell() { System.out.println("Move cell down"); }
-    @FXML private void runCell() { System.out.println("Run all cells"); }
-    @FXML private void pauseCell() { System.out.println("Pause all cells"); }
-    @FXML private void refreshCell() { System.out.println("Refresh all cells"); }
+
+    // toolbar run/pause calls runCell/pauseCell for "all cells"
+    @FXML private void runCell() { System.out.println("Run cell(s)"); }
+    @FXML private void pauseCell() { System.out.println("Pause cell(s)"); }
+
+    @FXML private void clearCell() {
+        System.out.println("Clear all cells");
+        for (var node : codeCellContainer.getChildren()) {
+            if (node instanceof VBox cellBox) {
+                TextArea codeArea = (TextArea) cellBox.getChildren().get(1);
+                codeArea.clear();
+            }
+        }
+    }
 
     // -------------------- File Actions --------------------
-    // Saving project to system
     @FXML
     private void saveProject() {
         FileChooser fileChooser = new FileChooser();
@@ -136,7 +192,6 @@ public class UIController {
         }
     }
 
-    // opens already existing project
     @FXML
     private void openProject() {
         FileChooser fileChooser = new FileChooser();
@@ -168,7 +223,6 @@ public class UIController {
         }
     }
 
-    // NOT SURE ABOUT THIS PART
     private void createCodeCellFromFile(String type, String content) {
         VBox cellBox = new VBox(5);
         cellBox.setPadding(new Insets(8));
@@ -180,14 +234,13 @@ public class UIController {
         cellLanguage.setValue(type);
 
         Button runBtn = makeIconButton("fas-play", "Run this cell");
-        Button deleteBtn = makeIconButton("fas-trash", "Delete this cell");
-        Button clearBtn = makeIconButton("fas-sync-alt", "Clear this cell");
+        Button deleteBtn = makeIconButton("fas-trash-alt", "Delete this cell");
+        Button clearBtn = makeIconButton("fas-eraser", "Clear this cell");
 
         TextArea codeArea = new TextArea();
         codeArea.setText(content);
         codeArea.setPrefRowCount(5);
-        // NEED TO FIX THIS!
-        VBox.setVgrow(codeArea, Priority.ALWAYS); // expands vertically as there are more number of lines in that small placeholder
+        VBox.setVgrow(codeArea, Priority.ALWAYS);
 
         header.getChildren().addAll(cellLanguage, runBtn, deleteBtn, clearBtn);
         cellBox.getChildren().addAll(header, codeArea);
@@ -195,7 +248,6 @@ public class UIController {
     }
 
     // -------------------- Menu Actions --------------------
-    // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
     @FXML private void exportPDF() { System.out.println("Export PDF"); }
     @FXML private void undoAction() { System.out.println("Undo"); }
     @FXML private void redoAction() { System.out.println("Redo"); }
@@ -206,7 +258,6 @@ public class UIController {
     @FXML private void showDocs() { System.out.println("Show Documentation"); }
 
     // -------------------- Theme Toggle --------------------
-    // simple method to toggle theme
     @FXML
     private void toggleTheme() {
         if (scene == null) return;
@@ -221,3 +272,4 @@ public class UIController {
         }
     }
 }
+

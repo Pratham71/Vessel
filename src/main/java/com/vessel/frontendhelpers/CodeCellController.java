@@ -21,6 +21,7 @@ import org.fxmisc.richtext.CodeArea;
 import java.util.regex.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
@@ -36,6 +37,14 @@ public class CodeCellController {
 
     private VBox parentContainer; // The notebook VBox (set by UIController on creation)
     private NotebookCell cellModel;
+
+    // Execution state for this cell
+    private volatile Task<Void> currentTask = null;
+    private volatile boolean isRunning = false;
+
+    // spinner references (kept here so we can stop/remove them on cancel)
+    private HBox spinnerBox = null;
+    private RotateTransition spinnerRotate = null;
 
     /**
      * This is called by the UIController after loading the cell.
@@ -65,9 +74,13 @@ public class CodeCellController {
         cellLanguage.setValue(cell.getType());
     }
 
-
+    // Syntax highlighting patterns
     private static final String[] JAVA_KEYWORDS = new String[] {
-            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while"
+            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default",
+            "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements",
+            "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected",
+            "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw",
+            "throws", "transient", "try", "void", "volatile", "while"
     };
     private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", JAVA_KEYWORDS) + ")\\b";
     private static final String PAREN_PATTERN = "\\(|\\)";
@@ -98,10 +111,6 @@ public class CodeCellController {
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
 
-//        EL PROBLEMO - this new RichTextFX CodeArea doesnt have prompt text support
-//        cellLanguage.setOnAction(e -> codeArea.setPromptText(getPromptForType(cellLanguage.getValue())));
-//        codeArea.setPromptText(getPromptForType(cellLanguage.getValue()));
-
         // Listener for syntax highlighting
         codeArea.textProperty().addListener((obs, oldText, newText) ->
                 codeArea.setStyleSpans(0, computeHighlighting(newText))
@@ -117,102 +126,160 @@ public class CodeCellController {
             if (cellModel != null) cellModel.setType(cellLanguage.getValue());
         });
 
-//        codeArea.getParagraphs().addListener((ListChangeListener<? super Object>) change -> {
-//            Platform.runLater(() -> {
-//                var flowNode = codeArea.lookup(".virtual-flow");
-//                if (flowNode instanceof Region flow) {
-//                    double fudge = 8;
-//                    codeArea.setPrefHeight(flow.getHeight() + fudge);
-//                }
-//            });
-//        });
-// --- Comment out the initial grow on startup (in Platform.runLater):
-// Platform.runLater(() -> {
-//     var flowNode = codeArea.lookup(".virtual-flow");
-//     if (flowNode instanceof Region flow) {
-//         double fudge = 8;
-//         codeArea.setPrefHeight(flow.getHeight() + fudge);
-//     }
-// });
-
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
+        // -------------------- Button handlers --------------------
+        runBtn.setOnAction(e -> runCellSimulation());
 
-        // Button handlers
+        // DELETE BUTTON - now shows warning before deleting
+        deleteBtn.setOnAction(e -> {
+            if (parentContainer != null && root != null) {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Warning");
+                confirm.setHeaderText(null);
+                confirm.setContentText("Are you sure you want to delete this cell?");
+                ButtonType yes = new ButtonType("Yes", ButtonBar.ButtonData.YES);
+                ButtonType no = new ButtonType("No", ButtonBar.ButtonData.NO);
+                confirm.getButtonTypes().setAll(yes, no);
 
-        runBtn.setOnAction(e -> {
-            outputBox.setVisible(true);
-            outputBox.getChildren().clear();
-
-            // --- Increment execution count ---
-            cellModel.incrementExecutionCount();
-
-            // --- Add spinner ---
-            HBox spinnerBox = new HBox(8);
-            FontIcon spinnerIcon = new FontIcon("fas-spinner");
-            spinnerIcon.getStyleClass().add("output-spinner");
-            RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
-            spin.setByAngle(360);
-            spin.setCycleCount(RotateTransition.INDEFINITE);
-            spin.play();
-            Label loadingText = new Label("Executing...");
-            loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
-            spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
-            outputBox.getChildren().add(spinnerBox);
-            outputBox.applyCss();
-            outputBox.layout();
-            fadeIn(spinnerBox);
-
-            // --- Simulate background execution ---
-            Task<Void> fakeTask = new Task<>() {
-                @Override
-                protected Void call() throws Exception {
-                    Thread.sleep(1000); // Simulate work, replace with JShell code later
-                    return null;
-                }
-            };
-
-            fakeTask.setOnSucceeded(ev -> {
-                spin.stop();
-                outputBox.getChildren().clear();
-
-//              THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
-//              Currently just prints whatever is in the box as output
-                String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
-
-                if (shellOutput.trim().isEmpty()) {
-                    Label noOutputLabel = new Label("(No output to print)");
-                    noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
-                    outputBox.getChildren().add(noOutputLabel);
-                    fadeIn(noOutputLabel);
-                } else {
-                    TextArea resultArea = new TextArea(shellOutput.trim());
-                    resultArea.getStyleClass().add("read-only-output");
-                    resultArea.setEditable(false);
-                    resultArea.setWrapText(true);
-                    resultArea.setFocusTraversable(false);
-                    resultArea.setMaxWidth(1000);
-                    // Auto-resize resultArea by line count
-                    int lineCount = resultArea.getText().split("\n", -1).length;
-                    resultArea.setPrefRowCount(Math.max(1, lineCount));
-                    resultArea.setWrapText(true);
-                    Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
-                    resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
-                    outputBox.getChildren().add(resultArea);
-                    fadeIn(resultArea);
-                }
-                outputBox.setPrefHeight(-1); // reset container sizing
-            });
-            new Thread(fakeTask).start();
-            cellModel.dumpContent(); // temp debug print
-        });
-
-            deleteBtn.setOnAction(e -> {
-                if (parentContainer != null && root != null) {
+                Optional<ButtonType> result = confirm.showAndWait();
+                if (result.isPresent() && result.get() == yes) {
                     parentContainer.getChildren().remove(root);
                 }
-            });
-            clearBtn.setOnAction(e -> codeArea.clear());
+            }
+        });
+
+        // CLEAR BUTTON - shows confirmation before clearing
+        clearBtn.setOnAction(e -> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Warning");
+            confirm.setHeaderText(null);
+            confirm.setContentText("Are you sure you want clear this cell?");
+            ButtonType yes = new ButtonType("Yes", ButtonBar.ButtonData.YES);
+            ButtonType no = new ButtonType("No", ButtonBar.ButtonData.NO);
+            confirm.getButtonTypes().setAll(yes, no);
+
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() == yes) {
+                clearContentWithoutConfirm();
+            }
+        });
+    }
+
+    private void runCellSimulation() {
+        // If already running, treat this click as "pause"
+        if (isRunning) {
+            if (currentTask != null) currentTask.cancel(true);
+            return;
+        }
+
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+
+        if (cellModel != null) cellModel.incrementExecutionCount();
+
+        spinnerBox = new HBox(8);
+        FontIcon spinnerIcon = new FontIcon("fas-spinner");
+        spinnerIcon.getStyleClass().add("output-spinner");
+        spinnerRotate = new RotateTransition(Duration.seconds(1), spinnerIcon);
+        spinnerRotate.setByAngle(360);
+        spinnerRotate.setCycleCount(RotateTransition.INDEFINITE);
+        spinnerRotate.play();
+        Label loadingText = new Label("Executing...");
+        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
+        spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
+        outputBox.getChildren().add(spinnerBox);
+        fadeIn(spinnerBox);
+
+        isRunning = true;
+        if (runBtn.getGraphic() instanceof FontIcon runIcon) runIcon.setIconLiteral("fas-stop");
+        else runBtn.setGraphic(new FontIcon("fas-stop"));
+        if (runBtn.getTooltip() == null) runBtn.setTooltip(new Tooltip("stop"));
+        else runBtn.getTooltip().setText("stop");
+
+        Task<Void> fakeTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                int steps = 20;
+                for (int i = 0; i < steps; i++) {
+                    if (isCancelled()) break;
+                    Thread.sleep(50);
+                }
+                return null;
+            }
+        };
+
+        currentTask = fakeTask;
+
+        fakeTask.setOnSucceeded(ev -> Platform.runLater(() -> {
+            if (spinnerRotate != null) spinnerRotate.stop();
+            outputBox.getChildren().clear();
+
+            String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
+            if (shellOutput.trim().isEmpty()) {
+                Label noOutputLabel = new Label("(No output to print)");
+                noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
+                outputBox.getChildren().add(noOutputLabel);
+                fadeIn(noOutputLabel);
+            } else {
+                TextArea resultArea = new TextArea(shellOutput.trim());
+                resultArea.getStyleClass().add("read-only-output");
+                resultArea.setEditable(false);
+                resultArea.setWrapText(true);
+                resultArea.setFocusTraversable(false);
+                resultArea.setMaxWidth(1000);
+                int lineCount = resultArea.getText().split("\n", -1).length;
+                resultArea.setPrefRowCount(Math.max(1, lineCount));
+                Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
+                resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
+                outputBox.getChildren().add(resultArea);
+                fadeIn(resultArea);
+            }
+            finishExecutionCleanup();
+        }));
+
+        fakeTask.setOnCancelled(ev -> Platform.runLater(() -> {
+            if (spinnerRotate != null) spinnerRotate.stop();
+            outputBox.getChildren().clear();
+            Label cancelledLabel = new Label("(Execution cancelled)");
+            cancelledLabel.setStyle("-fx-text-fill: #ffb86b; -fx-font-size: 14px;");
+            outputBox.getChildren().add(cancelledLabel);
+            fadeIn(cancelledLabel);
+            finishExecutionCleanup();
+        }));
+
+        fakeTask.setOnFailed(ev -> Platform.runLater(() -> {
+            if (spinnerRotate != null) spinnerRotate.stop();
+            outputBox.getChildren().clear();
+            Label failLabel = new Label("(Execution failed)");
+            failLabel.setStyle("-fx-text-fill: #ff6b6b; -fx-font-size: 14px;");
+            outputBox.getChildren().add(failLabel);
+            fadeIn(failLabel);
+            finishExecutionCleanup();
+        }));
+
+        new Thread(fakeTask).start();
+        if (cellModel != null) cellModel.dumpContent();
+    }
+
+    /**
+     * Called internally after execution completes/cancels/fails to restore UI state.
+     */
+    private void finishExecutionCleanup() {
+        isRunning = false;
+        currentTask = null;
+
+        if (spinnerRotate != null) spinnerRotate.stop();
+        if (spinnerBox != null && outputBox.getChildren().contains(spinnerBox)) outputBox.getChildren().remove(spinnerBox);
+
+        Platform.runLater(() -> {
+            if (runBtn != null) {
+                if (runBtn.getGraphic() instanceof FontIcon runIcon) runIcon.setIconLiteral("fas-play");
+                else runBtn.setGraphic(new FontIcon("fas-play"));
+                if (runBtn.getTooltip() == null) runBtn.setTooltip(new Tooltip("Run this cell"));
+                else runBtn.getTooltip().setText("Run this cell");
+            }
+        });
     }
 
     private StyleSpans<Collection<String>> computeHighlighting(String text) {
@@ -235,38 +302,28 @@ public class CodeCellController {
                                                                     matcher.group("CHAR")     != null ? "char"     :
                                                                             matcher.group("COMMENT")  != null ? "comment"  :
                                                                                     matcher.group("NUMBER")   != null ? "number"   :
-                                                                                            "plain"; // For any matched but uncategorized case (very rare)
-            // Add unstyled/plain segment before this match
-            if (matcher.start() > lastKwEnd) {
-                spansBuilder.add(Collections.singleton("plain"), matcher.start() - lastKwEnd);
-            }
-            // Add the highlighted segment
+                                                                                            "plain";
+            if (matcher.start() > lastKwEnd) spansBuilder.add(Collections.singleton("plain"), matcher.start() - lastKwEnd);
             spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
             lastKwEnd = matcher.end();
         }
-        // Add any remaining plain text at the end
-        if (lastKwEnd < text.length()) {
-            spansBuilder.add(Collections.singleton("plain"), text.length() - lastKwEnd);
-        }
+        if (lastKwEnd < text.length()) spansBuilder.add(Collections.singleton("plain"), text.length() - lastKwEnd);
         return spansBuilder.create();
     }
 
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
         helper.setFont(area.getFont());
-        helper.setWrappingWidth(area.getWidth() - 10); // -10 fudge for padding/border
+        helper.setWrappingWidth(area.getWidth() - 10);
         String text = area.getText();
         if (text == null || text.isEmpty()) text = " ";
-        // Line height for dynamic fudge:
         helper.setText("Ay");
         double lineHeight = helper.getLayoutBounds().getHeight();
-        // Full wrapped content height:
         helper.setText(text);
         double textHeight = helper.getLayoutBounds().getHeight();
         area.setPrefHeight(Math.max(lineHeight * 2, textHeight + lineHeight * 1.25));
     }
 
-    // fancy fade animation cuz why not
     private void fadeIn(Region node) {
         node.setOpacity(0);
         node.applyCss();
@@ -289,5 +346,20 @@ public class CodeCellController {
             case "Plain Text" -> "Enter plain text...";
             default -> "";
         };
+    }
+
+    // Helper getters used by UIController if needed
+    public boolean isRunning() { return isRunning; }
+    public Button getRunButton() { return runBtn; }
+    public void clearOutput() {
+        if (outputBox != null) {
+            outputBox.getChildren().clear();
+            outputBox.setVisible(false);
+        }
+    }
+    public void clearContentWithoutConfirm() {
+        codeArea.clear();
+        if (cellModel != null) cellModel.setContent("");
+        clearOutput();
     }
 }
