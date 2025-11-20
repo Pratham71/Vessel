@@ -31,11 +31,11 @@ public final class log {
 
     public void warn(String msg) { logger.warning(msg); }
 
-    public void config(String msg) { logger.config(msg); }
-
     public void severe(String msg) { logger.severe(msg); }
 
     public void error(String msg, Throwable e) { logger.log(Level.SEVERE, msg, e); }
+
+    public void warning(String msg) { logger.warning(msg); }
 
     // ------------- INTERNAL SETUP -------------
 
@@ -43,8 +43,9 @@ public final class log {
 
         Path dir = Path.of("logs", name);
         String timestamp = LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("yyyy_MM_dd-HH_mm")
+                DateTimeFormatter.ofPattern("yyyy_MM_dd")
         );
+
 
         // <name>-2025_11_10-12_44_12.log
         Path file = dir.resolve(name + "-" + timestamp + ".log");
@@ -52,11 +53,10 @@ public final class log {
         try {
             Files.createDirectories(dir);
 
-            FileHandler handler = new FileHandler(file.toString(), true);
 
             String fmt = "[%1$tF %1$tT] [%2$-7s] (%3$s) -> %4$s%n";
 
-            handler.setFormatter(new Formatter() {
+            Formatter customFormatter = new Formatter() {
                 @Override
                 public String format(LogRecord r) {
                     return String.format(
@@ -67,13 +67,29 @@ public final class log {
                             r.getMessage()
                     );
                 }
-            });
+            };
 
+            // File handler
+            FileHandler fileHandler = new FileHandler(file.toString(), true);
+            fileHandler.setFormatter(customFormatter);
+            fileHandler.setLevel(Level.ALL);
+
+            // Console handler for stdout (white text, not red)
+            StreamHandler consoleHandler = new StreamHandler(System.out, customFormatter) {
+                @Override
+                public synchronized void publish(LogRecord record) {
+                    super.publish(record);
+                    flush(); // Make sure it prints immediately
+                }
+            };
+            consoleHandler.setLevel(Level.ALL);
+
+            // Configure logger
             Logger logger = Logger.getLogger(name);
             logger.setUseParentHandlers(false);
-            logger.addHandler(handler);
+            logger.addHandler(fileHandler);
+            //logger.addHandler(consoleHandler);
             logger.setLevel(Level.ALL);
-            handler.setLevel(Level.ALL);
 
 
             System.out.println("log → " + file.toAbsolutePath());
