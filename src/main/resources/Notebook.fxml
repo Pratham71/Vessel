@@ -41,10 +41,8 @@
                 </Menu>
 
                 <!-- Insert Menu -->
-                <Menu text="Insert">
-                    <MenuItem text="Add Code Cell" onAction="#addCell"/>
-                    <MenuItem text="Add Markdown Cell" onAction="#addMarkdownCell"/>
-                </Menu>
+                <Menu fx:id="insertMenu" text="Insert"/>
+                <!--Dynamically filled from NotebookController.java's initialize() -->
 
                 <!-- Cell Menu -->
                 <Menu text="Cell">

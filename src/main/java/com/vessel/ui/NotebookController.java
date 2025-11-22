@@ -20,7 +20,7 @@ public class NotebookController {
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
-
+    @FXML private Menu insertMenu;
 //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
@@ -37,6 +37,13 @@ public class NotebookController {
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
+
+        // Dynamically populating insert menu
+        for (CellType type : CellType.values()) {
+            MenuItem item = new MenuItem("Add " + type.toString()); // Will show something like "Add xyz"
+            item.setOnAction(e -> addCell(type));
+            insertMenu.getItems().add(item);
+        }
 
         // Create default code cell on startup
         addCell(CellType.CODE);
@@ -56,12 +63,6 @@ public class NotebookController {
     @FXML
     private void addCell() {
         addCell(cellLanguage.getValue());
-    }
-
-    // #TODO: Get menubar also dynamically filled w enum types, and use one method to make cells of all types
-    @FXML
-    private void addMarkdownCell() {
-        addCell(CellType.MARKDOWN);
     }
 
     // Factory method that dumps out the VBox (div) housing the code cell
