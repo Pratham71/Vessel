@@ -16,7 +16,7 @@ import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 import java.io.*; // reading and writing project files
 
 public class NotebookController {
-// these are those fxml elements labelled via fx:id in Notebook.fxml file
+// these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
