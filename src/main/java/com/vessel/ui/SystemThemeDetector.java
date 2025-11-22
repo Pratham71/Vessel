@@ -1,4 +1,4 @@
-package com.vessel.frontendhelpers;
+package com.vessel.ui;
 
 import java.io.BufferedReader;
 import java.io.IOException;

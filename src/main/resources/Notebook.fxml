@@ -5,10 +5,10 @@
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<!--imported all classes of JavaFX required for main.fxml -->
+<!--imported all classes of JavaFX required for Notebook.fxml -->
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.vessel.UIController">
-    <!-- borderpane is layout with top,bottom, right,center; some predefined syntax to link FXML features, also adding fx controller ie form com.vessel.UIController-->
+            fx:controller="com.vessel.ui.NotebookController">
+    <!-- borderpane is layout with top,bottom, right,center; some predefined syntax to link FXML features, also adding fx controller ie form com.vessel.NotebookControllerroller-->
 
     <!-- Top: MenuBar + Toolbar -->
   <top> <!--  top region of borderpane-->
@@ -18,7 +18,7 @@
             <MenuBar>
 
                 <!-- File Menu -->
-                <Menu text="File"> <!--text="<label shown to user>", onAction="#openProject" // it calls openProject method in UIController when clicked-->
+                <Menu text="File"> <!--text="<label shown to user>", onAction="#openProject" // it calls openProject method in NotebookController when clicked-->
                     <MenuItem text="Open" onAction="#openProject"/>
                     <MenuItem text="Save Project" onAction="#saveProject"/>
                     <MenuItem text="Export as PDF" onAction="#exportPDF"/>
@@ -114,7 +114,7 @@
                 <!-- HBox is flexible empty space to push items to right side of the toolbar-->
                 <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->
                 <ChoiceBox fx:id="cellLanguage">
-                    <!-- Will be filled by initialize() in UIController later-->
+                    <!-- Will be filled by initialize() in NotebookController later-->
                 </ChoiceBox>
 
                 <!-- Theme toggle button -->

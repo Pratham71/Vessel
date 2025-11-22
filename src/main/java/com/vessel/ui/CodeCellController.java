@@ -1,6 +1,6 @@
 /*#TODO: Migrate syntax highlighting to helper class/file (looks v messy atm)*/
 
-package com.vessel.frontendhelpers;
+package com.vessel.ui;
 
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
@@ -34,11 +34,11 @@ public class CodeCellController {
     @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
     @FXML private VBox root; // This is the root of the cell
 
-    private VBox parentContainer; // The notebook VBox (set by UIController on creation)
+    private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     private NotebookCell cellModel;
 
     /**
-     * This is called by the UIController after loading the cell.
+     * This is called by the NotebookController after loading the cell.
      */
     public void setParentContainer(VBox parent) {
         this.parentContainer = parent;

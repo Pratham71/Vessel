@@ -1,11 +1,9 @@
-package com.vessel;
+package com.vessel.ui;
 // importing all required javafx classes
-import com.vessel.frontendhelpers.CodeCellController;
-import com.vessel.frontendhelpers.SystemThemeDetector;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in main.fxml file those fx:id, is pulled here with this
+import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene; // UI scene
 import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
@@ -17,8 +15,8 @@ import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
 
-public class UIController {
-// these are those fxml elements labelled via fx:id in main.fxml file
+public class NotebookController {
+// these are those fxml elements labelled via fx:id in Notebook.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
