@@ -1,17 +1,26 @@
 # Java Notebook Backend — Structure & Git Workflow
 
-## 📦 Package Structure (Final)
+## 📦 Package Structure (Tentative)
 
 ```
 src/main/java/com/vessel/
+├── core/
+│     └──  log.java
 ├── model/
 │     ├── NotebookCell.java
 │     ├── Notebook.java
 │     └── ExecResult.java
 ├── kernel/
 │     └── NotebookEngine.java
-├── persistence/
-      └── NotebookPersistence.java
+├── model/
+│     └── CellType.java
+│     └── Notebook.java
+│     └── NotebookCell.java
+├── ui/
+│     └── CodeCellController.java
+│     └── NotebookController.java
+│     └── SystemThemeDetector.java
+└── Main.java
 
 /notebooks/
    <notebook-name>/

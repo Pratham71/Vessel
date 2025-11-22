@@ -1,6 +1,7 @@
 package com.vessel; // com.vessel is folder(package) inside which we have all the files
 // some javafx classes are imported
 // Main.java
+import com.vessel.ui.NotebookController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,7 +15,7 @@ public class Main extends Application {
         Parent root = loader.load();
         Scene scene = new Scene(root, 1000, 650);
 
-        com.vessel.UIController controller = loader.getController();
+        NotebookController controller = loader.getController();
         controller.setScene(scene);
         stage.setScene(scene);
         stage.setTitle("Vessel Notebook");
