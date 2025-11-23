@@ -2,7 +2,7 @@
 
 ## 📦 Package Structure (Tentative)
 
-```
+```shell
 src/main/java/com/vessel/
 ├── core/
 │     └──  log.java
@@ -11,6 +11,8 @@ src/main/java/com/vessel/
 │     ├── Notebook.java
 │     └── ExecResult.java
 ├── kernel/
+│     ├── ExecutionRecord.java
+│     ├── ExecutionResult.java
 │     └── NotebookEngine.java
 ├── model/
 │     └── CellType.java
