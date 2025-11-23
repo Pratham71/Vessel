@@ -1,10 +1,9 @@
-package com.vessel;
+package com.vessel.ui;
 // importing all required javafx classes
-import com.vessel.frontendhelpers.CodeCellController;
-import com.vessel.frontendhelpers.SystemThemeDetector;
 import com.vessel.model.CellType;
+import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in main.fxml file those fx:id, is pulled here with this
+import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene; // UI scene
 import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
@@ -16,12 +15,12 @@ import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
 
-public class UIController {
+public class NotebookController {
 // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
-
+    @FXML private Menu insertMenu;
 //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
@@ -39,37 +38,51 @@ public class UIController {
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
 
+        // Dynamically populating insert menu
+        for (CellType type : CellType.values()) {
+            MenuItem item = new MenuItem("Add " + type.toString()); // Will show something like "Add xyz"
+            item.setOnAction(e -> addCell(type));
+            insertMenu.getItems().add(item);
+        }
+
         // Create default code cell on startup
-        createCodeCell(CellType.CODE);
+        addCell(CellType.CODE);
     }
 
     // -------------------- Cell Creation --------------------
 
+    // it creates a new cell container with proper formatting and light border
+     private void addCell(CellType initialType) {
+         NotebookCell cellModel = new NotebookCell();
+         cellModel.setType(initialType);
+
+         codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
+     }
+
+     // Parameterless overloading (used by .fxml files)
     @FXML
     private void addCell() {
-        createCodeCell(cellLanguage.getValue());
+        addCell(cellLanguage.getValue());
     }
 
-    @FXML
-    private void addMarkdownCell() {
-        createCodeCell(CellType.MARKDOWN);
+    // Factory method that dumps out the VBox (div) housing the code cell
+    private VBox createCellUI(CellType type, NotebookCell cellModel) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
+            VBox cell = loader.load();
+            CodeCellController cellController = loader.getController();
+            cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
+            cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
+            cellController.setRoot(cell); // pass root for removal
+            cellController.setCellType(type); //Init language
+            return cell;
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    // it creates a new cell container with proper formatting and light border
-     private void createCodeCell(CellType initialType) {
-         try {
-             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
-             VBox cell = loader.load();
-             CodeCellController cellController = loader.getController();
-             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
-             cellController.setRoot(cell); // pass root for removal
-
-             cellController.setCellType(initialType); //Init language
-             codeCellContainer.getChildren().add(cell);
-         } catch (Exception e) {
-             e.printStackTrace();
-         }
-     }
 
     // creates button icon
     private Button makeIconButton(String iconLiteral, String tooltipText) {
@@ -133,6 +146,7 @@ public class UIController {
     }
 
     // opens already existing project
+    // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
         FileChooser fileChooser = new FileChooser();
@@ -144,15 +158,15 @@ public class UIController {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 codeCellContainer.getChildren().clear();
                 String line;
-                String type = null;
+                CellType type = null;
                 StringBuilder code = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
                     if (line.equals("---CELL-END---")) {
                         createCodeCellFromFile(type, code.toString());
                         code.setLength(0);
                         type = null;
-                    } else if (type == null) {
-                        type = line;
+//                  } else if (type == null) {
+//                        type = line; --> type mismatch happening here with my current code
                     } else {
                         code.append(line.replace("\\n", "\n").replace("\\r", "\r")).append("\n");
                     }
@@ -164,30 +178,13 @@ public class UIController {
         }
     }
 
-    // NOT SURE ABOUT THIS PART
-    private void createCodeCellFromFile(String type, String content) {
-        VBox cellBox = new VBox(5);
-        cellBox.setPadding(new Insets(8));
-        cellBox.setStyle("-fx-border-color: #aaa; -fx-border-width: 1; -fx-background-color: -fx-base;");
+    // will update once json logic is set - calls same factory method for creating cells
+    private void createCodeCellFromFile(CellType type, String content) {
+        NotebookCell cellModel = new NotebookCell();
+        cellModel.setType(type);
+        cellModel.setContent(content);
 
-        HBox header = new HBox(8);
-        ChoiceBox<String> cellLanguage = new ChoiceBox<>();
-        cellLanguage.getItems().addAll("Java Code", "Markdown", "Plain Text");
-        cellLanguage.setValue(type);
-
-        Button runBtn = makeIconButton("fas-play", "Run this cell");
-        Button deleteBtn = makeIconButton("fas-trash", "Delete this cell");
-        Button clearBtn = makeIconButton("fas-sync-alt", "Clear this cell");
-
-        TextArea codeArea = new TextArea();
-        codeArea.setText(content);
-        codeArea.setPrefRowCount(5);
-        // NEED TO FIX THIS!
-        VBox.setVgrow(codeArea, Priority.ALWAYS); // expands vertically as there are more number of lines in that small placeholder
-
-        header.getChildren().addAll(cellLanguage, runBtn, deleteBtn, clearBtn);
-        cellBox.getChildren().addAll(header, codeArea);
-        codeCellContainer.getChildren().add(cellBox);
+        codeCellContainer.getChildren().add(createCellUI(type, cellModel));
     }
 
     // -------------------- Menu Actions --------------------
