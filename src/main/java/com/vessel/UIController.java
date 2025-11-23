@@ -13,7 +13,7 @@ import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
 import javafx.stage.FileChooser; // For opening/saving project files
 import javafx.geometry.Insets;
-import javafx.scene.layout.Priority;
+
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files

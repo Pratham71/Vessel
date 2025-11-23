@@ -68,3 +68,7 @@ bin/
 
 ### Kotlin ###
 .kotlin/
+
+# Temporary files made by Priyanshu
+run.ps1
+flowcharts/

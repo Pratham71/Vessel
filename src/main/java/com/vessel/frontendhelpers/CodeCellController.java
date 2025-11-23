@@ -84,6 +84,8 @@ public class CodeCellController {
     // Reference to the outer HBox container
     private HBox cellRoot;
 
+    private CellType cellType;
+
     // --- Internal State Variables ---
 
     private VBox parentContainer; // Reference to the parent container (Notebook's main VBox)
