@@ -8,7 +8,7 @@
 <?import org.fxmisc.richtext.CodeArea?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.vessel.frontendhelpers.CodeCellController"
+      fx:controller="com.vessel.ui.CodeCellController"
       spacing="5" style="-fx-max-width: 1000px; -fx-pref-width: 1000px;" alignment="CENTER">
 
     <padding>

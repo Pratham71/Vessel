@@ -59,7 +59,14 @@ public class NotebookCell {
     // Removes old output before running again for the same cell.
     public void clearOutputs(){ outputs.clear(); }
 
-
+    // temp debug method cuz im too dumb to use logs :(
+    public void dumpContent(){
+        System.out.println("Notebook Cell Type: " + cellType);
+        System.out.println("Notebook Cell Content: " + content);
+        System.out.println("Notebook Cell Created At: " + createdAt);
+        System.out.println("Notebook Cell Last Modified At: " + lastModifiedAt);
+        System.out.println("Notebook Cell Execution Count: " + executionCount);
+    }
     public int getExecutionCount() { return executionCount; }
     public void incrementExecutionCount() { executionCount++; }
 }
