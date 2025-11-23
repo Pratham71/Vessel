@@ -1,4 +1,5 @@
 package com.vessel;
+
 // importing all required javafx classes
 import com.vessel.frontendhelpers.CodeCellController;
 import com.vessel.frontendhelpers.SystemThemeDetector;
@@ -21,17 +22,24 @@ import java.util.List;
 
 public class UIController {
     // these are those fxml elements labelled via fx:id in main.fxml file
-    @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
-    @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
-    @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
+    @FXML
+    private VBox codeCellContainer; // that blocks containers made where user actually writes
+    @FXML
+    private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
+    @FXML
+    private Label javaVersionLabel; // displays java version of the user in the toolbar
 
-    @FXML private Button runPauseButton; // Run/Pause toggle button for all cells
-    @FXML private FontIcon runPauseIcon;   // icon inside Run/Pause button
-    @FXML private Tooltip runPauseTooltip; // tooltip inside Run/Pause button
+    @FXML
+    private Button runPauseButton; // Run/Pause toggle button for all cells
+    @FXML
+    private FontIcon runPauseIcon; // icon inside Run/Pause button
+    @FXML
+    private Tooltip runPauseTooltip; // tooltip inside Run/Pause button
 
-    @FXML private Button clearButton; // Clear/Delete button for all cells
+    @FXML
+    private Button clearButton; // Clear/Delete button for all cells
 
-    //    private boolean darkMode = false; // default theme is light mode
+    // private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
 
@@ -41,11 +49,13 @@ public class UIController {
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
         this.scene = scene;
         // Set initial theme
-        scene.getStylesheets().add(getClass().getResource((theme == SystemThemeDetector.Theme.LIGHT ? "/light.css" : "/dark.css")).toExternalForm());
+        scene.getStylesheets().add(getClass()
+                .getResource((theme == SystemThemeDetector.Theme.LIGHT ? "/light.css" : "/dark.css")).toExternalForm());
     }
 
     @FXML
-    private void initialize() { // called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+    private void initialize() { // called automatically after FXML loads, sets default lang to Java Code, and
+                                // shows java version in toolbar
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
@@ -73,12 +83,12 @@ public class UIController {
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
-            VBox cell = loader.load();
+            HBox cell = loader.load();
             CodeCellController cellController = loader.getController();
             cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
-            cellController.setRoot(cell); // pass root for removal
-            cellController.setCellType(initialType); //Init language
+            cellController.setCellRoot(cell); // pass root for removal
+            cellController.setCellType(initialType); // Init language
             codeCellContainer.getChildren().add(cell);
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,7 +111,7 @@ public class UIController {
         if (!isRunningAll) {
             // Start execution of all cells
             runPauseIcon.setIconLiteral("fas-pause"); // change icon
-            runPauseTooltip.setText("Pause");         // change tooltip
+            runPauseTooltip.setText("Pause"); // change tooltip
             isRunningAll = true;
 
             for (var node : codeCellContainer.getChildren()) {
@@ -141,17 +151,44 @@ public class UIController {
         }
     }
 
-    @FXML private void cutCell() { System.out.println("Cut cell"); }
-    @FXML private void copyCell() { System.out.println("Copy cell"); }
-    @FXML private void pasteCell() { System.out.println("Paste cell"); }
-    @FXML private void moveUpCell() { System.out.println("Move cell up"); }
-    @FXML private void moveDownCell() { System.out.println("Move cell down"); }
+    @FXML
+    private void cutCell() {
+        System.out.println("Cut cell");
+    }
+
+    @FXML
+    private void copyCell() {
+        System.out.println("Copy cell");
+    }
+
+    @FXML
+    private void pasteCell() {
+        System.out.println("Paste cell");
+    }
+
+    @FXML
+    private void moveUpCell() {
+        System.out.println("Move cell up");
+    }
+
+    @FXML
+    private void moveDownCell() {
+        System.out.println("Move cell down");
+    }
 
     // toolbar run/pause calls runCell/pauseCell for "all cells"
-    @FXML private void runCell() { System.out.println("Run cell(s)"); }
-    @FXML private void pauseCell() { System.out.println("Pause cell(s)"); }
+    @FXML
+    private void runCell() {
+        System.out.println("Run cell(s)");
+    }
 
-    @FXML private void clearCell() {
+    @FXML
+    private void pauseCell() {
+        System.out.println("Pause cell(s)");
+    }
+
+    @FXML
+    private void clearCell() {
         System.out.println("Clear all cells");
         for (var node : codeCellContainer.getChildren()) {
             if (node instanceof VBox cellBox) {
@@ -248,19 +285,51 @@ public class UIController {
     }
 
     // -------------------- Menu Actions --------------------
-    @FXML private void exportPDF() { System.out.println("Export PDF"); }
-    @FXML private void undoAction() { System.out.println("Undo"); }
-    @FXML private void redoAction() { System.out.println("Redo"); }
-    @FXML private void toggleToolbar() { System.out.println("Toggle Toolbar"); }
-    @FXML private void zoomIn() { System.out.println("Zoom In"); }
-    @FXML private void zoomOut() { System.out.println("Zoom Out"); }
-    @FXML private void showAbout() { System.out.println("Show About"); }
-    @FXML private void showDocs() { System.out.println("Show Documentation"); }
+    @FXML
+    private void exportPDF() {
+        System.out.println("Export PDF");
+    }
+
+    @FXML
+    private void undoAction() {
+        System.out.println("Undo");
+    }
+
+    @FXML
+    private void redoAction() {
+        System.out.println("Redo");
+    }
+
+    @FXML
+    private void toggleToolbar() {
+        System.out.println("Toggle Toolbar");
+    }
+
+    @FXML
+    private void zoomIn() {
+        System.out.println("Zoom In");
+    }
+
+    @FXML
+    private void zoomOut() {
+        System.out.println("Zoom Out");
+    }
+
+    @FXML
+    private void showAbout() {
+        System.out.println("Show About");
+    }
+
+    @FXML
+    private void showDocs() {
+        System.out.println("Show Documentation");
+    }
 
     // -------------------- Theme Toggle --------------------
     @FXML
     private void toggleTheme() {
-        if (scene == null) return;
+        if (scene == null)
+            return;
 
         scene.getStylesheets().clear();
         if (theme == SystemThemeDetector.Theme.DARK) {
@@ -272,4 +341,3 @@ public class UIController {
         }
     }
 }
-

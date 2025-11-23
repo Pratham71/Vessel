@@ -2,68 +2,48 @@
 
 /* The .root selector targets the base container of the entire scene graph. */
 .root {
-    /* Sets the primary background color for the application. */
     -fx-background-color: #f5f5f5;
-    /* Sets the default text color to black for contrast on the light background. */
     -fx-text-fill: #000000;
-    /* Defines the preferred font family for the application. */
     -fx-font-family: "Segoe UI", "Tahoma", "Arial";
 }
 
 /* Base Label and Icon Styling */
-
-/* Targets all Label components within the application. */
 .label {
-    /* Ensures all labels default to dark text. */
     -fx-text-fill: #000000;
 }
 
-/* Targets elements styled with the 'font-icon' class (from Ikonli library). */
 .font-icon {
-    /* Sets icon color to black for visibility in light mode. */
     -fx-fill: black;
 }
 
 /* --- Header (MenuBar & ToolBar) Styling --- */
-
-/* Targets both the MenuBar and ToolBar components in the header VBox. */
-.menu-bar, .tool-bar {
-    /* Light gray header background. */
+.menu-bar,
+.tool-bar {
     -fx-background-color: #e8ecec;
 }
 
-/* 1. Main Menu Labels (File, Edit, View, etc.) */
 .menu-bar .label {
-    /* Ensures the top-level menu titles are black. */
     -fx-text-fill: black;
 }
 
 /* --- Menu Dropdowns (Context Menus) --- */
 .menu-bar .context-menu {
-    /* Light dropdown box background. */
     -fx-background-color: #ffffff;
-    /* Subtle border. */
     -fx-border-color: #bfbfbf;
 }
 
-/* 2. Dropdown Options (MenuItems) */
 .menu-item .label {
-    /* Black text in dropdown items. */
     -fx-text-fill: #000000;
 }
 
-/* 3. Menu Item Hover State */
 .menu-item:hover {
-    /* Light blue hover color. */
     -fx-background-color: #cbe4ff;
 }
 
 .menu-item:hover .label {
-    /* Keep text readable. */
     -fx-text-fill: #000000;
 }
 
-/* Menu separator line */
 .menu-item .separator {
     -fx-background-color: #cccccc;
 }
@@ -103,12 +83,13 @@
 }
 
 /* TextArea / TextField (code editor-like) */
-.text-area, .text-field {
+.text-area,
+.text-field {
     -fx-background-color: #ffffff;
     -fx-control-inner-background: #ffffff;
     -fx-text-fill: #1e1e1e;
-    -fx-font-family: 'Consolas', monospace;
-    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 14px;
     -fx-border-color: #c0c0c0;
     -fx-highlight-fill: #87b7ff;
     -fx-highlight-text-fill: #000;
@@ -117,8 +98,8 @@
 /* --- CodeArea styling (syntax highlighting) --- */
 .code-area {
     -fx-background-color: #ffffff;
-    -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
-    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 14px;
     -fx-border-color: #c0c0c0;
     -fx-border-width: 1.5px;
     -fx-highlight-fill: #87b7ff;
@@ -135,14 +116,38 @@
     -fx-text-fill: #8a8a8a;
 }
 
-.keyword   { -fx-fill: #7c3fb4;   -fx-font-weight: bold; }
-.comment   { -fx-fill: #7c7c7c;   -fx-font-style: italic; }
-.string    { -fx-fill: #b57614; }
-.char      { -fx-fill: #c45500; }
-.number    { -fx-fill: #3a7a1f; }
-.paren, .brace, .bracket { -fx-fill: #000000; }
-.semicolon { -fx-fill: #d28b1a; }
-.code-area .plain { -fx-fill: #1e1e1e; }
+/* Syntax Highlighting */
+.keyword {
+    -fx-fill: #0033b3;
+    -fx-font-weight: bold;
+}
+
+.paren,
+.brace,
+.bracket {
+    -fx-fill: #000000;
+}
+
+.semicolon {
+    -fx-fill: #000000;
+}
+
+.string {
+    -fx-fill: #067d17;
+}
+
+.char {
+    -fx-fill: #067d17;
+}
+
+.comment {
+    -fx-fill: #8c8c8c;
+    -fx-font-style: italic;
+}
+
+.number {
+    -fx-fill: #1750eb;
+}
 
 /* --- CodeCell output --- */
 .output-area {
@@ -150,8 +155,8 @@
     -fx-border-color: transparent #c0c0c0 #c0c0c0 #c0c0c0;
     -fx-background-color: #fafafa;
     -fx-padding: 8 14 10 14;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 13px;
     -fx-min-height: 0px;
     -fx-pref-height: -1;
     -fx-effect: null;
@@ -162,8 +167,8 @@
     -fx-background-color: transparent;
     -fx-text-fill: #333333;
     -fx-border-width: 0;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 13px;
     -fx-control-inner-background: transparent;
     -fx-highlight-fill: #c0c0c0;
     -fx-highlight-text-fill: black;
