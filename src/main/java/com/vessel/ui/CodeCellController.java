@@ -1,4 +1,4 @@
-/*#TODO: Migrate syntax highlighting to helper class/file (looks v messy atm)*/
+/*#TODO: Program cell growth logic*/
 
 package com.vessel.ui;
 
@@ -19,11 +19,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
 import java.util.regex.*;
-import java.util.Collection;
-import java.util.Collections;
-
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
@@ -92,24 +87,6 @@ public class CodeCellController {
             if (cellModel != null) cellModel.setType(cellLanguage.getValue());
         });
 
-//        codeArea.getParagraphs().addListener((ListChangeListener<? super Object>) change -> {
-//            Platform.runLater(() -> {
-//                var flowNode = codeArea.lookup(".virtual-flow");
-//                if (flowNode instanceof Region flow) {
-//                    double fudge = 8;
-//                    codeArea.setPrefHeight(flow.getHeight() + fudge);
-//                }
-//            });
-//        });
-// --- Comment out the initial grow on startup (in Platform.runLater):
-// Platform.runLater(() -> {
-//     var flowNode = codeArea.lookup(".virtual-flow");
-//     if (flowNode instanceof Region flow) {
-//         double fudge = 8;
-//         codeArea.setPrefHeight(flow.getHeight() + fudge);
-//     }
-// });
-
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
 
@@ -151,8 +128,8 @@ public class CodeCellController {
                 spin.stop();
                 outputBox.getChildren().clear();
 
-//              THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
-//              Currently just prints whatever is in the box as output
+                // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
+                // Currently just prints whatever is in the box back as output
                 String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
 
                 if (shellOutput.trim().isEmpty()) {
@@ -167,7 +144,8 @@ public class CodeCellController {
                     resultArea.setWrapText(true);
                     resultArea.setFocusTraversable(false);
                     resultArea.setMaxWidth(1000);
-                    // Auto-resize resultArea by line count
+
+                    // MIGHT NEED SLIGHT FIXING LATER: Auto-resize resultArea by line count
                     int lineCount = resultArea.getText().split("\n", -1).length;
                     resultArea.setPrefRowCount(Math.max(1, lineCount));
                     resultArea.setWrapText(true);
@@ -197,9 +175,11 @@ public class CodeCellController {
         helper.setWrappingWidth(area.getWidth() - 10); // -10 fudge for padding/border
         String text = area.getText();
         if (text == null || text.isEmpty()) text = " ";
+
         // Line height for dynamic fudge:
         helper.setText("Ay");
         double lineHeight = helper.getLayoutBounds().getHeight();
+
         // Full wrapped content height:
         helper.setText(text);
         double textHeight = helper.getLayoutBounds().getHeight();
