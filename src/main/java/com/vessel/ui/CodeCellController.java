@@ -68,11 +68,11 @@ public class CodeCellController {
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
 
-//        EL PROBLEMO - this new RichTextFX CodeArea doesnt have prompt text support
-//        cellLanguage.setOnAction(e -> codeArea.setPromptText(getPromptForType(cellLanguage.getValue())));
-//        codeArea.setPromptText(getPromptForType(cellLanguage.getValue()));
+        // EL PROBLEMO - this new RichTextFX CodeArea doesnt have prompt text support
+        // cellLanguage.setOnAction(e -> codeArea.setPromptText(getPromptForType(cellLanguage.getValue())));
+        // codeArea.setPromptText(getPromptForType(cellLanguage.getValue()));
 
-        // Listener for syntax highlighting (i'm using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
+        // Listener for syntax highlighting (Using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
         codeArea.richChanges()
                 .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))  // filter to only fire when text actually changes - ignores caret movement and stuff
                 .subscribe(change -> codeArea.setStyleSpans(0, computeHighlighting(codeArea.getText())));
@@ -90,84 +90,93 @@ public class CodeCellController {
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
 
-        // Button handlers
+        // --- BUTTON HANDLERS ---
 
-        runBtn.setOnAction(e -> {
-            outputBox.setVisible(true);
-            outputBox.getChildren().clear();
+        runBtn.setOnAction(e -> runCell());
 
-            // --- Increment execution count ---
-            cellModel.incrementExecutionCount();
+        deleteBtn.setOnAction(e -> deleteCell());
 
-            // --- Add spinner ---
-            HBox spinnerBox = new HBox(8);
-            FontIcon spinnerIcon = new FontIcon("fas-spinner");
-            spinnerIcon.getStyleClass().add("output-spinner");
-            RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
-            spin.setByAngle(360);
-            spin.setCycleCount(RotateTransition.INDEFINITE);
-            spin.play();
-            Label loadingText = new Label("Executing...");
-            loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
-            spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
-            outputBox.getChildren().add(spinnerBox);
-            outputBox.applyCss();
-            outputBox.layout();
-            fadeIn(spinnerBox);
-
-            // --- Simulate background execution ---
-            Task<Void> fakeTask = new Task<>() {
-                @Override
-                protected Void call() throws Exception {
-                    Thread.sleep(1000); // Simulate work, replace with JShell code later
-                    return null;
-                }
-            };
-
-            fakeTask.setOnSucceeded(ev -> {
-                spin.stop();
-                outputBox.getChildren().clear();
-
-                // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
-                // Currently just prints whatever is in the box back as output
-                String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
-
-                if (shellOutput.trim().isEmpty()) {
-                    Label noOutputLabel = new Label("(No output to print)");
-                    noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
-                    outputBox.getChildren().add(noOutputLabel);
-                    fadeIn(noOutputLabel);
-                } else {
-                    TextArea resultArea = new TextArea(shellOutput.trim());
-                    resultArea.getStyleClass().add("read-only-output");
-                    resultArea.setEditable(false);
-                    resultArea.setWrapText(true);
-                    resultArea.setFocusTraversable(false);
-                    resultArea.setMaxWidth(1000);
-
-                    // MIGHT NEED SLIGHT FIXING LATER: Auto-resize resultArea by line count
-                    int lineCount = resultArea.getText().split("\n", -1).length;
-                    resultArea.setPrefRowCount(Math.max(1, lineCount));
-                    resultArea.setWrapText(true);
-                    Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
-                    resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
-                    outputBox.getChildren().add(resultArea);
-                    fadeIn(resultArea);
-                }
-                outputBox.setPrefHeight(-1); // reset container sizing
-            });
-            new Thread(fakeTask).start();
-            cellModel.dumpContent(); // temp debug print
-        });
-
-            deleteBtn.setOnAction(e -> {
-                if (parentContainer != null && root != null) {
-                    parentContainer.getChildren().remove(root);
-                }
-            });
-            clearBtn.setOnAction(e -> codeArea.clear());
+        clearBtn.setOnAction(e -> codeArea.clear());
     }
 
+
+    private void runCell() {
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+
+        // --- Increment execution count ---
+        cellModel.incrementExecutionCount();
+
+        // --- Add spinner ---
+        HBox spinnerBox = new HBox(8);
+        FontIcon spinnerIcon = new FontIcon("fas-spinner");
+        spinnerIcon.getStyleClass().add("output-spinner");
+        RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
+        spin.setByAngle(360);
+        spin.setCycleCount(RotateTransition.INDEFINITE);
+        spin.play();
+        Label loadingText = new Label("Executing...");
+        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
+        spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
+        outputBox.getChildren().add(spinnerBox);
+        outputBox.applyCss();
+        outputBox.layout();
+        fadeIn(spinnerBox);
+
+        // --- Simulate background execution ---
+        Task<Void> fakeTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Thread.sleep(1000); // Simulate work, replace with JShell code later
+                return null;
+            }
+        };
+
+        fakeTask.setOnSucceeded(ev -> {
+            displayOutput(spin);
+        });
+        new Thread(fakeTask).start();
+        cellModel.dumpContent(); // temp debug print
+    }
+
+    private void displayOutput(RotateTransition spin) {
+        spin.stop();
+        outputBox.getChildren().clear();
+
+        // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
+        // Currently just prints whatever is in the box back as output
+        String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
+
+        if (shellOutput.trim().isEmpty()) {
+            Label noOutputLabel = new Label("(No output to print)");
+            noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
+            outputBox.getChildren().add(noOutputLabel);
+            fadeIn(noOutputLabel);
+        } else {
+            TextArea resultArea = new TextArea(shellOutput.trim());
+            resultArea.getStyleClass().add("read-only-output");
+            resultArea.setEditable(false);
+            resultArea.setWrapText(true);
+            resultArea.setFocusTraversable(false);
+            resultArea.setMaxWidth(1000);
+
+            // MIGHT NEED SLIGHT FIXING LATER: Auto-resizes resultArea by line count
+            int lineCount = resultArea.getText().split("\n", -1).length;
+            resultArea.setPrefRowCount(Math.max(1, lineCount));
+            resultArea.setWrapText(true);
+            Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
+            resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
+            outputBox.getChildren().add(resultArea);
+            fadeIn(resultArea);
+        }
+        outputBox.setPrefHeight(-1); // reset container sizing
+    }
+
+    private void deleteCell() {
+        if (parentContainer != null && root != null) {
+            parentContainer.getChildren().remove(root);
+        }
+    }
 
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
