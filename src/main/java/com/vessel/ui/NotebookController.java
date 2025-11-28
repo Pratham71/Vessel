@@ -1,7 +1,9 @@
 package com.vessel.ui;
 // importing all required javafx classes
 import com.vessel.model.CellType;
+import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
+import com.vessel.persistence.NotebookPersistence;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
@@ -24,6 +26,9 @@ public class NotebookController {
 //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
+    private final NotebookPersistence persistence = new NotebookPersistence();
+    private Notebook notebook = new Notebook("Untitled");
+
 
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
@@ -55,7 +60,7 @@ public class NotebookController {
      private void addCell(CellType initialType) {
          NotebookCell cellModel = new NotebookCell();
          cellModel.setType(initialType);
-
+         notebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
          codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
      }
 
@@ -75,6 +80,7 @@ public class NotebookController {
             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             cellController.setRoot(cell); // pass root for removal
             cellController.setCellType(type); //Init language
+            cell.setUserData(cellController);
             return cell;
         }catch (IOException e) {
             throw new RuntimeException(e);
@@ -101,6 +107,20 @@ public class NotebookController {
 //            case TEXT -> "Enter plain text...";
 //        };
 //    }
+    // rebuild the notebook model from all current ui cells before saving
+    // ensures ui text and model data stay in sync
+    private void syncModelFromUI() {
+        notebook.getCells().clear();
+        for (var node : codeCellContainer.getChildren()) {
+            if (node instanceof VBox cellBox) {
+                // retrieve the controller for this cell
+                CodeCellController controller = (CodeCellController) cellBox.getUserData();
+                NotebookCell cell = controller.getNotebookCell();
+                notebook.addCell(cell);
+            }
+        }
+    }
+
 
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
@@ -117,66 +137,51 @@ public class NotebookController {
     // Saving project to system
     @FXML
     private void saveProject() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Project");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Vessel Project", "*.vessel"));
-        File file = fileChooser.showSaveDialog(codeCellContainer.getScene().getWindow());
+        TextInputDialog dialog = new TextInputDialog(notebook.getName());
+        dialog.setTitle("Save Notebook");
+        dialog.setHeaderText("Enter notebook name:");
+        dialog.setContentText("Name:");
 
-        if (file != null) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                for (var node : codeCellContainer.getChildren()) {
-                    if (node instanceof VBox cellBox) {
-                        HBox header = (HBox) cellBox.getChildren().get(0);
-                        ChoiceBox<String> lang = (ChoiceBox<String>) header.getChildren().get(0);
-                        TextArea codeArea = (TextArea) cellBox.getChildren().get(1);
-
-                        writer.write(lang.getValue());
-                        writer.newLine();
-                        writer.write(codeArea.getText().replace("\r", "\\r").replace("\n", "\\n"));
-                        writer.newLine();
-                        writer.write("---CELL-END---");
-                        writer.newLine();
-                    }
-                }
-                System.out.println("Project saved to " + file.getAbsolutePath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        dialog.showAndWait().ifPresent(name -> {
+            notebook.setName(name);   // rename notebook without resetting its data
+            syncModelFromUI();        // sync ui state into data model before saving
+            boolean ok = persistence.save(notebook);
+            System.out.println(ok ? "Saved!" : "Save failed");
+        });
     }
+
+
 
     // opens already existing project
     // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Project");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Vessel Project", "*.vessel"));
-        File file = fileChooser.showOpenDialog(codeCellContainer.getScene().getWindow());
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Open Notebook");
+        dialog.setHeaderText("Enter notebook name to load:");
+        dialog.setContentText("Name:");
 
-        if (file != null) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                codeCellContainer.getChildren().clear();
-                String line;
-                CellType type = null;
-                StringBuilder code = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    if (line.equals("---CELL-END---")) {
-                        createCodeCellFromFile(type, code.toString());
-                        code.setLength(0);
-                        type = null;
-//                  } else if (type == null) {
-//                        type = line; --> type mismatch happening here with my current code
-                    } else {
-                        code.append(line.replace("\\n", "\n").replace("\\r", "\r")).append("\n");
-                    }
-                }
-                System.out.println("Project loaded from " + file.getAbsolutePath());
-            } catch (IOException e) {
-                e.printStackTrace();
+        dialog.showAndWait().ifPresent(name -> {
+            Notebook loaded = persistence.load(name);
+
+            if (loaded != null) {
+                notebook = loaded;
+                renderNotebook();
+                System.out.println("Notebook loaded successfully.");
+            } else {
+                System.out.println("Could not load notebook: " + name);
             }
+        });
+    }
+
+    // clears ui and rebuilds all cells from the loaded notebook model
+    private void renderNotebook() {
+        codeCellContainer.getChildren().clear();
+        for (NotebookCell cell : notebook.getCells()) {
+            codeCellContainer.getChildren().add(createCellUI(cell.getType(), cell));
         }
     }
+
 
     // will update once json logic is set - calls same factory method for creating cells
     private void createCodeCellFromFile(CellType type, String content) {

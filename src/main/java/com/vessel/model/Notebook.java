@@ -45,6 +45,12 @@ public class Notebook {
                 .orElse(null);
     }
 
+    // updates the notebook name without creating a new object
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
     // Return all cells for rendering
     public List<NotebookCell> getCells() {
         return cells;

@@ -45,6 +45,7 @@ public class CodeCellController {
         this.root = root;
     }
 
+    // links this ui cell with its notebookcell model and loads initial content
     public void setNotebookCell(NotebookCell cell) {
         this.cellModel = cell;
 
@@ -60,6 +61,10 @@ public class CodeCellController {
             codeArea.replaceText(cell.getContent());
         }
         cellLanguage.setValue(cell.getType());
+    }
+
+    public NotebookCell getNotebookCell() {
+        return cellModel;
     }
 
     @FXML
