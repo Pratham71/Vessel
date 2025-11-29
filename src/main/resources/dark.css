@@ -96,12 +96,34 @@
     -fx-background-color: #4a4a4a;
 }
 
-/* --- ChoiceBox (Language Dropdown) Styling --- */
+/* ============================
+   CHOICEBOX DROPDOWN
+   ============================ */
+
+/* Entire popup background */
+.choice-box .context-menu {
+    -fx-background-color: #2a2a2a;      /* dark dropdown */
+    -fx-border-color: #444;
+}
+
+/* Each dropdown option */
+.choice-box .menu-item .label {
+    -fx-text-fill: #ffffff;             /* white text in dark mode */
+}
+
+/* Hover background */
+.choice-box .menu-item:hover {
+    -fx-background-color: #3d3d3d;      /* darker highlight */
+}
+
+.choice-box .menu-item:hover .label {
+    -fx-text-fill: #ffffff;
+}
 
 /* Targets the ChoiceBox component (fx:id="languageChoice"). */
 .choice-box {
     /* Sets the background for the dropdown box itself. */
-    -fx-background-color: #333333;
+    -fx-background-color: #3a3a3a;
     /* Sets the color of the dropdown arrow/mark to white. */
     -fx-mark-color: white;
 }
