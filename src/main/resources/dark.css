@@ -178,7 +178,7 @@
     -fx-highlight-fill: #1756b6;
     -fx-highlight-text-fill: #fff;
     -fx-min-height: 120px;
-    -fx-padding: 10 12 10 3;
+    -fx-padding: 10 12 10 5;
 }
 .code-area .caret {
     -fx-stroke: #ECECEC;
