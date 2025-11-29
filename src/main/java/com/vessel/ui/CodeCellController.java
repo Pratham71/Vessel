@@ -2,11 +2,9 @@
 
 package com.vessel.ui;
 
-import com.vessel.model.CellType;
-import com.vessel.model.NotebookCell;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
@@ -17,86 +15,40 @@ import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.fxmisc.richtext.CodeArea;
-import java.util.regex.*;
 
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
-public class CodeCellController {
-    @FXML private ChoiceBox<CellType> cellLanguage;
+public class CodeCellController extends GenericCellController {
     @FXML private Button runBtn;
-    @FXML private Button deleteBtn;
-    @FXML private Button clearBtn;
-    @FXML private CodeArea codeArea;
     @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
-    @FXML private VBox root; // This is the root of the cell
-
-    private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
-    private NotebookCell cellModel;
-
-    /**
-     * This is called by the NotebookController after loading the cell.
-     */
-    public void setParentContainer(VBox parent) {
-        this.parentContainer = parent;
-    }
-
-    public void setRoot(VBox root) {
-        this.root = root;
-    }
-
-    public void setNotebookCell(NotebookCell cell) {
-        this.cellModel = cell;
-
-        // Only set default text if the cell is empty (not re-loading output)
-        if (cell.getContent() == null || cell.getContent().isBlank()) {
-            String initText = "// Enter Java code here\nSystem.out.println(\"Hello, world!\");";
-
-            // Set both UI and model content
-            codeArea.replaceText(initText);
-            cell.setContent(initText);
-        } else {
-            // Fill UI from whatever the model contains (e.g. on loading)
-            codeArea.replaceText(cell.getContent());
-        }
-        cellLanguage.setValue(cell.getType());
-    }
 
     @FXML
-    private void initialize() {
-        // prevents NullPointer crashes
-        cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
-        cellLanguage.setValue(CellType.CODE);
-
-        // EL PROBLEMO - this new RichTextFX CodeArea doesnt have prompt text support
-        // cellLanguage.setOnAction(e -> codeArea.setPromptText(getPromptForType(cellLanguage.getValue())));
-        // codeArea.setPromptText(getPromptForType(cellLanguage.getValue()));
+    @Override
+    protected void initialize() {
+        // Initialize GenericCellController superclass first
+        super.initialize();
 
         // Listener for syntax highlighting (Using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
         codeArea.richChanges()
                 .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))  // filter to only fire when text actually changes - ignores caret movement and stuff
                 .subscribe(change -> codeArea.setStyleSpans(0, computeHighlighting(codeArea.getText())));
 
-        // Listener for updating cell model's content field
-        codeArea.textProperty().addListener((obs, old, newText) -> {
-            if (cellModel != null) cellModel.setContent(newText);
-        });
-
-        // Listener for setting cell model's "type" on type change (in the dropbox)
-        cellLanguage.setOnAction(e -> {
-            if (cellModel != null) cellModel.setType(cellLanguage.getValue());
-        });
-
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
+        codeArea.setParagraphGraphicFactory(line -> {
+            Label lineNo = new Label(String.valueOf(line + 1));
+            lineNo.getStyleClass().add("lineno");
+
+            StackPane spacer = new StackPane(lineNo);
+            spacer.getStyleClass().add("line-gutter");
+            spacer.setAlignment(Pos.CENTER_RIGHT);
+
+            return spacer;
+        });
 
         // --- BUTTON HANDLERS ---
 
         runBtn.setOnAction(e -> runCell());
-
-        deleteBtn.setOnAction(e -> deleteCell());
-
-        clearBtn.setOnAction(e -> codeArea.clear());
     }
 
 
@@ -172,12 +124,6 @@ public class CodeCellController {
         outputBox.setPrefHeight(-1); // reset container sizing
     }
 
-    private void deleteCell() {
-        if (parentContainer != null && root != null) {
-            parentContainer.getChildren().remove(root);
-        }
-    }
-
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
         helper.setFont(area.getFont());
@@ -205,10 +151,6 @@ public class CodeCellController {
                 new KeyFrame(Duration.millis(400), new KeyValue(node.opacityProperty(), 1))
         );
         fade.play();
-    }
-
-    public void setCellType(CellType type) {
-        cellLanguage.setValue(type);
     }
 
     private String getPromptForType(String type) {

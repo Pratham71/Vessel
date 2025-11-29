@@ -178,14 +178,32 @@
     -fx-highlight-fill: #1756b6;
     -fx-highlight-text-fill: #fff;
     -fx-min-height: 120px;
-    -fx-padding: 10 12 10 16;
+    -fx-padding: 10 12 10 3;
 }
 .code-area .caret {
     -fx-stroke: #ECECEC;
 }
+
 .lineno {
-    -fx-text-fill: #676e95;
+    -fx-text-fill: #464862;
+    -fx-border-color: transparent #464862 transparent transparent;
+    -fx-padding: 0 8 0 0;
+    -fx-border-width: 0 1 0 0;
+    -fx-min-width: 36px;       /* to reserve space for up to 3 digits */
+    -fx-alignment: CENTER_RIGHT;
 }
+
+.line-gutter {
+    -fx-background-color: #212225;
+    -fx-padding: 0 12 0 0;
+}
+
+.prompt-label {
+    -fx-text-fill: #555a70;
+    -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
+    -fx-font-size: 16px;
+}
+
 .keyword   { -fx-fill: #c792ea;   -fx-font-weight: bold; }
 .comment   { -fx-fill: #676e95;   -fx-font-style: italic;  }
 .string    { -fx-fill: #ecc48d; }

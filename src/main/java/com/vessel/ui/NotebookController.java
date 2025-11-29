@@ -68,13 +68,16 @@ public class NotebookController {
     // Factory method that dumps out the VBox (div) housing the code cell
     private VBox createCellUI(CellType type, NotebookCell cellModel) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
+            final String fxml = (type == CellType.CODE) ? "/CodeCell.fxml" : "/TextCell.fxml";
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
             VBox cell = loader.load();
-            CodeCellController cellController = loader.getController();
-            cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
-            cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
-            cellController.setRoot(cell); // pass root for removal
-            cellController.setCellType(type); //Init language
+
+            GenericCellController controller = loader.getController();
+            controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
+            controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
+            controller.setRoot(cell); // pass root for removal
+            controller.setCellType(type); //Init language
             return cell;
         }catch (IOException e) {
             throw new RuntimeException(e);

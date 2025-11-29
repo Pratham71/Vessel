@@ -45,7 +45,10 @@
         </Button>
     </HBox>
 
-    <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
+    <StackPane>
+        <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
+        <Label fx:id="promptLabel" styleClass="prompt-label" text="Enter Java code here"/>
+    </StackPane>
 
     <VBox fx:id="outputBox" spacing="0" styleClass="output-area" minHeight="0" maxWidth="1000" visible="false">
         <!-- Output UI will be injected here dynamically by the controller -->
