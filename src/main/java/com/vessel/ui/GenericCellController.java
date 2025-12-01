@@ -12,6 +12,7 @@ import org.fxmisc.richtext.CodeArea;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.layout.HBox;
 
 
 public class GenericCellController {
@@ -21,12 +22,22 @@ public class GenericCellController {
     @FXML private Label promptLabel;
     @FXML private Button deleteBtn;
     @FXML private Button clearBtn;
+    @FXML protected HBox controlsContainer; // Added fx:id to FXML
+    @FXML private Label executionCountLabelFXML; // Placeholder Label from FXML
+    @FXML private Button runBtn; // The button that toggles between Run/Cancel
+
+    // Field to hold the thread/task of the current execution
+    private Thread executionThread = null;
+
 
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
+    private int executionCount = 0;
 
     // Called before the specific cell type is initialized
     protected void initialize() {
+        executionCountLabelFXML.setText("[-]");
+        executionCountLabelFXML.getStyleClass().add("execution-count-label");
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
 
@@ -176,6 +187,10 @@ public class GenericCellController {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+    public void incrementAndDisplayExecutionCount() {
+        executionCount++;
+        executionCountLabelFXML.setText("[" + executionCount + "]");
     }
 
 

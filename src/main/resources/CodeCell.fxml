@@ -15,10 +15,11 @@
         <Insets top="8" right="8" bottom="8" left="8"/>
     </padding>
 
-    <HBox spacing="8">
+    <HBox fx:id="controlsContainer" spacing="8">
         <ChoiceBox fx:id="cellLanguage">
             <!-- Will be filled by initialize() in CodeCellController later-->
         </ChoiceBox>
+        <Label fx:id="executionCountLabelFXML" />
         <Button fx:id="runBtn">
             <graphic>
                 <FontIcon iconLiteral="fas-play" iconSize="16" styleClass="font-icon" />
@@ -37,7 +38,7 @@
         </Button>
         <Button fx:id="clearBtn">
             <graphic>
-                <FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon" />
+                <FontIcon iconLiteral="fas-eraser" iconSize="16" styleClass="font-icon" />
             </graphic>
             <tooltip>
                 <Tooltip text="Clear this cell"/>

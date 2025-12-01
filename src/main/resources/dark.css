@@ -307,3 +307,31 @@
 .button:hover {
     -fx-background-color: #555555;
 }
+
+/* Styling for the Execution Count Label */
+.execution-count-label {
+    /* INCREASE THIS VALUE to make the text bigger */
+    -fx-font-size: 1.5em;
+
+    /* Make sure the text color is still visible */
+    -fx-text-fill: #999999;
+
+    /* Center it vertically for better alignment with the buttons */
+    -fx-alignment: CENTER;
+
+    /* Add padding/margin to give it more body and visual presence */
+    /* Padding will make the clickable area (if any) or the container look larger */
+    -fx-padding: 3 10 3 10; /* Added vertical padding (3px top/bottom) */
+}
+
+/* You may also want to ensure the HBox aligns all items centrally */
+.controlsContainer {
+    -fx-alignment: CENTER_LEFT;
+    -fx-fill-height: true;
+}
+
+.execution-cancelled {
+    -fx-text-fill: #cd681e; /* bright yellow for dark mode */
+    -fx-font-size: 14px;
+    -fx-font-family: 'Fira Mono', 'Consolas', monospace;
+}
