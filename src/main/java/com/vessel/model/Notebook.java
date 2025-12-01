@@ -77,6 +77,7 @@ public class Notebook {
 
         if (getEngine() != null) {
             getEngine().shutdown();
+            engine = null;
         }
     }
 

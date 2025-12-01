@@ -227,12 +227,4 @@ public class CodeCellController {
         cellLanguage.setValue(type);
     }
 
-    private String getPromptForType(String type) {
-        return switch (type) {
-            case "Java Code" -> "Enter Java code here...";
-            case "Markdown" -> "Enter Markdown content...";
-            case "Plain Text" -> "Enter plain text...";
-            default -> "";
-        };
-    }
 }

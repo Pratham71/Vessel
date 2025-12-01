@@ -97,25 +97,6 @@ public class NotebookController {
         return null;
     }
 
-    // creates button icon
-    private Button makeIconButton(String iconLiteral, String tooltipText) {
-        FontIcon icon = new FontIcon(iconLiteral);
-        icon.getStyleClass().add("font-icon");
-        Button btn = new Button();
-        btn.setGraphic(icon);
-        btn.setTooltip(new Tooltip(tooltipText));
-        return btn;
-    }
-//    // gives place holder text - ive updated it to use new enum for the sake of later use
-//    private String getPromptForType(CellType type) {
-//        return switch (type) {
-//            case CODE -> "Enter Java code here...";
-//            case MARKDOWN -> "Enter Markdown content...";
-//            case TEXT -> "Enter plain text...";
-//        };
-//    }
-    // rebuild the notebook model from all current ui cells before saving
-    // ensures ui text and model data stay in sync
     private void syncModelFromUI() {
         currentNotebook.getCells().clear();
         for (var node : codeCellContainer.getChildren()) {
@@ -157,8 +138,6 @@ public class NotebookController {
         });
     }
 
-
-
     // opens already existing project
     // #TODO: Need to be replaced by json logic
     @FXML
@@ -172,6 +151,9 @@ public class NotebookController {
             Notebook loaded = persistence.load(name);
 
             if (loaded != null) {
+                if (currentNotebook != null) {
+                    currentNotebook.shutdownEngine();
+                }
                 currentNotebook = loaded;
                 currentNotebook.initEngineIfNull();
                 renderNotebook();
@@ -190,16 +172,6 @@ public class NotebookController {
         }
     }
 
-
-    // will update once json logic is set - calls same factory method for creating cells
-    private void createCodeCellFromFile(CellType type, String content) {
-        NotebookCell cellModel = new NotebookCell();
-        cellModel.setType(type);
-        cellModel.setContent(content);
-
-        codeCellContainer.getChildren().add(createCellUI(type, cellModel));
-    }
-
     // -------------------- Menu Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
     @FXML private void exportPDF() { System.out.println("Export PDF"); }
@@ -211,7 +183,7 @@ public class NotebookController {
     @FXML private void showAbout() { System.out.println("Show About"); }
     @FXML private void showDocs() { System.out.println("Show Documentation"); }
 
-    // -------------------- Theme Toggle --------------------
+    // -------------------- Helpers --------------------
     // simple method to toggle theme
     @FXML
     private void toggleTheme() {
@@ -225,5 +197,9 @@ public class NotebookController {
             scene.getStylesheets().add(getClass().getResource("/dark.css").toExternalForm());
             theme = SystemThemeDetector.Theme.DARK;
         }
+    }
+
+    public Notebook getCurrentNotebook() {
+        return currentNotebook;
     }
 }
