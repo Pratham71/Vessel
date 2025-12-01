@@ -219,3 +219,65 @@
     -fx-fill: #333333;
     -fx-padding: 0 8 0 0;
 }
+/* 1. Main Dialog Background (Lightest Shade) */
+.dialog-pane {
+    -fx-background-color: #f9f9f9; /* soft off-white */
+    -fx-text-fill: #333333; /* dark text for contrast */
+}
+
+/* 2. Header Panel (Slightly Lighter Shade at the Top - for subtle distinction) */
+.dialog-pane .header-panel {
+    -fx-background-color: #ffffff; /* pure white */
+    -fx-text-fill: #333333;
+    -fx-border-width: 0;
+    -fx-padding: 10 10 0 10;
+    -fx-effect: none;
+}
+
+/* 3. Content Area (Match the main dialog background with slight padding) */
+.dialog-pane .content {
+    -fx-background-color: #f9f9f9; /* match dialog pane */
+    -fx-text-fill: #333333;
+    -fx-padding: 0 0 0 0; /* remove gaps */
+}
+
+/* 4. Button Bar Area (Match main dialog background, no borders) */
+.dialog-pane .button-bar {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 10 10 0;
+}
+
+/* 5. Target internal container of the ButtonBar to remove padding */
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 0;
+}
+
+/* 6. Remove separator border/region above buttons */
+.dialog-pane .button-bar .border {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+/* --- Other necessary styles --- */
+
+.dialog-pane .header-text {
+    -fx-fill: #333333;
+    -fx-text-fill: #333333;
+}
+
+.dialog-pane .graphic-container {
+    -fx-background-color: transparent;
+}
+
+.button {
+    -fx-background-color: #e1e1e1;
+    -fx-text-fill: #333333;
+}
+
+.button:hover {
+    -fx-background-color: #cfcfcf;
+}
