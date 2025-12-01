@@ -30,7 +30,7 @@ public class Notebook {
     public Notebook(String name) {
         this.name = name;
 
-        this.engine = new NotebookEngine(); // testing ts
+        initEngineIfNull();
     }
     // Add a new cell to the notebook
     public void addCell(NotebookCell cell) {
@@ -81,4 +81,9 @@ public class Notebook {
     }
 
 
+    public void initEngineIfNull() {
+        if (this.engine == null) {
+            this.engine = new NotebookEngine();
+        }
+    }
 }

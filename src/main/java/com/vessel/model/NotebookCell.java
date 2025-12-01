@@ -70,6 +70,7 @@ public class NotebookCell {
     public void setExecutionResult(ExecutionResult executionResult) {
         this.executionResult = executionResult;
     }
+    public ExecutionResult getExecutionResult() { return executionResult; }
     public int getExecutionCount() { return executionCount; }
     public void incrementExecutionCount() { executionCount++; }
 }

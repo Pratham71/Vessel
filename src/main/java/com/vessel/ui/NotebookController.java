@@ -173,6 +173,7 @@ public class NotebookController {
 
             if (loaded != null) {
                 currentNotebook = loaded;
+                currentNotebook.initEngineIfNull();
                 renderNotebook();
                 System.out.println("Notebook loaded successfully.");
             } else {

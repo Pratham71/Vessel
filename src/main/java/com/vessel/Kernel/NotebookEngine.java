@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
 import jdk.jshell.JShell;
 import jdk.jshell.SnippetEvent;
@@ -148,10 +147,10 @@ public class NotebookEngine {
 
 
     // Thread safe execution.
-    public void execute(NotebookCell cell) {
+    public Void execute(NotebookCell cell) {
         String code = cell.getContent();
         // Vallidation
-        if (code == null || code.trim().isEmpty()) {
+        if (code == null || code.trim().isBlank()) {
             cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
         }
 
@@ -201,8 +200,8 @@ public class NotebookEngine {
                 jshell.stop();
 
                 // Return a timeout result
-                cell.setExecutionResult(new ExecutionResult("", " TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
-                        " Possible infinite loop or recursion."
+                cell.setExecutionResult(new ExecutionResult("", "TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
+                        "Possible infinite loop or recursion."
                         , EXECUTION_TIMEOUT_MS, false));
 
             } catch (InterruptedException ie) {
@@ -226,7 +225,7 @@ public class NotebookEngine {
                 if (cause == null) cause = e;
 
                 // Return a fatal error result
-                cell.setExecutionResult(new ExecutionResult("", " FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false));
+                cell.setExecutionResult(new ExecutionResult("", "FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false));
             }
 
         } finally {
@@ -234,6 +233,7 @@ public class NotebookEngine {
             executionLock.unlock();
             engine.debug(" Execution lock Released.");
         }
+        return null;
     }
 
     // Internal Execution (Runs in executor thread)
@@ -382,7 +382,7 @@ public class NotebookEngine {
         long executionTime = (System.nanoTime() - startTime) / 1_000_000;
 
         // Append time
-        output.append("\n Execution time: ")
+        output.append("\nExecution time: ")
                 .append(executionTime).append(" ms\n");
 
         // Return result

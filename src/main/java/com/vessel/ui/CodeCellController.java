@@ -2,6 +2,7 @@
 
 package com.vessel.ui;
 
+import com.vessel.Kernel.ExecutionResult;
 import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
@@ -19,9 +20,6 @@ import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
-import java.util.regex.*;
-
-import com.vessel.Kernel.NotebookEngine;
 
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
@@ -133,18 +131,18 @@ public class CodeCellController {
         fadeIn(spinnerBox);
 
         // --- Simulate background execution ---
-        Task<Void> fakeTask = new Task<>() {
+        Task<Void> shellTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                Thread.sleep(1000); // Simulate work, replace with JShell code later
-                return null;
+                return engine.execute(cellModel);
             }
         };
 
-        fakeTask.setOnSucceeded(ev -> {
+        shellTask.setOnSucceeded(ev -> {
             displayOutput(spin);
         });
-        new Thread(fakeTask).start();
+
+        new Thread(shellTask).start();
         cellModel.dumpContent(); // temp debug print
     }
 
@@ -154,15 +152,20 @@ public class CodeCellController {
 
         // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
         // Currently just prints whatever is in the box back as output
-        String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
+        ExecutionResult shellResult = cellModel.getExecutionResult();
 
-        if (shellOutput.trim().isEmpty()) {
+        if (!shellResult.success()) {
+            Label err = new Label("Error:\n" + shellResult.error());
+            err.setStyle("-fx-text-fill: #ff5555;");
+            outputBox.getChildren().add(err);
+        }
+        else if (shellResult.output().trim().isEmpty()) {
             Label noOutputLabel = new Label("(No output to print)");
             noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
             outputBox.getChildren().add(noOutputLabel);
             fadeIn(noOutputLabel);
         } else {
-            TextArea resultArea = new TextArea(shellOutput.trim());
+            TextArea resultArea = new TextArea(shellResult.output().trim());
             resultArea.getStyleClass().add("read-only-output");
             resultArea.setEditable(false);
             resultArea.setWrapText(true);
@@ -216,6 +219,10 @@ public class CodeCellController {
         fade.play();
     }
 
+    public void setEngine(NotebookEngine engine) {
+        this.engine = engine;
+    }
+
     public void setCellType(CellType type) {
         cellLanguage.setValue(type);
     }
@@ -227,9 +234,5 @@ public class CodeCellController {
             case "Plain Text" -> "Enter plain text...";
             default -> "";
         };
-    }
-
-    public void setEngine(NotebookEngine engine) {
-        this.engine = engine;
     }
 }
