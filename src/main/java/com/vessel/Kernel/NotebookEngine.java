@@ -8,8 +8,7 @@
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,10 +21,13 @@ public class NotebookEngine {
     // === Persistent Jshell ===
     private final JShell jshell;
 
+    // Buffers
+    private ByteArrayOutputStream jshellBuffer;
+    private PrintStream jshellPrintStream;
+
     // === Thread-Safety ===
     private final ReentrantLock executionLock = new ReentrantLock(); // Locks the execution thread.
     private volatile boolean isExecuting = false;
-    private volatile String currentExectionCellId = "001"; // to be implemented
 
     // === Timeouts ===
     private static final long EXECUTION_TIMEOUT_MS = 5_000; // 5s
@@ -130,15 +132,21 @@ public class NotebookEngine {
                     t.setDaemon(true);
 
                     // Give each thread a readable name based on the current cell
-                    t.setName("Jshell-Executor-" + currentExectionCellId);
+                    t.setName("Jshell-Worker");
 
                     engine.severe(" Jshell thread started: " + "`" + t.getName() + "`");
                     return t;
                 }
         );
 
+        jshellBuffer = new ByteArrayOutputStream();
+         jshellPrintStream = new PrintStream(jshellBuffer, true); // autoflush
+
         // Init. JShell with output streams
-        this.jshell = JShell.builder().build();
+        this.jshell = JShell.builder()
+                .out(jshellPrintStream)
+                .err(jshellPrintStream)
+                .build();
 
         // Load Init Snippets
         loadInitSnippets(jshell, INIT_SNIPPETS);
@@ -146,13 +154,16 @@ public class NotebookEngine {
     }
 
 
+
     // Thread safe execution.
     public Void execute(NotebookCell cell) {
         String code = cell.getContent();
+        System.out.println("code = " + code);
+
         // Vallidation
-        if (code == null || code.trim().isBlank()) {
-            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
-        }
+//        if (!(code == null || code.trim().isBlank())) {
+//            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
+//        }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
         for (String pattern : DANGEROUS_PATTERNS) {
@@ -201,7 +212,7 @@ public class NotebookEngine {
 
                 // Return a timeout result
                 cell.setExecutionResult(new ExecutionResult("", "TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
-                        "Possible infinite loop or recursion."
+                        " Possible infinite loop or recursion."
                         , EXECUTION_TIMEOUT_MS, false));
 
             } catch (InterruptedException ie) {
@@ -241,17 +252,8 @@ public class NotebookEngine {
         // Start timer
         long startTime = System.nanoTime();
 
-        // Buffer for capturing System.out and System.err
-        ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
-        PrintStream outputStream = new PrintStream(outputBuffer);
-
-        // Save original print streams
-        PrintStream originalOut = System.out;
-        PrintStream originalErr = System.err;
-
-        // Redirect output to buffer
-        System.setOut(outputStream);
-        System.setErr(outputStream);
+        // Clear the persistent buffer before running new code
+        jshellBuffer.reset();
 
         // Output builder and success flag
         StringBuilder output = new StringBuilder();
@@ -275,6 +277,7 @@ public class NotebookEngine {
             // Execute JShell snippet
             //outputStream.flush();
             List<SnippetEvent> events = jshell.eval(code);
+            System.out.println("events.size() = " + events.size());
 
             if (events.isEmpty()) {
                 errors.append(" No output (empty snippet)");
@@ -282,7 +285,6 @@ public class NotebookEngine {
 
             // Process each event
             for (SnippetEvent event : events) {
-
                 // Snippet status handling
                 switch (event.status()) {
                     case REJECTED:
@@ -304,8 +306,7 @@ public class NotebookEngine {
 
                 // Compilation diagnostics
                 jshell.diagnostics(event.snippet()).forEach(diag -> {
-                    errors.append("Compilation Error at line: ")
-                            .append(diag.getStartPosition()).append(": ")
+                    errors.append("Compilation Error: ")
                             .append(diag.getMessage(null)).append("\n");
                     engine.severe(" Compilation error: " + diag.getMessage(null));
                     success[0] = false;
@@ -337,9 +338,10 @@ public class NotebookEngine {
                 }
             }
 
-            // Capture printed output
-            outputStream.flush();
-            String printed = outputBuffer.toString();
+            // Capture STDOUT
+            // Force flushing just to be safe. (even though auto-flush is set true on init.)
+            jshellPrintStream.flush();
+            String printed = jshellBuffer.toString();
 
             if (!printed.isEmpty()) {
                 output.append(printed);
@@ -372,10 +374,6 @@ public class NotebookEngine {
                     .append(e.getMessage()).append("\n");
             success[0] = false;
 
-        } finally {
-            // Restore stdout/stderr
-            System.setOut(originalOut);
-            System.setErr(originalErr);
         }
 
         // Compute execution time
