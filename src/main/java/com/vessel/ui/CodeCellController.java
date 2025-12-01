@@ -65,45 +65,6 @@ public class CodeCellController extends GenericCellController {
     }
 
 
-    private void runCell() {
-        outputBox.setVisible(true);
-        outputBox.getChildren().clear();
-        this.incrementAndDisplayExecutionCount();
-        // --- Increment execution count ---
-        cellModel.incrementExecutionCount();
-
-        // --- Add spinner ---
-        HBox spinnerBox = new HBox(8);
-        FontIcon spinnerIcon = new FontIcon("fas-spinner");
-        spinnerIcon.getStyleClass().add("output-spinner");
-        RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
-        spin.setByAngle(360);
-        spin.setCycleCount(RotateTransition.INDEFINITE);
-        spin.play();
-        Label loadingText = new Label("Executing...");
-        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
-        spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
-        outputBox.getChildren().add(spinnerBox);
-        outputBox.applyCss();
-        outputBox.layout();
-        fadeIn(spinnerBox);
-
-        // --- Simulate background execution ---
-        Task<Void> fakeTask = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                Thread.sleep(1000); // Simulate work, replace with JShell code later
-                return null;
-            }
-        };
-
-        fakeTask.setOnSucceeded(ev -> {
-            displayOutput(spin);
-        });
-        new Thread(fakeTask).start();
-        cellModel.dumpContent(); // temp debug print
-    }
-
     private void displayOutput(RotateTransition spin) {
         spin.stop();
         outputBox.getChildren().clear();
