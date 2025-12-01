@@ -23,11 +23,11 @@ import java.time.LocalDateTime;
 
 public class NotebookCell {
 
-    private ExecutionResult executionResult;
     private final String id = UUID.randomUUID().toString();
     private CellType cellType;
     private String content;
     private int executionCount = 0;
+    private ExecutionResult executionResult;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime lastModifiedAt = LocalDateTime.now();
 

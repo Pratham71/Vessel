@@ -62,6 +62,9 @@ public class CodeCellController {
             // Fill UI from whatever the model contains (e.g. on loading)
             codeArea.replaceText(cell.getContent());
         }
+        if (cell.getExecutionResult() != null && !cell.getContent().isBlank()) {
+            displayOutput();
+        }
         cellLanguage.setValue(cell.getType());
     }
 
@@ -148,7 +151,17 @@ public class CodeCellController {
 
     private void displayOutput(RotateTransition spin) {
         spin.stop();
+        displayOutput();
+    }
+
+    // Overload for loading old outputs on loading existing file
+    private void displayOutput() {
         outputBox.getChildren().clear();
+
+        // explicit check for when loading a file
+        if (!outputBox.isVisible()) {
+            outputBox.setVisible(true);
+        }
 
         // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
         // Currently just prints whatever is in the box back as output
