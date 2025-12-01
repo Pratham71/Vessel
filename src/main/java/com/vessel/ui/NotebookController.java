@@ -27,7 +27,7 @@ public class NotebookController {
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
-    private Notebook notebook = new Notebook("Untitled");
+    private Notebook currentNotebook;
 
 
     // Pass scene reference from Main.java
@@ -38,7 +38,11 @@ public class NotebookController {
     }
 
     @FXML
-    private void initialize() { // called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+    private void initialize() {// called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+
+        // Notebook init.
+        currentNotebook = new Notebook("untitled"); //  hardcoded right now
+
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
@@ -60,7 +64,7 @@ public class NotebookController {
      private void addCell(CellType initialType) {
          NotebookCell cellModel = new NotebookCell();
          cellModel.setType(initialType);
-         notebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
+         currentNotebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
          codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
      }
 
@@ -76,6 +80,9 @@ public class NotebookController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
             VBox cell = loader.load();
             CodeCellController cellController = loader.getController();
+            if (cellController instanceof CodeCellController ) {
+                cellController.setEngine(currentNotebook.getEngine());
+            }
             cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             cellController.setRoot(cell); // pass root for removal
@@ -110,13 +117,13 @@ public class NotebookController {
     // rebuild the notebook model from all current ui cells before saving
     // ensures ui text and model data stay in sync
     private void syncModelFromUI() {
-        notebook.getCells().clear();
+        currentNotebook.getCells().clear();
         for (var node : codeCellContainer.getChildren()) {
             if (node instanceof VBox cellBox) {
                 // retrieve the controller for this cell
                 CodeCellController controller = (CodeCellController) cellBox.getUserData();
                 NotebookCell cell = controller.getNotebookCell();
-                notebook.addCell(cell);
+                currentNotebook.addCell(cell);
             }
         }
     }
@@ -137,15 +144,15 @@ public class NotebookController {
     // Saving project to system
     @FXML
     private void saveProject() {
-        TextInputDialog dialog = new TextInputDialog(notebook.getName());
+        TextInputDialog dialog = new TextInputDialog(currentNotebook.getName());
         dialog.setTitle("Save Notebook");
         dialog.setHeaderText("Enter notebook name:");
         dialog.setContentText("Name:");
 
         dialog.showAndWait().ifPresent(name -> {
-            notebook.setName(name);   // rename notebook without resetting its data
+            currentNotebook.setName(name);   // rename notebook without resetting its data
             syncModelFromUI();        // sync ui state into data model before saving
-            boolean ok = persistence.save(notebook);
+            boolean ok = persistence.save(currentNotebook);
             System.out.println(ok ? "Saved!" : "Save failed");
         });
     }
@@ -165,7 +172,7 @@ public class NotebookController {
             Notebook loaded = persistence.load(name);
 
             if (loaded != null) {
-                notebook = loaded;
+                currentNotebook = loaded;
                 renderNotebook();
                 System.out.println("Notebook loaded successfully.");
             } else {
@@ -177,7 +184,7 @@ public class NotebookController {
     // clears ui and rebuilds all cells from the loaded notebook model
     private void renderNotebook() {
         codeCellContainer.getChildren().clear();
-        for (NotebookCell cell : notebook.getCells()) {
+        for (NotebookCell cell : currentNotebook.getCells()) {
             codeCellContainer.getChildren().add(createCellUI(cell.getType(), cell));
         }
     }

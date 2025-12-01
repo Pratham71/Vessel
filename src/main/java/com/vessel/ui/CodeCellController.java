@@ -2,6 +2,7 @@
 
 package com.vessel.ui;
 
+import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
@@ -20,6 +21,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
 import java.util.regex.*;
 
+import com.vessel.Kernel.NotebookEngine;
+
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController {
@@ -33,6 +36,7 @@ public class CodeCellController {
 
     private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     private NotebookCell cellModel;
+    private NotebookEngine engine;
 
     /**
      * This is called by the NotebookController after loading the cell.
@@ -223,5 +227,9 @@ public class CodeCellController {
             case "Plain Text" -> "Enter plain text...";
             default -> "";
         };
+    }
+
+    public void setEngine(NotebookEngine engine) {
+        this.engine = engine;
     }
 }

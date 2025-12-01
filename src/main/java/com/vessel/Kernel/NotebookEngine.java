@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.vessel.model.Notebook;
+import com.vessel.model.NotebookCell;
 import jdk.jshell.JShell;
 import jdk.jshell.SnippetEvent;
 
@@ -45,7 +47,7 @@ public class NotebookEngine {
     // === Stats ===
     private int totalExecutions = 0;
     private long totalExecutionTime = 0;
-    private final LinkedList<ExecutionRecord> history = new LinkedList<>();
+    private final LinkedList<ExecutionResult> history = new LinkedList<>();
     private static final int MAX_HISTORY = 50;
 
 
@@ -144,12 +146,13 @@ public class NotebookEngine {
         engine.info(" NotebookEngine initialized with persistent JShell kernel");
     }
 
-    // Thread safe execution.
-    public ExecutionResult execute(String code) {
 
+    // Thread safe execution.
+    public void execute(NotebookCell cell) {
+        String code = cell.getContent();
         // Vallidation
         if (code == null || code.trim().isEmpty()) {
-            return new ExecutionResult("", "Empty Code Cell", 0, false);
+            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
         }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
@@ -157,14 +160,14 @@ public class NotebookEngine {
             if (code.contains(pattern)) {
                 engine.warn(" Blocked dangerous pattern: " + pattern);
 
-                return new ExecutionResult("", "Blocked dangerous operation: " + pattern, -1, false);
+                cell.setExecutionResult(new ExecutionResult("", "Blocked dangerous operation: " + pattern, -1, false));
             }
         }
 
         // Try to get the execution lock (non-blocking)
         if (!executionLock.tryLock()) {
             engine.warning(" Execution blocked: Another cell is running.");
-            return new ExecutionResult("", "Execution blocked: Another cell is running.\nPlease wait or interrupt it.", -1, false);
+            cell.setExecutionResult(new ExecutionResult("", "Execution blocked: Another cell is running.\nPlease wait or interrupt it.", -1, false));
         }
 
         try {
@@ -182,10 +185,10 @@ public class NotebookEngine {
                 // Updating Stats
                 totalExecutions++;
                 totalExecutionTime += result.executionTimeMs();
-                addToHistory(code, result);
+                //addToHistory(code, result);
 
                 engine.info(" Code Execution complete");
-                return result;
+                cell.setExecutionResult(result);
 
             } catch (TimeoutException e) {
 
@@ -198,9 +201,9 @@ public class NotebookEngine {
                 jshell.stop();
 
                 // Return a timeout result
-                return new ExecutionResult("", " TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
+                cell.setExecutionResult(new ExecutionResult("", " TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
                         " Possible infinite loop or recursion."
-                        , EXECUTION_TIMEOUT_MS, false);
+                        , EXECUTION_TIMEOUT_MS, false));
 
             } catch (InterruptedException ie) {
 
@@ -213,7 +216,7 @@ public class NotebookEngine {
                 engine.error(" Execution interrupted", ie);
 
                 // Return an interrupted result
-                return new ExecutionResult("", "Execution interrupted by user", -1, false);
+                cell.setExecutionResult(new ExecutionResult("", "Execution interrupted by user", -1, false));
 
             } catch (ExecutionException e) {
                 engine.error(" Execution failed with exception: ", e);
@@ -223,7 +226,7 @@ public class NotebookEngine {
                 if (cause == null) cause = e;
 
                 // Return a fatal error result
-                return new ExecutionResult("", " FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false);
+                cell.setExecutionResult(new ExecutionResult("", " FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false));
             }
 
         } finally {
@@ -493,29 +496,29 @@ public class NotebookEngine {
         return stats;
     }
 
-    private void addToHistory(String code, ExecutionResult result) {
-        history.add(new ExecutionRecord(
-                code,
-                result.output(),
-                result.executionTimeMs(),
-                result.success()
-        ));
-
-        engine.info(" Adding " + code + " to history");
-
-        if (history.size() > MAX_HISTORY) {
-            history.removeFirst();
-        }
-    }
-
-    public List<ExecutionRecord> getHistory() {
-        return new ArrayList<ExecutionRecord>(history);
-    }
-
-    public void clearHistory() {
-        history.clear();
-        engine.info(" Clearing history...");
-    }
+//    private void addToHistory(String code, ExecutionResult result) {
+//        history.add(new ExecutionResult(
+//                code,
+//                result.output(),
+//                result.executionTimeMs(),
+//                result.success()
+//        ));
+//
+//        engine.info(" Adding " + code + " to history");
+//
+//        if (history.size() > MAX_HISTORY) {
+//            history.removeFirst();
+//        }
+//    }
+//
+//    public List<ExecutionResult> getHistory() {
+//        return new ArrayList<ExecutionResult>(history);
+//    }
+//
+//    public void clearHistory() {
+//        history.clear();
+//        engine.info(" Clearing history...");
+//    }
 
     // Cleanup and close jshell safely
     public void shutdown() {
@@ -538,7 +541,7 @@ public class NotebookEngine {
             engine.info(" Shutting down JShell...");
         }
 
-        clearHistory();
+        //clearHistory();
 
         engine.info(" NotebookEngine shutdown complete.");
     }
@@ -547,4 +550,13 @@ public class NotebookEngine {
     public boolean isExecuting() {
         return isExecuting;
     }
+
+//    public static void main(String[] args) {
+//        NotebookEngine engine = new NotebookEngine();
+//
+//        engine.executeInternal("public class Pratham{\n\n\tpublic void pubic(){\n\t\tprint(\"gay\");\n\t} \n}");
+//        System.out.println(engine.getStatistics());
+//
+//        engine.shutdown();
+//    }
 }
