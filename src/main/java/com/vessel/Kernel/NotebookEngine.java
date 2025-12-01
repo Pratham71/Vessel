@@ -21,6 +21,7 @@ public class NotebookEngine {
     // === Persistent Jshell ===
     private final JShell jshell;
 
+
     // Buffers
     private ByteArrayOutputStream jshellBuffer;
     private PrintStream jshellPrintStream;
@@ -61,7 +62,8 @@ public class NotebookEngine {
 
             // math
             "import java.lang.Math.*;",
-            "import java.math.*;"
+            "import java.math.*;",
+            "import java.lang.*;"
 
     );
 
@@ -158,12 +160,11 @@ public class NotebookEngine {
     // Thread safe execution.
     public Void execute(NotebookCell cell) {
         String code = cell.getContent();
-        System.out.println("code = " + code);
 
-        // Vallidation
-//        if (!(code == null || code.trim().isBlank())) {
-//            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
-//        }
+//     Vallidation
+        if (code == null || code.trim().isBlank()) {
+            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
+        }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
         for (String pattern : DANGEROUS_PATTERNS) {
@@ -548,13 +549,4 @@ public class NotebookEngine {
     public boolean isExecuting() {
         return isExecuting;
     }
-
-//    public static void main(String[] args) {
-//        NotebookEngine engine = new NotebookEngine();
-//
-//        engine.executeInternal("public class Pratham{\n\n\tpublic void pubic(){\n\t\tprint(\"gay\");\n\t} \n}");
-//        System.out.println(engine.getStatistics());
-//
-//        engine.shutdown();
-//    }
 }
