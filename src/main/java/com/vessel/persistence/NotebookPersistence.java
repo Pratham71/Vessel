@@ -43,10 +43,12 @@ public class NotebookPersistence {
         }
     }
 
-    // removes illegal characters from filename and replaces spaces with underscores
     private String sanitize(String name) {
-        return name.replaceAll("[^a-zA-Z0-9-_ ]", "")
-                .replace(" ", "_");
+        if (name == null) return "untitled";
+        // keep letters, numbers, dash, underscore, space
+        String cleaned = name.replaceAll("[^a-zA-Z0-9-_ ]", "");
+        if (cleaned.isBlank()) return "untitled";
+        return cleaned;
     }
 
     // converts the entire notebook object into json and writes it to disk
@@ -64,6 +66,26 @@ public class NotebookPersistence {
             return false;
         }
     }
+
+    public boolean saveToPath(Notebook notebook, String fullPath) {
+        try (FileWriter writer = new FileWriter(fullPath)) {
+            writer.write(gson.toJson(notebook));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Notebook loadFromPath(String fullPath) {
+        try (FileReader reader = new FileReader(fullPath)) {
+            return gson.fromJson(reader, Notebook.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     // loads a notebook json file from disk and converts it back into a notebook object
     // returns null if file not found or loading failed

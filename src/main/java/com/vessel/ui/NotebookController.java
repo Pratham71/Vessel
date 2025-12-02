@@ -16,6 +16,8 @@ import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
+import javafx.concurrent.Task;
+import javafx.stage.Window;
 
 public class NotebookController {
 // these are those fxml elements labelled via fx:id in main.fxml file
@@ -80,6 +82,7 @@ public class NotebookController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CodeCell.fxml"));
             VBox cell = loader.load();
             CodeCellController cellController = loader.getController();
+            cellController.setNotebookController(this);
             if (cellController instanceof CodeCellController ) {
                 cellController.setEngine(currentNotebook.getEngine());
             }
@@ -109,6 +112,10 @@ public class NotebookController {
         }
     }
 
+    public Notebook getNotebook() {
+        return currentNotebook;
+    }
+
 
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
@@ -125,43 +132,56 @@ public class NotebookController {
     // Saving project to system
     @FXML
     private void saveProject() {
-        TextInputDialog dialog = new TextInputDialog(currentNotebook.getName());
-        dialog.setTitle("Save Notebook");
-        dialog.setHeaderText("Enter notebook name:");
-        dialog.setContentText("Name:");
+        // sync UI → model
+        syncModelFromUI();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Notebook");
+        // open in /notebooks by default
+        fileChooser.setInitialDirectory(new File("notebooks"));
+        fileChooser.setInitialFileName(currentNotebook.getName() + ".json");
+        // allow only json files
+        fileChooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
+        File file = fileChooser.showSaveDialog(codeCellContainer.getScene().getWindow());
+        if (file == null) return; // user canceled
 
-        dialog.showAndWait().ifPresent(name -> {
-            currentNotebook.setName(name);   // rename notebook without resetting its data
-            syncModelFromUI();        // sync ui state into data model before saving
-            boolean ok = persistence.save(currentNotebook);
-            System.out.println(ok ? "Saved!" : "Save failed");
-        });
+        // wrap save logic in Task
+        Task<Boolean> saveTask = new Task<Boolean>() {
+            @Override
+            protected Boolean call() throws Exception {
+                return persistence.saveToPath(currentNotebook, file.getAbsolutePath());
+            }
+        };
+
+        saveTask.setOnSucceeded(e -> System.out.println("save done!"));
+        saveTask.setOnFailed(e -> System.out.println("save failed."));
+
+        new Thread(saveTask).start();
     }
 
     // opens already existing project
     // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Open Notebook");
-        dialog.setHeaderText("Enter notebook name to load:");
-        dialog.setContentText("Name:");
-
-        dialog.showAndWait().ifPresent(name -> {
-            Notebook loaded = persistence.load(name);
-
-            if (loaded != null) {
-                if (currentNotebook != null) {
-                    currentNotebook.shutdownEngine();
-                }
-                currentNotebook = loaded;
-                currentNotebook.initEngineIfNull();
-                renderNotebook();
-                System.out.println("Notebook loaded successfully.");
-            } else {
-                System.out.println("Could not load notebook: " + name);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Notebook");
+        fileChooser.setInitialDirectory(new File("notebooks"));
+        fileChooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
+        File file = fileChooser.showOpenDialog(codeCellContainer.getScene().getWindow());
+        if (file == null) return;
+        Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
+        if (loaded != null) {
+            if (currentNotebook != null) {
+                currentNotebook.shutdownEngine();
             }
-        });
+            currentNotebook = loaded;
+            currentNotebook.initEngineIfNull();
+            renderNotebook();
+            System.out.println("loaded ok");
+        } else {
+            System.out.println("load failed");
+        }
     }
 
     // clears ui and rebuilds all cells from the loaded notebook model

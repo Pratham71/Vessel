@@ -34,11 +34,14 @@ public class CodeCellController {
 
     private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     private NotebookCell cellModel;
+    private NotebookController notebookController;
+
     private NotebookEngine engine;
 
     /**
      * This is called by the NotebookController after loading the cell.
      */
+
     public void setParentContainer(VBox parent) {
         this.parentContainer = parent;
     }
@@ -46,6 +49,11 @@ public class CodeCellController {
     public void setRoot(VBox root) {
         this.root = root;
     }
+
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
+    }
+
 
     // links this ui cell with its notebookcell model and loads initial content
     public void setNotebookCell(NotebookCell cell) {
@@ -201,7 +209,13 @@ public class CodeCellController {
         if (parentContainer != null && root != null) {
             parentContainer.getChildren().remove(root);
         }
+
+        if (cellModel != null) {
+            // also remove from notebook model
+            notebookController.getNotebook().removeCell(cellModel.getId());
+        }
     }
+
 
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
