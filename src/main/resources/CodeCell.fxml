@@ -19,6 +19,7 @@
         <ChoiceBox fx:id="cellLanguage">
             <!-- Will be filled by initialize() in CodeCellController later-->
         </ChoiceBox>
+        <Label fx:id="executionCountLabel" />
         <Button fx:id="runBtn">
             <graphic>
                 <FontIcon iconLiteral="fas-play" iconSize="16" styleClass="font-icon" />
@@ -37,7 +38,7 @@
         </Button>
         <Button fx:id="clearBtn">
             <graphic>
-                <FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon" />
+                <FontIcon iconLiteral="fas-eraser" iconSize="16" styleClass="font-icon" />
             </graphic>
             <tooltip>
                 <Tooltip text="Clear this cell"/>
@@ -45,7 +46,10 @@
         </Button>
     </HBox>
 
-    <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
+    <StackPane>
+        <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
+        <Label fx:id="promptLabel" styleClass="prompt-label" text="Enter Java code here"/>
+    </StackPane>
 
     <VBox fx:id="outputBox" spacing="0" styleClass="output-area" minHeight="0" maxWidth="1000" visible="false">
         <!-- Output UI will be injected here dynamically by the controller -->

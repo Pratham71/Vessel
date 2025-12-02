@@ -1,20 +1,329 @@
 /* Light theme */
+
+/* The .root selector targets the base container of the entire scene graph. */
 .root {
-    -fx-background-color: #dce3e3;
+    -fx-background-color: #f5f5f5;
+    -fx-text-fill: #000000;
+    -fx-font-family: "Segoe UI", "Tahoma", "Arial";
+}
+
+/* Base Label and Icon Styling */
+.label {
     -fx-text-fill: #000000;
 }
 
-/* MenuBar, ToolBar, Buttons */
-.menu-bar, .tool-bar {
-    -fx-background-color: #edf3f3;
+.font-icon {
+    -fx-fill: black;
 }
 
+/* --- Header (MenuBar & ToolBar) Styling --- */
+.menu-bar,
+.tool-bar {
+    -fx-background-color: #e8ecec;
+}
+
+.menu-bar .label {
+    -fx-text-fill: black;
+}
+
+/* --- Menu Dropdowns (Context Menus) --- */
+.menu-bar .context-menu {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #bfbfbf;
+}
+
+.menu-item .label {
+    -fx-text-fill: #000000;
+}
+
+.menu-item:hover {
+    -fx-background-color: #cbe4ff;
+}
+
+.menu-item:hover .label {
+    -fx-text-fill: #000000;
+}
+
+.menu-item .separator {
+    -fx-background-color: #cccccc;
+}
+
+/* --- Buttons Styling --- */
 .button {
     -fx-background-color: #d6d6d6;
     -fx-text-fill: #000000;
+    -fx-border-color: transparent;
 }
 
-/* Icons black in light mode */
-.font-icon {
-    -fx-fill: black;
+.button:hover {
+    -fx-background-color: #c8c8c8;
+}
+
+/* ============================
+   CHOICEBOX DROPDOWN
+   ============================ */
+.choice-box .context-menu {
+    -fx-background-color: #ffffff;
+    /* light dropdown */
+    -fx-border-color: #bfbfbf;
+}
+
+.choice-box .menu-item .label {
+    -fx-text-fill: #000000;
+}
+
+.choice-box .menu-item:hover {
+    -fx-background-color: #cbe4ff;
+}
+
+.choice-box .menu-item:hover .label {
+    -fx-text-fill: #000000;
+}
+
+.choice-box {
+    -fx-background-color: #d6d6d6;
+    -fx-mark-color: black;
+}
+
+.choice-box .label {
+    -fx-text-fill: #000000;
+}
+
+/* --- Center Content Area (ScrollPane & Code Cells) --- */
+.scroll-pane {
+    -fx-background-color: #f5f5f5;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #f5f5f5;
+}
+
+#codeCellContainer {
+    -fx-background-color: #f5f5f5;
+}
+
+/* TextArea / TextField (code editor-like) */
+.text-area,
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-text-fill: #1e1e1e;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 14px;
+    -fx-border-color: #c0c0c0;
+    -fx-highlight-fill: #87b7ff;
+    -fx-highlight-text-fill: #000000;
+}
+
+/* --- CodeArea styling (syntax highlighting) --- */
+.code-area {
+    -fx-background-color: #ffffff;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 14px;
+    -fx-border-color: #c0c0c0;
+    -fx-border-width: 1.5px;
+    -fx-highlight-fill: #87b7ff;
+    -fx-highlight-text-fill: #000000;
+    -fx-min-height: 120px;
+    -fx-padding: 10 12 10 5;
+}
+
+.code-area .caret {
+    -fx-stroke: #000000;
+}
+
+.lineno {
+    -fx-text-fill: #464862;
+    -fx-border-color: transparent #141520 transparent transparent;
+    -fx-padding: 0 8 0 0;
+    -fx-border-width: 0 1 0 0;
+    -fx-min-width: 36px;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.line-gutter {
+    -fx-background-color: #ffffff;
+    -fx-padding: 0 12 0 0;
+}
+
+.prompt-label {
+    -fx-text-fill: #555555;
+    -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
+    -fx-font-size: 16px;
+}
+
+/* Syntax Highlighting */
+.keyword {
+    -fx-fill: #0033b3;
+    -fx-font-weight: bold;
+}
+
+.comment {
+    -fx-fill: #8c8c8c;
+    -fx-font-style: italic;
+}
+
+.string {
+    -fx-fill: #067d17;
+}
+
+.char {
+    -fx-fill: #067d17;
+}
+
+.number {
+    -fx-fill: #1750eb;
+}
+
+.paren,
+.brace,
+.bracket {
+    -fx-fill: #000000;
+}
+
+.semicolon {
+    -fx-fill: #000000;
+}
+
+.code-area .plain {
+    -fx-fill: #1e1e1e;
+}
+
+/* --- CodeCell output --- */
+.output-area {
+    -fx-border-width: 0 1.5px 1.5px 1.5px;
+    -fx-border-color: transparent #c0c0c0 #c0c0c0 #c0c0c0;
+    -fx-background-color: #fafafa;
+    -fx-padding: 8 14 10 14;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 13px;
+    -fx-min-height: 0px;
+    -fx-pref-height: -1;
+    -fx-effect: null;
+}
+
+/* for errors */
+.output-area .label.output-label {
+    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas';
+    -fx-text-fill: #d32f2f;
+}
+
+/* for “(no output)” */
+.output-area .label.output-label-muted {
+    -fx-text-fill: #6f6f7a;
+}
+
+/* for “Executing...” */
+.output-area .label.output-label-loading {
+    -fx-text-fill: #777777;
+}
+
+/* Read-only output */
+.read-only-output {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-border-width: 0;
+    -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    -fx-font-size: 13px;
+    -fx-control-inner-background: transparent;
+    -fx-highlight-fill: #c0c0c0;
+    -fx-highlight-text-fill: black;
+}
+
+/* Spinner styling */
+.output-spinner {
+    -fx-fill: #333333;
+    -fx-padding: 0 8 0 0;
+}
+/* 1. Main Dialog Background (Lightest Shade) */
+.dialog-pane {
+    -fx-background-color: #f9f9f9; /* soft off-white */
+    -fx-text-fill: #333333; /* dark text for contrast */
+}
+
+/* 2. Header Panel (Slightly Lighter Shade at the Top - for subtle distinction) */
+.dialog-pane .header-panel {
+    -fx-background-color: #ffffff; /* pure white */
+    -fx-text-fill: #333333;
+    -fx-border-width: 0;
+    -fx-padding: 10 10 0 10;
+    -fx-effect: none;
+}
+
+/* 3. Content Area (Match the main dialog background with slight padding) */
+.dialog-pane .content {
+    -fx-background-color: #f9f9f9; /* match dialog pane */
+    -fx-text-fill: #333333;
+    -fx-padding: 0 0 0 0; /* remove gaps */
+}
+
+/* 4. Button Bar Area (Match main dialog background, no borders) */
+.dialog-pane .button-bar {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 10 10 0;
+}
+
+/* 5. Target internal container of the ButtonBar to remove padding */
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 0;
+}
+
+/* 6. Remove separator border/region above buttons */
+.dialog-pane .button-bar .border {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+/* --- Other necessary styles --- */
+
+.dialog-pane .header-text {
+    -fx-fill: #333333;
+    -fx-text-fill: #333333;
+}
+
+.dialog-pane .graphic-container {
+    -fx-background-color: transparent;
+}
+
+.button {
+    -fx-background-color: #e1e1e1;
+    -fx-text-fill: #333333;
+}
+
+.button:hover {
+    -fx-background-color: #cfcfcf;
+}
+/* Styling for the Execution Count Label - Light Mode */
+.execution-count-label {
+    /* Keep the font size consistent */
+    -fx-font-size: 1.5em;
+
+    /* Text color for light background */
+    -fx-text-fill: #666666; /* darker gray for visibility on light background */
+
+    /* Center it vertically for better alignment with the buttons */
+    -fx-alignment: CENTER;
+
+    /* Add padding/margin to give it more visual presence */
+    -fx-padding: 3 10 3 10; /* 3px top/bottom, 10px left/right */
+}
+
+/* Container for controls (like buttons + execution count) */
+.controlsContainer {
+    -fx-alignment: CENTER_LEFT;
+    -fx-fill-height: true;
+
+    /* Optional: add some spacing for light mode if needed */
+    -fx-spacing: 8;
+}
+
+.execution-cancelled {
+    -fx-text-fill: #cd681e; /* golden yellow for light mode */
+    -fx-font-size: 14px;
+    -fx-font-family: 'Fira Mono', 'Consolas', monospace;
 }
