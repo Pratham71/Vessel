@@ -16,12 +16,12 @@ import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 import java.io.*; // reading and writing project files
 
 public class NotebookController {
-// these are those fxml elements labelled via fx:id in main.fxml file
+    // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
     @FXML private Menu insertMenu;
-//    private boolean darkMode = false; // default theme is light mode
+    //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
 
@@ -52,14 +52,14 @@ public class NotebookController {
     // -------------------- Cell Creation --------------------
 
     // it creates a new cell container with proper formatting and light border
-     private void addCell(CellType initialType) {
-         NotebookCell cellModel = new NotebookCell();
-         cellModel.setType(initialType);
+    private void addCell(CellType initialType) {
+        NotebookCell cellModel = new NotebookCell();
+        cellModel.setType(initialType);
 
-         codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
-     }
+        codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
+    }
 
-     // Parameterless overloading (used by .fxml files)
+    // Parameterless overloading (used by .fxml files)
     @FXML
     private void addCell() {
         addCell(cellLanguage.getValue());

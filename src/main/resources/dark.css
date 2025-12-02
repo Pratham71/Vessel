@@ -245,3 +245,93 @@
     -fx-fill: #d4d4d4; /* match text edit color */
     -fx-padding: 0 8 0 0;
 }
+/* 1. Main Dialog Background (Darkest Shade) */
+.dialog-pane {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #d4d4d4;
+}
+
+/* 2. Header Panel (The Lighter Shade at the Top - If you want the title bar lighter) */
+.dialog-pane .header-panel {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-width: 0;
+    -fx-padding: 10 10 0 10;
+    -fx-effect: none;
+}
+
+/* 3. Content Area (Needs to be explicitly set to the darkest shade and no padding) */
+.dialog-pane .content {
+    -fx-background-color: #2a2a2a; /* KEY: Match the dialog background */
+    -fx-text-fill: #d4d4d4;
+    -fx-padding: 0 0 0 0; /* KEY: Remove all padding to eliminate gaps */
+}
+
+/* 4. Button Bar Area (Needs to be the same darkest shade, and stripped of borders/padding) */
+.dialog-pane .button-bar {
+    -fx-background-color: #2a2a2a; /* KEY: Match the content background */
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 10 10 0;
+}
+
+/* 5. Target the internal container of the ButtonBar to remove any internal spacing/padding */
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 0;
+}
+
+/* 6. CRITICAL FIX: Target the internal separator border/region for the line above buttons */
+.dialog-pane .button-bar .border {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+/* --- Other necessary styles --- */
+
+.dialog-pane .header-text {
+    -fx-fill: #d4d4d4;
+    -fx-text-fill: #d4d4d4;
+}
+
+.dialog-pane .graphic-container {
+    -fx-background-color: transparent;
+}
+
+.button {
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: #d4d4d4;
+}
+
+.button:hover {
+    -fx-background-color: #555555;
+}
+
+/* Styling for the Execution Count Label */
+.execution-count-label {
+    /* INCREASE THIS VALUE to make the text bigger */
+    -fx-font-size: 1.5em;
+
+    /* Make sure the text color is still visible */
+    -fx-text-fill: #999999;
+
+    /* Center it vertically for better alignment with the buttons */
+    -fx-alignment: CENTER;
+
+    /* Add padding/margin to give it more body and visual presence */
+    /* Padding will make the clickable area (if any) or the container look larger */
+    -fx-padding: 3 10 3 10; /* Added vertical padding (3px top/bottom) */
+}
+
+/* You may also want to ensure the HBox aligns all items centrally */
+.controlsContainer {
+    -fx-alignment: CENTER_LEFT;
+    -fx-fill-height: true;
+}
+
+.execution-cancelled {
+    -fx-text-fill: #cd681e; /* bright yellow for dark mode */
+    -fx-font-size: 14px;
+    -fx-font-family: 'Fira Mono', 'Consolas', monospace;
+}

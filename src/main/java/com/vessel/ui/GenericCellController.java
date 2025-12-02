@@ -9,6 +9,11 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import org.fxmisc.richtext.CodeArea;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.layout.HBox;
+
 
 public class GenericCellController {
     @FXML protected VBox root; // This is the root of the cell
@@ -17,12 +22,22 @@ public class GenericCellController {
     @FXML private Label promptLabel;
     @FXML private Button deleteBtn;
     @FXML private Button clearBtn;
+    @FXML protected HBox controlsContainer; // Added fx:id to FXML
+    @FXML private Label executionCountLabelFXML; // Placeholder Label from FXML
+    @FXML private Button runBtn; // The button that toggles between Run/Cancel
+
+    // Field to hold the thread/task of the current execution
+    private Thread executionThread = null;
+
 
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
+    private int executionCount = 0;
 
     // Called before the specific cell type is initialized
     protected void initialize() {
+        executionCountLabelFXML.setText("[-]");
+        executionCountLabelFXML.getStyleClass().add("execution-count-label");
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
 
@@ -47,9 +62,8 @@ public class GenericCellController {
         });
 
         // --- BUTTON LISTENERS --
-        deleteBtn.setOnAction(e -> deleteCell());
-
-        clearBtn.setOnAction(e -> codeArea.clear());
+        deleteBtn.setOnAction(e -> confirmDelete());
+        clearBtn.setOnAction(e -> confirmClear());
     }
 
     public void setNotebookCell(NotebookCell cell) {
@@ -93,4 +107,91 @@ public class GenericCellController {
             parentContainer.getChildren().remove(root);
         }
     }
+    private void confirmDelete() {
+        try {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+            if (root != null && root.getScene() != null && root.getScene().getWindow() != null) {
+                alert.initOwner(root.getScene().getWindow());
+            } else {
+                System.err.println("Warning: root or window is null, Alert owner not set.");
+            }
+
+            // Remove default Modena stylesheet
+            alert.getDialogPane().getStylesheets().clear();
+
+            boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
+
+            // Remove leading slash to avoid resource loading issues
+            String theme = isDarkMode ? "resources/dark.css" : "resources/light.css";
+            var cssResource = getClass().getResource(theme);
+
+            if (cssResource == null) {
+                System.err.println("ERROR: Stylesheet not found: " + theme);
+            } else {
+                alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
+            }
+
+            alert.setTitle("Delete Cell");
+            alert.setHeaderText("Are you sure you want to delete this cell?");
+
+            ButtonType yes = new ButtonType("Delete", ButtonBar.ButtonData.OK_DONE);
+            ButtonType no = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(yes, no);
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == yes) {
+                    deleteCell();
+                }
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void confirmClear() {
+        try {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+            if (root != null && root.getScene() != null && root.getScene().getWindow() != null) {
+                alert.initOwner(root.getScene().getWindow());
+            } else {
+                System.err.println("Warning: root or window is null, Alert owner not set.");
+            }
+
+            // Remove default Modena stylesheet
+            alert.getDialogPane().getStylesheets().clear();
+
+            boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
+            String theme = isDarkMode ? "style/dark-theme.css" : "style/light-theme.css";
+            var cssResource = getClass().getResource(theme);
+
+            if (cssResource == null) {
+                System.err.println("ERROR: Stylesheet not found: " + theme);
+            } else {
+                alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
+            }
+
+            alert.setTitle("Clear Cell");
+            alert.setHeaderText("Clear all text from this cell?");
+
+            ButtonType yes = new ButtonType("Clear", ButtonBar.ButtonData.OK_DONE);
+            ButtonType no = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(yes, no);
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == yes) {
+                    codeArea.clear();
+                }
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    public void incrementAndDisplayExecutionCount() {
+        executionCount++;
+        executionCountLabelFXML.setText("[" + executionCount + "]");
+    }
+
+
 }

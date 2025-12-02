@@ -19,14 +19,30 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController extends GenericCellController {
-    @FXML private Button runBtn;
+
     @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
+    @FXML private Button runBtn; // The button that toggles between Run/Cancel
+
+    // Field to hold the thread/task of the current execution
+    private Thread executionThread = null;
+
+    // Field to hold the FontIcon for dynamic icon swapping
+    private FontIcon runIcon;
+    private FontIcon stopIcon;
 
     @FXML
     @Override
     protected void initialize() {
         // Initialize GenericCellController superclass first
         super.initialize();
+        // Stop Icon: Define the icon for 'Cancel' (e.g., a square stop icon)
+        // You'll need FontIcon imported: org.kordamp.ikonli.javafx.FontIcon
+        runIcon = (FontIcon) runBtn.getGraphic();
+        stopIcon = new FontIcon("fas-stop"); // Or use another relevant stop icon literal
+        stopIcon.setIconSize(16);
+        stopIcon.getStyleClass().add("font-icon"); // Apply the same style class as the run button
+
+        runBtn.setOnAction(e -> toggleExecution());
 
         // Listener for syntax highlighting (Using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
         codeArea.richChanges()
@@ -46,50 +62,8 @@ public class CodeCellController extends GenericCellController {
             return spacer;
         });
 
-        // --- BUTTON HANDLERS ---
-
-        runBtn.setOnAction(e -> runCell());
     }
 
-
-    private void runCell() {
-        outputBox.setVisible(true);
-        outputBox.getChildren().clear();
-
-        // --- Increment execution count ---
-        cellModel.incrementExecutionCount();
-
-        // --- Add spinner ---
-        HBox spinnerBox = new HBox(8);
-        FontIcon spinnerIcon = new FontIcon("fas-spinner");
-        spinnerIcon.getStyleClass().add("output-spinner");
-        RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
-        spin.setByAngle(360);
-        spin.setCycleCount(RotateTransition.INDEFINITE);
-        spin.play();
-        Label loadingText = new Label("Executing...");
-        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
-        spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
-        outputBox.getChildren().add(spinnerBox);
-        outputBox.applyCss();
-        outputBox.layout();
-        fadeIn(spinnerBox);
-
-        // --- Simulate background execution ---
-        Task<Void> fakeTask = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                Thread.sleep(1000); // Simulate work, replace with JShell code later
-                return null;
-            }
-        };
-
-        fakeTask.setOnSucceeded(ev -> {
-            displayOutput(spin);
-        });
-        new Thread(fakeTask).start();
-        cellModel.dumpContent(); // temp debug print
-    }
 
     private void displayOutput(RotateTransition spin) {
         spin.stop();
@@ -160,5 +134,81 @@ public class CodeCellController extends GenericCellController {
             case "Plain Text" -> "Enter plain text...";
             default -> "";
         };
+    }
+    private void executeCode() {
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+
+        // --- Increment execution count at start ---
+        incrementAndDisplayExecutionCount();
+        cellModel.incrementExecutionCount();
+        // 1. Change UI state to CANCEL
+        setRunButtonState(true);
+
+        // Spinner
+        HBox spinnerBox = new HBox(8);
+        FontIcon spinnerIcon = new FontIcon("fas-spinner");
+        spinnerIcon.getStyleClass().add("output-spinner");
+        RotateTransition spin = new RotateTransition(Duration.seconds(1), spinnerIcon);
+        spin.setByAngle(360);
+        spin.setCycleCount(RotateTransition.INDEFINITE);
+        spin.play();
+        Label loadingText = new Label("Executing...");
+        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
+        spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
+        outputBox.getChildren().add(spinnerBox);
+        fadeIn(spinnerBox);
+
+
+
+        // Execution thread
+        executionThread = new Thread(() -> {
+            try {
+                Thread.sleep(5000); // Simulate code execution
+                // --------------------------------------------------
+
+                if (!Thread.currentThread().isInterrupted()) {
+                    Platform.runLater(() -> {
+                        displayOutput(spin);
+                        setRunButtonState(false);
+                    });
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Platform.runLater(() -> {
+                    outputBox.getChildren().clear();
+                    Label cancelledLabel = new Label("[Execution Cancelled]");
+                    cancelledLabel.getStyleClass().add("execution-cancelled");
+                    outputBox.getChildren().add(cancelledLabel);
+                    setRunButtonState(false);
+                });
+            }
+        });
+        executionThread.start();
+    }
+    private void toggleExecution() {
+        if (executionThread != null && executionThread.isAlive()) {
+            // If a thread is running, CANCEL it
+            executionThread.interrupt();
+            executionThread = null;
+        } else {
+            // If no thread is running, START execution
+            executeCode();
+        }
+    }
+
+    /**
+     * Updates the run button's icon and tooltip based on the running state.
+     * @param isRunning True if execution is starting, False if it has finished or been cancelled.
+     */
+    private void setRunButtonState(boolean isRunning) {
+        if (isRunning) {
+            runBtn.setGraphic(stopIcon);
+            runBtn.setTooltip(new Tooltip("Cancel Execution"));
+        } else {
+            runBtn.setGraphic(runIcon);
+            runBtn.setTooltip(new Tooltip("Run this cell"));
+            executionThread = null; // Ensure thread reference is cleared
+        }
     }
 }
