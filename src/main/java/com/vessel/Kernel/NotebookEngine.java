@@ -21,6 +21,9 @@ public class NotebookEngine {
     // === Persistent Jshell ===
     private final JShell jshell;
 
+    // keeps the most recent full output for ExecutionResult
+    private final StringBuilder currentOutput = new StringBuilder();
+    private StreamingOutputStream.Listener streamingListener;
 
     // Buffers
     private ByteArrayOutputStream jshellBuffer;
@@ -31,7 +34,7 @@ public class NotebookEngine {
     private volatile boolean isExecuting = false;
 
     // === Timeouts ===
-    private static final long EXECUTION_TIMEOUT_MS = 5_000; // 5s
+    private static final long EXECUTION_TIMEOUT_MS = 30_000; // 30s changing this to make loops run longer before timing out
     private final ExecutorService executorService; // A Java thread-pool interface used to run tasks asynchronously.
 
     // === Loggers ===
@@ -120,6 +123,22 @@ public class NotebookEngine {
             executionLock.unlock();
         }
     }
+    // 1) Initialize stepwise loop state
+    public void startStepLoop(String initCode) {
+        executeInternal(initCode); // e.g. "int i = 0;"
+    }
+
+    // 2) Execute one step and check condition
+    public boolean stepLoop(String stepCode, String conditionCode) {
+        // run one iteration body
+        executeInternal(stepCode); // e.g. "System.out.println(i); i++;"
+
+        // check if we should continue
+        ExecutionResult condResult = executeInternal(conditionCode); // e.g. "i < 5"
+        String condText = condResult.output().trim();
+        // JShell prints expression values like "Expressions value: true"
+        return condText.contains("true");
+    }
 
     // === Constructor ===
 
@@ -140,21 +159,31 @@ public class NotebookEngine {
                     return t;
                 }
         );
+        //Updated Constructor where ByteArrayOutputStream in removed and StreamingOutputStream is added
+        StreamingOutputStream.Listener listener = chunk -> {
+            synchronized (currentOutput) {
+                currentOutput.append(chunk);
+            }
+            if (streamingListener != null) {
+                streamingListener.onText(chunk);
+            }
+        };
 
-        jshellBuffer = new ByteArrayOutputStream();
-         jshellPrintStream = new PrintStream(jshellBuffer, true); // autoflush
+        StreamingOutputStream sos = new StreamingOutputStream(listener);
+        PrintStream jshellPrintStream = new PrintStream(sos, true);
 
-        // Init. JShell with output streams
         this.jshell = JShell.builder()
                 .out(jshellPrintStream)
                 .err(jshellPrintStream)
                 .build();
 
-        // Load Init Snippets
         loadInitSnippets(jshell, INIT_SNIPPETS);
         engine.info(" NotebookEngine initialized with persistent JShell kernel");
     }
-
+    // Add a setter so the UI can tell the engine how to stream:
+    public void setStreamingListener(StreamingOutputStream.Listener listener) {
+        this.streamingListener = listener;
+    }
 
 
     // Thread safe execution.
@@ -253,16 +282,15 @@ public class NotebookEngine {
         // Start timer
         long startTime = System.nanoTime();
 
-        // Clear the persistent buffer before running new code
-        jshellBuffer.reset();
-
-        // Output builder and success flag
-        StringBuilder output = new StringBuilder();
+        synchronized (currentOutput) {
+            currentOutput.setLength(0);   // clear previous run
+        }
+        //success flag
         StringBuilder errors = new StringBuilder();
         final boolean[] success = {true};
 
         try {
-            // Check memory usage
+            // Check memory usage (same as before)
             Runtime runtime = Runtime.getRuntime();
             long usedMemory = runtime.totalMemory() - runtime.freeMemory();
             long maxMemory = runtime.maxMemory();
@@ -276,7 +304,6 @@ public class NotebookEngine {
             }
 
             // Execute JShell snippet
-            //outputStream.flush();
             List<SnippetEvent> events = jshell.eval(code);
             System.out.println("events.size() = " + events.size());
 
@@ -333,60 +360,54 @@ public class NotebookEngine {
 
                 // Expression result
                 if (event.value() != null && !event.value().isEmpty()) {
-                    output.append("Expressions value: ")
-                            .append(event.value()).append("\n");
+                    // Note: this still goes to the final output, not streaming,
+                    // because JShell only gives value after evaluation.
+                    synchronized (currentOutput) {
+                        currentOutput.append("Expressions value: ")
+                                .append(event.value()).append("\n");
+                    }
                     engine.debug("Expressions value: " + event.value());
                 }
             }
 
-            // Capture STDOUT
-            // Force flushing just to be safe. (even though auto-flush is set true on init.)
-            jshellPrintStream.flush();
-            String printed = jshellBuffer.toString();
-
-            if (!printed.isEmpty()) {
-                output.append(printed);
-                if (!printed.endsWith("\n")) output.append("\n");
-                engine.debug("Stdout captured: " + printed.length() + " chars");
-            }
+            // IMPORTANT: no ByteArrayOutputStream/printed capture here anymore.
+            // StreamingOutputStream is already pushing stdout/stderr to currentOutput
+            // and to the UI live.
 
         } catch (OutOfMemoryError e) {
-            // Out-of-memory handler
             engine.severe("OutOfMemoryError: " + e.getMessage());
-            output.append("FATAL: Out of memory!\n")
-                    .append("The kernel will be reset.\n");
+            synchronized (currentOutput) {
+                currentOutput.append("FATAL: Out of memory!\n")
+                        .append("The kernel will be reset.\n");
+            }
             success[0] = false;
-
-            // Reset kernel async
             CompletableFuture.runAsync(this::resetKernel);
 
         } catch (StackOverflowError e) {
-            // Stack overflow handler
             engine.severe("StackOverflowError: " + e.getMessage());
             errors.append("FATAL: Stack overflow!\n")
                     .append("Likely infinite recursion.\n");
             success[0] = false;
 
         } catch (Exception e) {
-            // General error handler
             engine.error("Unexpected error", e);
             errors.append(" UNEXPECTED ERROR: ")
                     .append(e.getClass().getSimpleName()).append(": ")
                     .append(e.getMessage()).append("\n");
             success[0] = false;
-
         }
 
-        // Compute execution time
-        long executionTime = (System.nanoTime() - startTime) / 1_000_000;
+            long executionTime = (System.nanoTime() - startTime) / 1_000_000;
 
-        // Append time
-        output.append("\nExecution time: ")
-                .append(executionTime).append(" ms\n");
+            String finalOutput;
+            synchronized (currentOutput) {
+                currentOutput.append("\nExecution time: ")
+                        .append(executionTime).append(" ms\n");
+                finalOutput = currentOutput.toString();
+            }
 
-        // Return result
-        return new ExecutionResult(output.toString(), errors.toString(), executionTime, success[0]);
-    }
+            return new ExecutionResult(finalOutput, errors.toString(), executionTime, success[0]);
+        }
 
     // Clears Kernel, Useful for 'Restart Kernel' button in front end.
     public void resetKernel() {
@@ -413,6 +434,7 @@ public class NotebookEngine {
             executionLock.unlock();
         }
     }
+
 
 
     // let front end interrupt Kernel

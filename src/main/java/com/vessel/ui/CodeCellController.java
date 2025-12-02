@@ -35,6 +35,9 @@ public class CodeCellController {
     private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     private NotebookCell cellModel;
     private NotebookEngine engine;
+    // CodeCellController.java
+    private TextArea liveOutputArea;
+
 
     /**
      * This is called by the NotebookController after loading the cell.
@@ -133,25 +136,69 @@ public class CodeCellController {
         outputBox.layout();
         fadeIn(spinnerBox);
 
-        // --- Simulate background execution ---
+        // create TextArea for live output
+        liveOutputArea = new TextArea();
+        liveOutputArea.getStyleClass().add("read-only-output");
+        liveOutputArea.setEditable(false);
+        liveOutputArea.setWrapText(true);
+        liveOutputArea.setFocusTraversable(false);
+        liveOutputArea.setMaxWidth(1000);
+        outputBox.getChildren().add(liveOutputArea);
+        String code = cellModel.getContent();
+        String[] parts = code.split("// @step|// @body|// @cond");
+        if (parts.length == 4) {
+            String initCode = parts[1].trim();
+            String bodyCode = parts[2].trim();
+            String condCode = parts[3].trim();
+
+            Task<Void> shellTask = new Task<>() {
+                @Override
+                protected Void call() {
+                    engine.startStepLoop(initCode);
+                    while (engine.stepLoop(bodyCode, condCode)) {
+                        // optional small sleep so UI has time to repaint
+                        try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+                    }
+                    return null;
+                }
+            };
+
+            shellTask.setOnSucceeded(ev -> {
+                spin.stop();
+                // output already streamed into liveOutputArea
+                engine.setStreamingListener(null);
+            });
+
+            new Thread(shellTask).start();
+            return;
+        }
+
+        // register streaming listener on engine
+        engine.setStreamingListener(chunk ->
+                Platform.runLater(() -> {
+                    if (liveOutputArea != null) {
+                        liveOutputArea.appendText(chunk);
+                        adjustOutputAreaHeight(liveOutputArea);
+                    }
+                })
+        );
+
         Task<Void> shellTask = new Task<>() {
             @Override
-            protected Void call() throws Exception {
+            protected Void call() {
                 return engine.execute(cellModel);
             }
         };
 
         shellTask.setOnSucceeded(ev -> {
-            displayOutput(spin);
+            spin.stop();
+            displayOutput();   // will replace live area with final result if you want
+            // optionally clear listener so other cells can set their own
+            engine.setStreamingListener(null);
         });
 
         new Thread(shellTask).start();
-        cellModel.dumpContent(); // temp debug print
-    }
-
-    private void displayOutput(RotateTransition spin) {
-        spin.stop();
-        displayOutput();
+        cellModel.dumpContent();
     }
 
     // Overload for loading old outputs on loading existing file
