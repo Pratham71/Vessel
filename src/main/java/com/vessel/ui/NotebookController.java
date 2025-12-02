@@ -29,7 +29,7 @@ public class NotebookController {
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
-    private Notebook notebook = new Notebook("Untitled");
+    private Notebook currentNotebook;
 
 
     // Pass scene reference from Main.java
@@ -40,7 +40,11 @@ public class NotebookController {
     }
 
     @FXML
-    private void initialize() { // called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+    private void initialize() {// called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+
+        // Notebook init.
+        currentNotebook = new Notebook("untitled"); //  hardcoded right now
+
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
@@ -62,7 +66,7 @@ public class NotebookController {
      private void addCell(CellType initialType) {
          NotebookCell cellModel = new NotebookCell();
          cellModel.setType(initialType);
-         notebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
+         currentNotebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
          codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
      }
 
@@ -79,6 +83,9 @@ public class NotebookController {
             VBox cell = loader.load();
             CodeCellController cellController = loader.getController();
             cellController.setNotebookController(this);
+            if (cellController instanceof CodeCellController ) {
+                cellController.setEngine(currentNotebook.getEngine());
+            }
             cellController.setNotebookCell(cellModel); // Pass cellModel object to the controller
             cellController.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             cellController.setRoot(cell); // pass root for removal
@@ -93,39 +100,20 @@ public class NotebookController {
         return null;
     }
 
-    // creates button icon
-    private Button makeIconButton(String iconLiteral, String tooltipText) {
-        FontIcon icon = new FontIcon(iconLiteral);
-        icon.getStyleClass().add("font-icon");
-        Button btn = new Button();
-        btn.setGraphic(icon);
-        btn.setTooltip(new Tooltip(tooltipText));
-        return btn;
-    }
-//    // gives place holder text - ive updated it to use new enum for the sake of later use
-//    private String getPromptForType(CellType type) {
-//        return switch (type) {
-//            case CODE -> "Enter Java code here...";
-//            case MARKDOWN -> "Enter Markdown content...";
-//            case TEXT -> "Enter plain text...";
-//        };
-//    }
-    // rebuild the notebook model from all current ui cells before saving
-    // ensures ui text and model data stay in sync
     private void syncModelFromUI() {
-        notebook.getCells().clear();
+        currentNotebook.getCells().clear();
         for (var node : codeCellContainer.getChildren()) {
             if (node instanceof VBox cellBox) {
                 // retrieve the controller for this cell
                 CodeCellController controller = (CodeCellController) cellBox.getUserData();
                 NotebookCell cell = controller.getNotebookCell();
-                notebook.addCell(cell);
+                currentNotebook.addCell(cell);
             }
         }
     }
 
     public Notebook getNotebook() {
-        return notebook;
+        return currentNotebook;
     }
 
 
@@ -150,7 +138,7 @@ public class NotebookController {
         fileChooser.setTitle("Save Notebook");
         // open in /notebooks by default
         fileChooser.setInitialDirectory(new File("notebooks"));
-        fileChooser.setInitialFileName(notebook.getName() + ".json");
+        fileChooser.setInitialFileName(currentNotebook.getName() + ".json");
         // allow only json files
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
@@ -161,7 +149,7 @@ public class NotebookController {
         Task<Boolean> saveTask = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                return persistence.saveToPath(notebook, file.getAbsolutePath());
+                return persistence.saveToPath(currentNotebook, file.getAbsolutePath());
             }
         };
 
@@ -184,7 +172,7 @@ public class NotebookController {
         if (file == null) return;
         Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
         if (loaded != null) {
-            notebook = loaded;
+            currentNotebook = loaded;
             renderNotebook();
             System.out.println("loaded ok");
         } else {
@@ -195,19 +183,9 @@ public class NotebookController {
     // clears ui and rebuilds all cells from the loaded notebook model
     private void renderNotebook() {
         codeCellContainer.getChildren().clear();
-        for (NotebookCell cell : notebook.getCells()) {
+        for (NotebookCell cell : currentNotebook.getCells()) {
             codeCellContainer.getChildren().add(createCellUI(cell.getType(), cell));
         }
-    }
-
-
-    // will update once json logic is set - calls same factory method for creating cells
-    private void createCodeCellFromFile(CellType type, String content) {
-        NotebookCell cellModel = new NotebookCell();
-        cellModel.setType(type);
-        cellModel.setContent(content);
-
-        codeCellContainer.getChildren().add(createCellUI(type, cellModel));
     }
 
     // -------------------- Menu Actions --------------------
@@ -221,7 +199,7 @@ public class NotebookController {
     @FXML private void showAbout() { System.out.println("Show About"); }
     @FXML private void showDocs() { System.out.println("Show Documentation"); }
 
-    // -------------------- Theme Toggle --------------------
+    // -------------------- Helpers --------------------
     // simple method to toggle theme
     @FXML
     private void toggleTheme() {
@@ -235,5 +213,9 @@ public class NotebookController {
             scene.getStylesheets().add(getClass().getResource("/dark.css").toExternalForm());
             theme = SystemThemeDetector.Theme.DARK;
         }
+    }
+
+    public Notebook getCurrentNotebook() {
+        return currentNotebook;
     }
 }

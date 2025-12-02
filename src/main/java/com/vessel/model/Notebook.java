@@ -18,15 +18,20 @@ Optional:
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vessel.Kernel.NotebookEngine;
+import com.vessel.Kernel.ExecutionResult;
+
 public class Notebook {
 
     private String name;
     private List<NotebookCell> cells = new ArrayList<>();
+    private transient NotebookEngine engine;
 
     public Notebook(String name) {
         this.name = name;
-    }
 
+        initEngineIfNull();
+    }
     // Add a new cell to the notebook
     public void addCell(NotebookCell cell) {
         cells.add(cell);
@@ -59,5 +64,27 @@ public class Notebook {
     // Notebook name (used for JSON save filename)
     public String getName() {
         return name;
+    }
+
+    // Engine realated code:
+    public NotebookEngine getEngine() { return engine; }
+
+
+    public void shutdownEngine(){
+        if(getEngine().isExecuting()){
+            getEngine().interrupt();
+        }
+
+        if (getEngine() != null) {
+            getEngine().shutdown();
+            engine = null;
+        }
+    }
+
+
+    public void initEngineIfNull() {
+        if (this.engine == null) {
+            this.engine = new NotebookEngine();
+        }
     }
 }

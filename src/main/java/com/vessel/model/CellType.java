@@ -18,4 +18,3 @@ public enum CellType {
         return displayName;
     }
 }
-
