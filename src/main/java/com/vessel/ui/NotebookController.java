@@ -172,7 +172,11 @@ public class NotebookController {
         if (file == null) return;
         Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
         if (loaded != null) {
+            if (currentNotebook != null) {
+                currentNotebook.shutdownEngine();
+            }
             currentNotebook = loaded;
+            currentNotebook.initEngineIfNull();
             renderNotebook();
             System.out.println("loaded ok");
         } else {
