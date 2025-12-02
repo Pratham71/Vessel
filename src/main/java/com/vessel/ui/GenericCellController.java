@@ -123,7 +123,7 @@ public class GenericCellController {
             boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
 
             // Remove leading slash to avoid resource loading issues
-            String theme = isDarkMode ? "resources/dark.css" : "resources/light.css";
+            String theme = isDarkMode ? "/dark.css" : "/light.css";
             var cssResource = getClass().getResource(theme);
 
             if (cssResource == null) {
@@ -163,7 +163,7 @@ public class GenericCellController {
             alert.getDialogPane().getStylesheets().clear();
 
             boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
-            String theme = isDarkMode ? "style/dark-theme.css" : "style/light-theme.css";
+            String theme = isDarkMode ? "/dark.css" : "/light.css";
             var cssResource = getClass().getResource(theme);
 
             if (cssResource == null) {
