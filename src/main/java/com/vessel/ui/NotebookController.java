@@ -144,39 +144,29 @@ public class NotebookController {
     // Saving project to system
     @FXML
     private void saveProject() {
-
         // sync UI → model
         syncModelFromUI();
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Notebook");
-
         // open in /notebooks by default
         fileChooser.setInitialDirectory(new File("notebooks"));
-
-        // default filename
         fileChooser.setInitialFileName(notebook.getName() + ".json");
-
         // allow only json files
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
-
         File file = fileChooser.showSaveDialog(codeCellContainer.getScene().getWindow());
-
         if (file == null) return; // user canceled
 
         // wrap save logic in Task
         Task<Boolean> saveTask = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-
                 // placeholder progress until backend links real progress
                 for (int i = 0; i <= 100; i += 20) {
                     updateProgress(i, 100);
                     System.out.println("saving... " + i + "%");
                     Thread.sleep(300);
                 }
-
                 return persistence.saveToPath(notebook, file.getAbsolutePath());
             }
         };
@@ -187,26 +177,18 @@ public class NotebookController {
         new Thread(saveTask).start();
     }
 
-
-
-
     // opens already existing project
     // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Notebook");
-
         fileChooser.setInitialDirectory(new File("notebooks"));
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
-
         File file = fileChooser.showOpenDialog(codeCellContainer.getScene().getWindow());
         if (file == null) return;
-
         Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
-
         if (loaded != null) {
             notebook = loaded;
             renderNotebook();
@@ -215,7 +197,6 @@ public class NotebookController {
             System.out.println("load failed");
         }
     }
-
 
     // clears ui and rebuilds all cells from the loaded notebook model
     private void renderNotebook() {

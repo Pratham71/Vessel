@@ -43,10 +43,12 @@ public class NotebookPersistence {
         }
     }
 
-    // removes illegal characters from filename and replaces spaces with underscores
     private String sanitize(String name) {
-        return name.replaceAll("[^a-zA-Z0-9-_ ]", "")
-                .replace(" ", "_");
+        if (name == null) return "untitled";
+        // keep letters, numbers, dash, underscore, space
+        String cleaned = name.replaceAll("[^a-zA-Z0-9-_ ]", "");
+        if (cleaned.isBlank()) return "untitled";
+        return cleaned;
     }
 
     // converts the entire notebook object into json and writes it to disk
