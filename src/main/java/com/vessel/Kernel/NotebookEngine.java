@@ -8,12 +8,12 @@
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.vessel.model.NotebookCell;
 import jdk.jshell.JShell;
 import jdk.jshell.SnippetEvent;
 
@@ -21,10 +21,14 @@ public class NotebookEngine {
     // === Persistent Jshell ===
     private final JShell jshell;
 
+
+    // Buffers
+    private ByteArrayOutputStream jshellBuffer;
+    private PrintStream jshellPrintStream;
+
     // === Thread-Safety ===
     private final ReentrantLock executionLock = new ReentrantLock(); // Locks the execution thread.
     private volatile boolean isExecuting = false;
-    private volatile String currentExectionCellId = "001"; // to be implemented
 
     // === Timeouts ===
     private static final long EXECUTION_TIMEOUT_MS = 5_000; // 5s
@@ -45,7 +49,7 @@ public class NotebookEngine {
     // === Stats ===
     private int totalExecutions = 0;
     private long totalExecutionTime = 0;
-    private final LinkedList<ExecutionRecord> history = new LinkedList<>();
+    private final LinkedList<ExecutionResult> history = new LinkedList<>();
     private static final int MAX_HISTORY = 50;
 
 
@@ -58,7 +62,8 @@ public class NotebookEngine {
 
             // math
             "import java.lang.Math.*;",
-            "import java.math.*;"
+            "import java.math.*;",
+            "import java.lang.*;"
 
     );
 
@@ -129,27 +134,36 @@ public class NotebookEngine {
                     t.setDaemon(true);
 
                     // Give each thread a readable name based on the current cell
-                    t.setName("Jshell-Executor-" + currentExectionCellId);
+                    t.setName("Jshell-Worker");
 
                     engine.severe(" Jshell thread started: " + "`" + t.getName() + "`");
                     return t;
                 }
         );
 
+        jshellBuffer = new ByteArrayOutputStream();
+         jshellPrintStream = new PrintStream(jshellBuffer, true); // autoflush
+
         // Init. JShell with output streams
-        this.jshell = JShell.builder().build();
+        this.jshell = JShell.builder()
+                .out(jshellPrintStream)
+                .err(jshellPrintStream)
+                .build();
 
         // Load Init Snippets
         loadInitSnippets(jshell, INIT_SNIPPETS);
         engine.info(" NotebookEngine initialized with persistent JShell kernel");
     }
 
-    // Thread safe execution.
-    public ExecutionResult execute(String code) {
 
-        // Vallidation
-        if (code == null || code.trim().isEmpty()) {
-            return new ExecutionResult("", "Empty Code Cell", 0, false);
+
+    // Thread safe execution.
+    public Void execute(NotebookCell cell) {
+        String code = cell.getContent();
+
+//     Vallidation
+        if (code == null || code.trim().isBlank()) {
+            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
         }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
@@ -157,14 +171,14 @@ public class NotebookEngine {
             if (code.contains(pattern)) {
                 engine.warn(" Blocked dangerous pattern: " + pattern);
 
-                return new ExecutionResult("", "Blocked dangerous operation: " + pattern, -1, false);
+                cell.setExecutionResult(new ExecutionResult("", "Blocked dangerous operation: " + pattern, -1, false));
             }
         }
 
         // Try to get the execution lock (non-blocking)
         if (!executionLock.tryLock()) {
             engine.warning(" Execution blocked: Another cell is running.");
-            return new ExecutionResult("", "Execution blocked: Another cell is running.\nPlease wait or interrupt it.", -1, false);
+            cell.setExecutionResult(new ExecutionResult("", "Execution blocked: Another cell is running.\nPlease wait or interrupt it.", -1, false));
         }
 
         try {
@@ -182,10 +196,10 @@ public class NotebookEngine {
                 // Updating Stats
                 totalExecutions++;
                 totalExecutionTime += result.executionTimeMs();
-                addToHistory(code, result);
+                //addToHistory(code, result);
 
                 engine.info(" Code Execution complete");
-                return result;
+                cell.setExecutionResult(result);
 
             } catch (TimeoutException e) {
 
@@ -198,9 +212,9 @@ public class NotebookEngine {
                 jshell.stop();
 
                 // Return a timeout result
-                return new ExecutionResult("", " TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
+                cell.setExecutionResult(new ExecutionResult("", "TIMEOUT: Execution Exceeded " + (EXECUTION_TIMEOUT_MS / 1000) +
                         " Possible infinite loop or recursion."
-                        , EXECUTION_TIMEOUT_MS, false);
+                        , EXECUTION_TIMEOUT_MS, false));
 
             } catch (InterruptedException ie) {
 
@@ -213,7 +227,7 @@ public class NotebookEngine {
                 engine.error(" Execution interrupted", ie);
 
                 // Return an interrupted result
-                return new ExecutionResult("", "Execution interrupted by user", -1, false);
+                cell.setExecutionResult(new ExecutionResult("", "Execution interrupted by user", -1, false));
 
             } catch (ExecutionException e) {
                 engine.error(" Execution failed with exception: ", e);
@@ -223,7 +237,7 @@ public class NotebookEngine {
                 if (cause == null) cause = e;
 
                 // Return a fatal error result
-                return new ExecutionResult("", " FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false);
+                cell.setExecutionResult(new ExecutionResult("", "FATAL ERROR: " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), -1, false));
             }
 
         } finally {
@@ -231,6 +245,7 @@ public class NotebookEngine {
             executionLock.unlock();
             engine.debug(" Execution lock Released.");
         }
+        return null;
     }
 
     // Internal Execution (Runs in executor thread)
@@ -238,17 +253,8 @@ public class NotebookEngine {
         // Start timer
         long startTime = System.nanoTime();
 
-        // Buffer for capturing System.out and System.err
-        ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
-        PrintStream outputStream = new PrintStream(outputBuffer);
-
-        // Save original print streams
-        PrintStream originalOut = System.out;
-        PrintStream originalErr = System.err;
-
-        // Redirect output to buffer
-        System.setOut(outputStream);
-        System.setErr(outputStream);
+        // Clear the persistent buffer before running new code
+        jshellBuffer.reset();
 
         // Output builder and success flag
         StringBuilder output = new StringBuilder();
@@ -272,6 +278,7 @@ public class NotebookEngine {
             // Execute JShell snippet
             //outputStream.flush();
             List<SnippetEvent> events = jshell.eval(code);
+            System.out.println("events.size() = " + events.size());
 
             if (events.isEmpty()) {
                 errors.append(" No output (empty snippet)");
@@ -279,7 +286,6 @@ public class NotebookEngine {
 
             // Process each event
             for (SnippetEvent event : events) {
-
                 // Snippet status handling
                 switch (event.status()) {
                     case REJECTED:
@@ -301,8 +307,7 @@ public class NotebookEngine {
 
                 // Compilation diagnostics
                 jshell.diagnostics(event.snippet()).forEach(diag -> {
-                    errors.append("Compilation Error at line: ")
-                            .append(diag.getStartPosition()).append(": ")
+                    errors.append("Compilation Error: ")
                             .append(diag.getMessage(null)).append("\n");
                     engine.severe(" Compilation error: " + diag.getMessage(null));
                     success[0] = false;
@@ -334,9 +339,10 @@ public class NotebookEngine {
                 }
             }
 
-            // Capture printed output
-            outputStream.flush();
-            String printed = outputBuffer.toString();
+            // Capture STDOUT
+            // Force flushing just to be safe. (even though auto-flush is set true on init.)
+            jshellPrintStream.flush();
+            String printed = jshellBuffer.toString();
 
             if (!printed.isEmpty()) {
                 output.append(printed);
@@ -369,17 +375,13 @@ public class NotebookEngine {
                     .append(e.getMessage()).append("\n");
             success[0] = false;
 
-        } finally {
-            // Restore stdout/stderr
-            System.setOut(originalOut);
-            System.setErr(originalErr);
         }
 
         // Compute execution time
         long executionTime = (System.nanoTime() - startTime) / 1_000_000;
 
         // Append time
-        output.append("\n Execution time: ")
+        output.append("\nExecution time: ")
                 .append(executionTime).append(" ms\n");
 
         // Return result
@@ -493,29 +495,29 @@ public class NotebookEngine {
         return stats;
     }
 
-    private void addToHistory(String code, ExecutionResult result) {
-        history.add(new ExecutionRecord(
-                code,
-                result.output(),
-                result.executionTimeMs(),
-                result.success()
-        ));
-
-        engine.info(" Adding " + code + " to history");
-
-        if (history.size() > MAX_HISTORY) {
-            history.removeFirst();
-        }
-    }
-
-    public List<ExecutionRecord> getHistory() {
-        return new ArrayList<ExecutionRecord>(history);
-    }
-
-    public void clearHistory() {
-        history.clear();
-        engine.info(" Clearing history...");
-    }
+//    private void addToHistory(String code, ExecutionResult result) {
+//        history.add(new ExecutionResult(
+//                code,
+//                result.output(),
+//                result.executionTimeMs(),
+//                result.success()
+//        ));
+//
+//        engine.info(" Adding " + code + " to history");
+//
+//        if (history.size() > MAX_HISTORY) {
+//            history.removeFirst();
+//        }
+//    }
+//
+//    public List<ExecutionResult> getHistory() {
+//        return new ArrayList<ExecutionResult>(history);
+//    }
+//
+//    public void clearHistory() {
+//        history.clear();
+//        engine.info(" Clearing history...");
+//    }
 
     // Cleanup and close jshell safely
     public void shutdown() {
@@ -538,7 +540,7 @@ public class NotebookEngine {
             engine.info(" Shutting down JShell...");
         }
 
-        clearHistory();
+        //clearHistory();
 
         engine.info(" NotebookEngine shutdown complete.");
     }

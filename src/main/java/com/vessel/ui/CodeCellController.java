@@ -2,13 +2,15 @@
 
 package com.vessel.ui;
 
+import com.vessel.Kernel.ExecutionResult;
+import com.vessel.Kernel.NotebookEngine;
+import com.vessel.model.NotebookCell;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
-import javafx.concurrent.Task;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -16,19 +18,55 @@ import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.util.regex.*;
+
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController extends GenericCellController {
 
     @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
     @FXML private Button runBtn; // The button that toggles between Run/Cancel
+    @FXML private VBox root; // This is the root of the cell
+
+    private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
+    private NotebookCell cellModel;
+    private NotebookController notebookController;
+
+    private NotebookEngine engine;
+
+    /**
+     * This is called by the NotebookController after loading the cell.
+     */
+
+    public void setParentContainer(VBox parent) {
+        this.parentContainer = parent; // #TODO: move to superclass
+    }
 
     // Field to hold the thread/task of the current execution
     private Thread executionThread = null;
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
+    }
 
     // Field to hold the FontIcon for dynamic icon swapping
     private FontIcon runIcon;
     private FontIcon stopIcon;
+
+    @Override
+    public void setNotebookCell(NotebookCell cell) {
+//        if (cell.getContent() != null && !cell.getContent().isBlank()) {
+//            // Fill UI from whatever the model contains (e.g. on loading)
+//            codeArea.replaceText(cell.getContent());
+//        } // #TODO: Update in superclass
+        super.setNotebookCell(cell);
+        if (cell.getExecutionResult() != null && !cell.getContent().isBlank()) {
+            displayOutput();
+        }
+    }
+
+    public NotebookCell getNotebookCell() {
+        return cellModel;
+    }
 
     @FXML
     @Override
@@ -67,19 +105,34 @@ public class CodeCellController extends GenericCellController {
 
     private void displayOutput(RotateTransition spin) {
         spin.stop();
+        displayOutput();
+    }
+
+    // Overload for loading old outputs on loading existing file
+    private void displayOutput() {
         outputBox.getChildren().clear();
+
+        // explicit check for when loading a file
+        if (!outputBox.isVisible()) {
+            outputBox.setVisible(true);
+        }
 
         // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
         // Currently just prints whatever is in the box back as output
-        String shellOutput = codeArea.getText().isEmpty() ? "" : "Run clicked for " + cellLanguage.getValue() + ":\n" + codeArea.getText();
+        ExecutionResult shellResult = cellModel.getExecutionResult();
 
-        if (shellOutput.trim().isEmpty()) {
+        if (!shellResult.success()) {
+            Label err = new Label("Error:\n" + shellResult.error());
+            err.setStyle("-fx-text-fill: #ff5555;");
+            outputBox.getChildren().add(err);
+        }
+        else if (shellResult.output().trim().isEmpty()) {
             Label noOutputLabel = new Label("(No output to print)");
             noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
             outputBox.getChildren().add(noOutputLabel);
             fadeIn(noOutputLabel);
         } else {
-            TextArea resultArea = new TextArea(shellOutput.trim());
+            TextArea resultArea = new TextArea(shellResult.output().trim());
             resultArea.getStyleClass().add("read-only-output");
             resultArea.setEditable(false);
             resultArea.setWrapText(true);
@@ -97,6 +150,18 @@ public class CodeCellController extends GenericCellController {
         }
         outputBox.setPrefHeight(-1); // reset container sizing
     }
+
+    private void deleteCell() {
+        if (parentContainer != null && root != null) {
+            parentContainer.getChildren().remove(root);
+        }
+        // TODO: Move to superclass
+        if (cellModel != null) {
+            // also remove from notebook model
+            notebookController.getNotebook().removeCell(cellModel.getId());
+        }
+    }
+
 
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
@@ -127,14 +192,6 @@ public class CodeCellController extends GenericCellController {
         fade.play();
     }
 
-    private String getPromptForType(String type) {
-        return switch (type) {
-            case "Java Code" -> "Enter Java code here...";
-            case "Markdown" -> "Enter Markdown content...";
-            case "Plain Text" -> "Enter plain text...";
-            default -> "";
-        };
-    }
     private void executeCode() {
         outputBox.setVisible(true);
         outputBox.getChildren().clear();
@@ -196,6 +253,11 @@ public class CodeCellController extends GenericCellController {
             executeCode();
         }
     }
+    public void setEngine(NotebookEngine engine) {
+        this.engine = engine;
+    }
+
+}
 
     /**
      * Updates the run button's icon and tooltip based on the running state.
