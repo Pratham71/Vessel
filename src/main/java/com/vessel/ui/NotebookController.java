@@ -18,6 +18,7 @@ package com.vessel.ui;
 *           -you can also autosave every x minutes
 * #TODO: untitled files with new content should prompt a dialogue if user tries closing app without saving it
 *       - make sure dialogue/alert is positioned on top of parent window
+* #TODO: Add logic (if present in branch) for auto indents, auto closing brackets etc.
 *
 * #TODO: Add a "New notebook" button/option to the File tab in the menubar that opens a new note book
 * #TODO: Add zoom functionality

@@ -211,7 +211,7 @@ public class CodeCellController extends GenericCellController {
             spin.stop();
             outputBox.getChildren().clear();
             Label cancelled = new Label("[Execution Cancelled]");
-            cancelled.getStyleClass().add("execution-cancelled");
+            cancelled.getStyleClass().add("output-label");
             outputBox.getChildren().add(cancelled);
             setRunButtonState(false);
         });
