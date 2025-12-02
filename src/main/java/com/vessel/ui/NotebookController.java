@@ -161,12 +161,6 @@ public class NotebookController {
         Task<Boolean> saveTask = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                // placeholder progress until backend links real progress
-                for (int i = 0; i <= 100; i += 20) {
-                    updateProgress(i, 100);
-                    System.out.println("saving... " + i + "%");
-                    Thread.sleep(300);
-                }
                 return persistence.saveToPath(notebook, file.getAbsolutePath());
             }
         };
