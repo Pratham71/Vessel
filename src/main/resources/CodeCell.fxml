@@ -47,8 +47,17 @@
 
     <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
 
-    <VBox fx:id="outputBox" spacing="0" styleClass="output-area" minHeight="0" maxWidth="1000" visible="false">
+    <VBox fx:id="outputBox" spacing="0" styleClass="output-area"
+          minHeight="0" maxWidth="1000" visible="false">
         <!-- Output UI will be injected here dynamically by the controller -->
-        <!-- Initially kept invisible until output injected-->
     </VBox>
+
+    <!-- NEW: input bar for interactive System.in -->
+    <HBox spacing="6">
+        <TextField fx:id="inputField"
+                   promptText="Type input for System.in and press Send"
+                   HBox.hgrow="ALWAYS"/>
+        <Button text="Send" onAction="#sendInteractiveInput"/>
+    </HBox>
+
 </VBox>

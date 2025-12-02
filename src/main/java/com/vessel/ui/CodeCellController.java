@@ -6,6 +6,8 @@ import com.vessel.Kernel.ExecutionResult;
 import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
+import com.vessel.util.InteractiveCompiler;
+import com.vessel.util.InteractiveProcess;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
@@ -21,22 +23,47 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
 
+import java.io.IOException;
+
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController {
-    @FXML private ChoiceBox<CellType> cellLanguage;
-    @FXML private Button runBtn;
-    @FXML private Button deleteBtn;
-    @FXML private Button clearBtn;
-    @FXML private CodeArea codeArea;
-    @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
-    @FXML private VBox root; // This is the root of the cell
+    @FXML
+    private ChoiceBox<CellType> cellLanguage;
+    @FXML
+    private Button runBtn;
+    @FXML
+    private Button deleteBtn;
+    @FXML
+    private Button clearBtn;
+    @FXML
+    private CodeArea codeArea;
+    @FXML
+    private VBox outputBox; // New outputbox -> JShell output goes in here
+    @FXML
+    private VBox root; // This is the root of the cell
 
     private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     private NotebookCell cellModel;
     private NotebookEngine engine;
     // CodeCellController.java
     private TextArea liveOutputArea;
+
+    @FXML
+    private TextField inputField;
+
+    @FXML
+    private void sendInteractiveInput() {
+        if (interactiveProcess == null) return;
+        String text = inputField.getText();
+        inputField.clear();
+        try {
+            interactiveProcess.sendLine(text);
+        } catch (IOException e) {
+            // optional: append error to outputBox
+        }
+    }
+
 
 
     /**
@@ -70,6 +97,8 @@ public class CodeCellController {
         }
         cellLanguage.setValue(cell.getType());
     }
+
+    private InteractiveProcess interactiveProcess;
 
     public NotebookCell getNotebookCell() {
         return cellModel;
@@ -113,14 +142,12 @@ public class CodeCellController {
     }
 
 
-    private void runCell() {
+    private void runJshellCell() {
         outputBox.setVisible(true);
         outputBox.getChildren().clear();
 
-        // --- Increment execution count ---
         cellModel.incrementExecutionCount();
 
-        // --- Add spinner ---
         HBox spinnerBox = new HBox(8);
         FontIcon spinnerIcon = new FontIcon("fas-spinner");
         spinnerIcon.getStyleClass().add("output-spinner");
@@ -136,7 +163,6 @@ public class CodeCellController {
         outputBox.layout();
         fadeIn(spinnerBox);
 
-        // create TextArea for live output
         liveOutputArea = new TextArea();
         liveOutputArea.getStyleClass().add("read-only-output");
         liveOutputArea.setEditable(false);
@@ -144,6 +170,7 @@ public class CodeCellController {
         liveOutputArea.setFocusTraversable(false);
         liveOutputArea.setMaxWidth(1000);
         outputBox.getChildren().add(liveOutputArea);
+
         String code = cellModel.getContent();
         String[] parts = code.split("// @step|// @body|// @cond");
         if (parts.length == 4) {
@@ -156,7 +183,6 @@ public class CodeCellController {
                 protected Void call() {
                     engine.startStepLoop(initCode);
                     while (engine.stepLoop(bodyCode, condCode)) {
-                        // optional small sleep so UI has time to repaint
                         try { Thread.sleep(100); } catch (InterruptedException ignored) {}
                     }
                     return null;
@@ -165,7 +191,6 @@ public class CodeCellController {
 
             shellTask.setOnSucceeded(ev -> {
                 spin.stop();
-                // output already streamed into liveOutputArea
                 engine.setStreamingListener(null);
             });
 
@@ -173,7 +198,6 @@ public class CodeCellController {
             return;
         }
 
-        // register streaming listener on engine
         engine.setStreamingListener(chunk ->
                 Platform.runLater(() -> {
                     if (liveOutputArea != null) {
@@ -192,14 +216,29 @@ public class CodeCellController {
 
         shellTask.setOnSucceeded(ev -> {
             spin.stop();
-            displayOutput();   // will replace live area with final result if you want
-            // optionally clear listener so other cells can set their own
+            displayOutput();
             engine.setStreamingListener(null);
         });
 
         new Thread(shellTask).start();
         cellModel.dumpContent();
     }
+
+
+
+    private void runCell() {
+        String code = cellModel.getContent();
+        if (code == null || code.isBlank()) return;
+
+        boolean isInteractive = code.contains("Scanner") && code.contains("System.in");
+        if (isInteractive) {
+            runInteractiveCell();
+        } else {
+            runJshellCell();   // your existing JShell logic (renamed from old runCell)
+        }
+    }
+
+
 
     // Overload for loading old outputs on loading existing file
     private void displayOutput() {
@@ -218,8 +257,7 @@ public class CodeCellController {
             Label err = new Label("Error:\n" + shellResult.error());
             err.setStyle("-fx-text-fill: #ff5555;");
             outputBox.getChildren().add(err);
-        }
-        else if (shellResult.output().trim().isEmpty()) {
+        } else if (shellResult.output().trim().isEmpty()) {
             Label noOutputLabel = new Label("(No output to print)");
             noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
             outputBox.getChildren().add(noOutputLabel);
@@ -287,4 +325,85 @@ public class CodeCellController {
         cellLanguage.setValue(type);
     }
 
+    private void runInteractiveCell() {
+        String code = cellModel.getContent();
+        if (code == null || code.isBlank()) return;
+
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+
+        TextArea consoleArea = new TextArea();
+        consoleArea.getStyleClass().add("read-only-output");
+        consoleArea.setEditable(false);
+        consoleArea.setWrapText(true);
+        consoleArea.setMaxWidth(1000);
+        outputBox.getChildren().add(consoleArea);
+
+        Task<ExecutionResult> task = new Task<>() {
+            @Override
+            protected ExecutionResult call() throws Exception {
+                long start = System.nanoTime();
+
+                // 1) compile cell code
+                var compileResult = InteractiveCompiler.compileInteractive(code);
+                if (!compileResult.success) {
+                    long timeMs = (System.nanoTime() - start) / 1_000_000;
+                    return new ExecutionResult(
+                            "",
+                            "Compilation failed:\n" + compileResult.compilerOutput,
+                            timeMs,
+                            false
+                    );
+                }
+
+                StringBuilder stdoutBuf = new StringBuilder();
+                StringBuilder stderrBuf = new StringBuilder();
+
+                // 2) start child JVM
+                interactiveProcess = new InteractiveProcess(
+                        compileResult.classOutputDir,
+                        compileResult.mainClassName,
+                        text -> {
+                            stdoutBuf.append(text);
+                            Platform.runLater(() -> consoleArea.appendText(text));
+                        },
+                        text -> {
+                            stderrBuf.append(text);
+                            Platform.runLater(() -> consoleArea.appendText(text));
+                        }
+                );
+
+                int exitCode = interactiveProcess.waitFor();
+                long timeMs = (System.nanoTime() - start) / 1_000_000;
+
+                boolean success = (exitCode == 0 && stderrBuf.length() == 0);
+                String output = stdoutBuf.toString() + "\n[exit code: " + exitCode + "]\n";
+                String error = stderrBuf.toString();
+
+                return new ExecutionResult(output, error, timeMs, success);
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
+            ExecutionResult result = task.getValue();
+            cellModel.setExecutionResult(result);
+            displayOutput();
+            interactiveProcess = null;
+        });
+
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
+            ExecutionResult result = new ExecutionResult(
+                    "",
+                    "Interactive run failed: " + (ex == null ? "unknown error" : ex.getMessage()),
+                    0,
+                    false
+            );
+            cellModel.setExecutionResult(result);
+            displayOutput();
+            interactiveProcess = null;
+        });
+
+        new Thread(task, "Interactive-Runner").start();
+    }
 }
