@@ -53,4 +53,30 @@ notebook-level json system.
 - loading notebook showing blank cells
 
 ---
+## updates
+
+## added
+- saveToPath() and loadFromPath() in notebookpersistence
+  - supports file-explorer–based saving and loading
+  - defaults to the /notebooks directory
+
+- setNotebookController() added to codecellcontroller
+  - enables child cells to update the active notebook model
+## changed
+- saveProject() updated
+    - now uses system file explorer instead of text input dialog
+    - wraps persistence logic in a task
+
+
+
+- openProject() updated
+    - explorer opens in /notebooks/ by default
+    - loads notebook json directly from full path
+
+- delete logic
+    - codecellcontroller.deleteCell() now:
+        - removes the ui node
+        - calls notebook.removecell(id)
+        - keeps ui and model in sync
+
 

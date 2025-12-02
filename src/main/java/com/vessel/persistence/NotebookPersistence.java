@@ -65,6 +65,26 @@ public class NotebookPersistence {
         }
     }
 
+    public boolean saveToPath(Notebook notebook, String fullPath) {
+        try (FileWriter writer = new FileWriter(fullPath)) {
+            writer.write(gson.toJson(notebook));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Notebook loadFromPath(String fullPath) {
+        try (FileReader reader = new FileReader(fullPath)) {
+            return gson.fromJson(reader, Notebook.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     // loads a notebook json file from disk and converts it back into a notebook object
     // returns null if file not found or loading failed
     public Notebook load(String name) {
