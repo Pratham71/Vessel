@@ -37,8 +37,6 @@ public class CodeCellController {
     private NotebookEngine engine;
     // CodeCellController.java
     private TextArea liveOutputArea;
-
-
     /**
      * This is called by the NotebookController after loading the cell.
      */
@@ -70,6 +68,18 @@ public class CodeCellController {
         }
         cellLanguage.setValue(cell.getType());
     }
+
+    private void promptForInputAndSetScanner() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Notebook Input");
+        dialog.setHeaderText("Provide input for sc");
+        dialog.setContentText("Enter a line:");
+
+        dialog.showAndWait().ifPresent(text -> {
+            engine.setSimulatedInput(text);
+        });
+    }
+
 
     public NotebookCell getNotebookCell() {
         return cellModel;
@@ -114,6 +124,37 @@ public class CodeCellController {
 
 
     private void runCell() {
+        String code = cellModel.getContent();
+
+        // 1) Detect usage of sc.
+        if (code.contains("sc.")) {
+            // Ask user for the "input" string once
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Notebook Input");
+            dialog.setHeaderText("Code uses sc, please provide input");
+            dialog.setContentText("Lines for scanner (\\n between values):");
+
+            var result = dialog.showAndWait();
+            if (result.isEmpty()) {
+                // user cancelled; you can just return
+                return;
+            }
+            String userInput = result.get();
+
+            // 2) Prepend a simulated Scanner definition
+            // Escaping quotes and backslashes for Java string literal:
+            String escaped = userInput
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"");
+            String prefix =
+                    "String __vesselInput = \"" + escaped + "\\n\";\n" +
+                            "java.util.Scanner sc = new java.util.Scanner(__vesselInput);\n";
+
+            code = prefix + code;
+            cellModel.setContent(code); // so engine sees modified code
+        }
+
+        // 3) then run the cell as you already do
         outputBox.setVisible(true);
         outputBox.getChildren().clear();
 
@@ -144,7 +185,6 @@ public class CodeCellController {
         liveOutputArea.setFocusTraversable(false);
         liveOutputArea.setMaxWidth(1000);
         outputBox.getChildren().add(liveOutputArea);
-        String code = cellModel.getContent();
         String[] parts = code.split("// @step|// @body|// @cond");
         if (parts.length == 4) {
             String initCode = parts[1].trim();
@@ -248,6 +288,17 @@ public class CodeCellController {
         if (parentContainer != null && root != null) {
             parentContainer.getChildren().remove(root);
         }
+    }
+
+    private void promptAndSendInput() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Notebook Input");
+        dialog.setHeaderText("Input required for System.in");
+        dialog.setContentText("Enter a line:");
+
+        dialog.showAndWait().ifPresent(line -> {
+            engine.sendInputLine(line);
+        });
     }
 
     private void adjustOutputAreaHeight(TextArea area) {

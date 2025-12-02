@@ -8,6 +8,9 @@
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -24,10 +27,8 @@ public class NotebookEngine {
     // keeps the most recent full output for ExecutionResult
     private final StringBuilder currentOutput = new StringBuilder();
     private StreamingOutputStream.Listener streamingListener;
-
-    // Buffers
-    private ByteArrayOutputStream jshellBuffer;
-    private PrintStream jshellPrintStream;
+    private final PipedInputStream inputPipe;
+    private final PipedOutputStream inputFeeder;
 
     // === Thread-Safety ===
     private final ReentrantLock executionLock = new ReentrantLock(); // Locks the execution thread.
@@ -101,7 +102,9 @@ public class NotebookEngine {
             "static String day() { return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern(\"EEEE\")); }",
             "static String dateTime() { return \"%s | %s | %s\".formatted(day(), date(), now()); }",
             "static int rand(int min, int max) { return java.util.concurrent.ThreadLocalRandom.current().nextInt(min, max + 1); }",
-            "static long TimeThis(Runnable r) { long t = System.nanoTime(); r.run(); return (System.nanoTime() - t) / 1_000_000; }"
+            "static long TimeThis(Runnable r) { long t = System.nanoTime(); r.run(); return (System.nanoTime() - t) / 1_000_000; }",
+            // NEW: predefined Scanner named sc
+            "var sc = new java.util.Scanner(System.in);"
     );
 
     private static final List<String> INIT_SNIPPETS = List.of(
@@ -139,11 +142,27 @@ public class NotebookEngine {
         // JShell prints expression values like "Expressions value: true"
         return condText.contains("true");
     }
+    // NotebookEngine.java
+    public void setSimulatedInput(String input) {
+        // exposes a snippet that (re)creates sc inside JShell
+        String code = "java.util.Scanner sc = new java.util.Scanner(\""
+                + input.replace("\\", "\\\\").replace("\"", "\\\"")
+                + "\\n\");";
+        executeInternal(code); // or jshell.eval(code) inside a lock
+    }
+
 
     // === Constructor ===
 
     public NotebookEngine() {
+        try {
+            inputFeeder = new PipedOutputStream();
+            inputPipe = new PipedInputStream(inputFeeder);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create JShell input pipe", e);
+        }
 
+        System.setIn(inputPipe);
         // Thread Safe executor for timeout handling
         executorService = Executors.newCachedThreadPool(
                 r -> {
@@ -276,6 +295,16 @@ public class NotebookEngine {
         }
         return null;
     }
+    public void sendInputLine(String line) {
+        engine.info("sendInputLine called with: " + line);
+        try {
+            inputFeeder.write((line + "\n").getBytes());
+            inputFeeder.flush();
+        } catch (IOException e) {
+            engine.error("Failed to send input to JShell", e);
+        }
+    }
+
 
     // Internal Execution (Runs in executor thread)
     private ExecutionResult executeInternal(String code) {
