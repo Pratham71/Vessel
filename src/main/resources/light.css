@@ -202,6 +202,23 @@
     -fx-effect: null;
 }
 
+/* for errors */
+.output-area .label.output-label {
+    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas';
+    -fx-text-fill: #d32f2f;
+}
+
+/* for “(no output)” */
+.output-area .label.output-label-muted {
+    -fx-text-fill: #6f6f7a;
+}
+
+/* for “Executing...” */
+.output-area .label.output-label-loading {
+    -fx-text-fill: #777777;
+}
+
 /* Read-only output */
 .read-only-output {
     -fx-background-color: transparent;

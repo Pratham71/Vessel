@@ -1,5 +1,6 @@
 package com.vessel.ui;
 
+import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
 import javafx.collections.FXCollections;
@@ -16,28 +17,24 @@ import javafx.scene.layout.HBox;
 
 
 public class GenericCellController {
-    @FXML protected VBox root; // This is the root of the cell
-    @FXML protected ChoiceBox<CellType> cellLanguage;
-    @FXML protected CodeArea codeArea;
     @FXML private Label promptLabel;
     @FXML private Button deleteBtn;
     @FXML private Button clearBtn;
-    @FXML protected HBox controlsContainer; // Added fx:id to FXML
-    @FXML private Label executionCountLabelFXML; // Placeholder Label from FXML
-    @FXML private Button runBtn; // The button that toggles between Run/Cancel
 
-    // Field to hold the thread/task of the current execution
-    private Thread executionThread = null;
+    private NotebookController notebookController;
 
+    // === INHERITED BY SUBCLASSES ===
+
+    @FXML protected VBox root; // This is the root of the cell
+    @FXML protected ChoiceBox<CellType> cellLanguage;
+    @FXML protected CodeArea codeArea;
 
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
-    private int executionCount = 0;
+    protected NotebookEngine engine;
 
     // Called before the specific cell type is initialized
     protected void initialize() {
-        executionCountLabelFXML.setText("[-]");
-        executionCountLabelFXML.getStyleClass().add("execution-count-label");
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
 
@@ -66,24 +63,23 @@ public class GenericCellController {
         clearBtn.setOnAction(e -> confirmClear());
     }
 
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
+    }
+
     public void setNotebookCell(NotebookCell cell) {
         this.cellModel = cell;
 
-        // Only set default text if the cell is empty (not re-loading output)
-        if (cell.getContent() == null || cell.getContent().isBlank()) {
-            // Ask subclass for its default text (can be empty)
-            String initText = getInitialContent();
-
-            if (initText != null) {
-                codeArea.replaceText(initText);
-                cell.setContent(initText);
-            }
-        } else {
+        if (cell.getContent() != null && !cell.getContent().isBlank()) {
             // Fill UI from whatever the model contains (e.g. on loading)
             codeArea.replaceText(cell.getContent());
         }
 
         cellLanguage.setValue(cell.getType());
+    }
+
+    public NotebookCell getNotebookCell() {
+        return cellModel;
     }
 
     public void setParentContainer(VBox parent) {
@@ -98,39 +94,26 @@ public class GenericCellController {
         cellLanguage.setValue(type);
     }
 
-    // hook for subclasses (specifically CodeCellController) to use
-    protected String getInitialContent() {
-        return null; // default: no template
+    // Its easier to have all cell types secretly hold an engine,
+    // rather than have it instantiate and un-instantiate everytime you switch types
+    // Only difference is non code cells cant RUN the engine
+    public void setEngine(NotebookEngine engine) {
+        this.engine = engine;
     }
+
     protected void deleteCell() {
         if (parentContainer != null && root != null) {
             parentContainer.getChildren().remove(root);
         }
+
+        if (cellModel != null) {
+            // also remove from notebook model
+            notebookController.getNotebook().removeCell(cellModel.getId());
+        }
     }
     private void confirmDelete() {
         try {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-
-            if (root != null && root.getScene() != null && root.getScene().getWindow() != null) {
-                alert.initOwner(root.getScene().getWindow());
-            } else {
-                System.err.println("Warning: root or window is null, Alert owner not set.");
-            }
-
-            // Remove default Modena stylesheet
-            alert.getDialogPane().getStylesheets().clear();
-
-            boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
-
-            // Remove leading slash to avoid resource loading issues
-            String theme = isDarkMode ? "/dark.css" : "/light.css";
-            var cssResource = getClass().getResource(theme);
-
-            if (cssResource == null) {
-                System.err.println("ERROR: Stylesheet not found: " + theme);
-            } else {
-                alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
-            }
+            Alert alert = generateAlert();
 
             alert.setTitle("Delete Cell");
             alert.setHeaderText("Are you sure you want to delete this cell?");
@@ -151,26 +134,7 @@ public class GenericCellController {
 
     private void confirmClear() {
         try {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-
-            if (root != null && root.getScene() != null && root.getScene().getWindow() != null) {
-                alert.initOwner(root.getScene().getWindow());
-            } else {
-                System.err.println("Warning: root or window is null, Alert owner not set.");
-            }
-
-            // Remove default Modena stylesheet
-            alert.getDialogPane().getStylesheets().clear();
-
-            boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
-            String theme = isDarkMode ? "/dark.css" : "/light.css";
-            var cssResource = getClass().getResource(theme);
-
-            if (cssResource == null) {
-                System.err.println("ERROR: Stylesheet not found: " + theme);
-            } else {
-                alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
-            }
+            Alert alert = generateAlert();
 
             alert.setTitle("Clear Cell");
             alert.setHeaderText("Clear all text from this cell?");
@@ -188,10 +152,28 @@ public class GenericCellController {
             ex.printStackTrace();
         }
     }
-    public void incrementAndDisplayExecutionCount() {
-        executionCount++;
-        executionCountLabelFXML.setText("[" + executionCount + "]");
+
+    private Alert generateAlert() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+        if (root != null && root.getScene() != null && root.getScene().getWindow() != null) {
+            alert.initOwner(root.getScene().getWindow());
+        } else {
+            System.err.println("Warning: root or window is null, Alert owner not set.");
+        }
+
+        // Remove default Modena stylesheet
+        alert.getDialogPane().getStylesheets().clear();
+
+        boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
+        String theme = isDarkMode ? "/dark.css" : "/light.css";
+        var cssResource = getClass().getResource(theme);
+
+        if (cssResource == null) {
+            System.err.println("ERROR: Stylesheet not found: " + theme);
+        } else {
+            alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
+        }
+        return alert;
     }
-
-
 }

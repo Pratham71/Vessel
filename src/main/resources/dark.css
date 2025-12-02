@@ -229,6 +229,23 @@
     /*-fx-opacity: 0; !* Start hidden, fade in with animation *!*/
 }
 
+/* for errors */
+.output-area .label.output-label {
+    -fx-font-size: 15px;
+    -fx-font-family: 'Consolas';
+    -fx-text-fill: #ff5555; /* default: error red */
+}
+
+/* for “(no output)” */
+.output-area .label.output-label-muted {
+    -fx-text-fill: #888a99;
+}
+
+/* for “Executing...” */
+.output-area .label.output-label-loading {
+    -fx-text-fill: #d4d4d4;
+}
+
 /* Make the output area selectable but read-only: use a TextArea inside it, styled as output */
 .read-only-output {
     -fx-background-color: transparent;

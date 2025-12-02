@@ -15,11 +15,11 @@
         <Insets top="8" right="8" bottom="8" left="8"/>
     </padding>
 
-    <HBox fx:id="controlsContainer" spacing="8">
+    <HBox spacing="8">
         <ChoiceBox fx:id="cellLanguage">
             <!-- Will be filled by initialize() in CodeCellController later-->
         </ChoiceBox>
-        <Label fx:id="executionCountLabelFXML" />
+        <Label fx:id="executionCountLabel" />
         <Button fx:id="runBtn">
             <graphic>
                 <FontIcon iconLiteral="fas-play" iconSize="16" styleClass="font-icon" />

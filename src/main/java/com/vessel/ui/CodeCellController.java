@@ -3,8 +3,8 @@
 package com.vessel.ui;
 
 import com.vessel.Kernel.ExecutionResult;
-import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.NotebookCell;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -18,54 +18,29 @@ import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.util.regex.*;
-
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController extends GenericCellController {
 
     @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
     @FXML private Button runBtn; // The button that toggles between Run/Cancel
-    @FXML private VBox root; // This is the root of the cell
 
-    private VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
-    private NotebookCell cellModel;
-    private NotebookController notebookController;
-
-    private NotebookEngine engine;
-
-    /**
-     * This is called by the NotebookController after loading the cell.
-     */
-
-    public void setParentContainer(VBox parent) {
-        this.parentContainer = parent; // #TODO: move to superclass
-    }
-
-    // Field to hold the thread/task of the current execution
-    private Thread executionThread = null;
-    public void setNotebookController(NotebookController controller) {
-        this.notebookController = controller;
-    }
+    private int executionCount = 0;
+    @FXML private Label executionCountLabel;
 
     // Field to hold the FontIcon for dynamic icon swapping
     private FontIcon runIcon;
     private FontIcon stopIcon;
 
+    // Field to hold the thread/task of the current execution
+    private Task<Void> shellTask;
+
     @Override
     public void setNotebookCell(NotebookCell cell) {
-//        if (cell.getContent() != null && !cell.getContent().isBlank()) {
-//            // Fill UI from whatever the model contains (e.g. on loading)
-//            codeArea.replaceText(cell.getContent());
-//        } // #TODO: Update in superclass
         super.setNotebookCell(cell);
         if (cell.getExecutionResult() != null && !cell.getContent().isBlank()) {
             displayOutput();
         }
-    }
-
-    public NotebookCell getNotebookCell() {
-        return cellModel;
     }
 
     @FXML
@@ -73,6 +48,8 @@ public class CodeCellController extends GenericCellController {
     protected void initialize() {
         // Initialize GenericCellController superclass first
         super.initialize();
+        executionCountLabel.setText("[-]");
+        executionCountLabel.getStyleClass().add("execution-count-label");
         // Stop Icon: Define the icon for 'Cancel' (e.g., a square stop icon)
         // You'll need FontIcon imported: org.kordamp.ikonli.javafx.FontIcon
         runIcon = (FontIcon) runBtn.getGraphic();
@@ -119,16 +96,24 @@ public class CodeCellController extends GenericCellController {
 
         // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
         // Currently just prints whatever is in the box back as output
-        ExecutionResult shellResult = cellModel.getExecutionResult();
+        ExecutionResult shellResult = super.cellModel.getExecutionResult();
+
+        // nullpointer check
+        if (shellResult == null) {
+            Label err = new Label("[No result available – execution failed or was cancelled]");
+            err.getStyleClass().add("output-label");
+            outputBox.getChildren().add(err);
+            return;
+        }
 
         if (!shellResult.success()) {
-            Label err = new Label("Error:\n" + shellResult.error());
-            err.setStyle("-fx-text-fill: #ff5555;");
+            Label err = new Label("Error:\n" + shellResult.error().trim());
+            err.getStyleClass().add("output-label");
             outputBox.getChildren().add(err);
         }
         else if (shellResult.output().trim().isEmpty()) {
             Label noOutputLabel = new Label("(No output to print)");
-            noOutputLabel.setStyle("-fx-text-fill: #888a99; -fx-font-size: 15px; -fx-font-family: 'Fira Mono', 'Consolas', monospace;");
+            noOutputLabel.getStyleClass().addAll("output-label", "output-label-muted");
             outputBox.getChildren().add(noOutputLabel);
             fadeIn(noOutputLabel);
         } else {
@@ -150,18 +135,6 @@ public class CodeCellController extends GenericCellController {
         }
         outputBox.setPrefHeight(-1); // reset container sizing
     }
-
-    private void deleteCell() {
-        if (parentContainer != null && root != null) {
-            parentContainer.getChildren().remove(root);
-        }
-        // TODO: Move to superclass
-        if (cellModel != null) {
-            // also remove from notebook model
-            notebookController.getNotebook().removeCell(cellModel.getId());
-        }
-    }
-
 
     private void adjustOutputAreaHeight(TextArea area) {
         Text helper = new Text();
@@ -198,7 +171,7 @@ public class CodeCellController extends GenericCellController {
 
         // --- Increment execution count at start ---
         incrementAndDisplayExecutionCount();
-        cellModel.incrementExecutionCount();
+        super.cellModel.incrementExecutionCount();
         // 1. Change UI state to CANCEL
         setRunButtonState(true);
 
@@ -211,53 +184,88 @@ public class CodeCellController extends GenericCellController {
         spin.setCycleCount(RotateTransition.INDEFINITE);
         spin.play();
         Label loadingText = new Label("Executing...");
-        loadingText.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px;");
+        loadingText.getStyleClass().addAll("output-label", "output-label-loading");
         spinnerBox.getChildren().addAll(spinnerIcon, loadingText);
         outputBox.getChildren().add(spinnerBox);
         fadeIn(spinnerBox);
 
-
-
-        // Execution thread
-        executionThread = new Thread(() -> {
-            try {
-                Thread.sleep(5000); // Simulate code execution
-                // --------------------------------------------------
-
-                if (!Thread.currentThread().isInterrupted()) {
-                    Platform.runLater(() -> {
-                        displayOutput(spin);
-                        setRunButtonState(false);
-                    });
+        shellTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // to avoid nullpointerexceptions
+                if (engine == null) {
+                    throw new IllegalStateException("NotebookEngine is not attached to this cell (Backend issue, restart kernel or reload the app)");
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                Platform.runLater(() -> {
-                    outputBox.getChildren().clear();
-                    Label cancelledLabel = new Label("[Execution Cancelled]");
-                    cancelledLabel.getStyleClass().add("execution-cancelled");
-                    outputBox.getChildren().add(cancelledLabel);
-                    setRunButtonState(false);
-                });
+                engine.execute(cellModel);   // fills cellModel.getExecutionResult()
+                return null;                 // matches Task<Void>
             }
+        };
+
+        shellTask.setOnSucceeded(e -> {
+            spin.stop();
+            displayOutput();      // reads cellModel.getExecutionResult()
+            setRunButtonState(false);
         });
-        executionThread.start();
+
+        shellTask.setOnCancelled(e -> {
+            spin.stop();
+            outputBox.getChildren().clear();
+            Label cancelled = new Label("[Execution Cancelled]");
+            cancelled.getStyleClass().add("execution-cancelled");
+            outputBox.getChildren().add(cancelled);
+            setRunButtonState(false);
+        });
+
+        shellTask.setOnFailed(e -> {
+            spin.stop();
+            outputBox.getChildren().clear();
+
+            Throwable ex = shellTask.getException();
+            Label err = new Label(
+                    "[Backend execution failed: " + (ex != null ? ex.getMessage() : "Unknown error") + "]"
+            );
+            err.getStyleClass().add("output-label");
+            outputBox.getChildren().add(err);
+
+            setRunButtonState(false);
+        });
+
+        new Thread(shellTask).start();
+
+// Execution thread
+//        executionThread = new Thread(() -> {
+//            try {
+//                engine.execute(cellModel);
+//                // --------------------------------------------------
+//
+//                if (!Thread.currentThread().isInterrupted()) {
+//                    Platform.runLater(() -> {
+//                        displayOutput(spin);
+//                        setRunButtonState(false);
+//                    });
+//                }
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//                Platform.runLater(() -> {
+//                    outputBox.getChildren().clear();
+//                    Label cancelledLabel = new Label("[Execution Cancelled]");
+//                    cancelledLabel.getStyleClass().add("execution-cancelled");
+//                    outputBox.getChildren().add(cancelledLabel);
+//                    setRunButtonState(false);
+//                });
+//            }
+//        });
+//        executionThread.start();
     }
+
     private void toggleExecution() {
-        if (executionThread != null && executionThread.isAlive()) {
-            // If a thread is running, CANCEL it
-            executionThread.interrupt();
-            executionThread = null;
+        if (shellTask != null && shellTask.isRunning()) {
+            // this will interrupt the engine thread/task
+            shellTask.cancel();
         } else {
-            // If no thread is running, START execution
             executeCode();
         }
     }
-    public void setEngine(NotebookEngine engine) {
-        this.engine = engine;
-    }
-
-}
 
     /**
      * Updates the run button's icon and tooltip based on the running state.
@@ -270,7 +278,11 @@ public class CodeCellController extends GenericCellController {
         } else {
             runBtn.setGraphic(runIcon);
             runBtn.setTooltip(new Tooltip("Run this cell"));
-            executionThread = null; // Ensure thread reference is cleared
         }
+    }
+
+    public void incrementAndDisplayExecutionCount() {
+        executionCount++;
+        executionCountLabel.setText("[" + executionCount + "]");
     }
 }
