@@ -262,6 +262,31 @@
     -fx-fill: #d4d4d4; /* match text edit color */
     -fx-padding: 0 8 0 0;
 }
+/* scrollbar styling*/
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.85;
+}
+.scroll-bar .track {
+    -fx-background-color: #212121;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #555555;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #777777;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 8px;
+    -fx-max-width: 8px;
+}
 /* 1. Main Dialog Background (Darkest Shade) */
 .dialog-pane {
     -fx-background-color: #2a2a2a;

@@ -15,6 +15,29 @@
 .font-icon {
     -fx-fill: black;
 }
+/* scrollbar styling*/
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.85;
+}
+.scroll-bar .track {
+    -fx-background-color: #E8E8E8;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #AAAAAA;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+}
+.scroll-bar .thumb:hover {
+    -fx-background-color: #888888;
+}
+.scroll-bar:vertical {
+    -fx-pref-width: 8px;
+    -fx-max-width: 8px;
+}
 
 /* --- Header (MenuBar & ToolBar) Styling --- */
 .menu-bar,
