@@ -274,10 +274,34 @@ public class NotebookEngine {
                         .append(String.format("%.1f", memoryUserPercentage))
                         .append("%\n\n");
             }
+            //Split code into individual statements using the semicolon as a delimiter
+            String[] statements=code.split(";\\s*");
 
-            // Execute JShell snippet
-            //outputStream.flush();
-            List<SnippetEvent> events = jshell.eval(code);
+            // list will accumulate all events from all stmts
+            List<SnippetEvent> events = new ArrayList<>();
+            boolean currentSuccess=true;
+
+            for (String statement:statements){
+                String trimmedStatement = statement.trim();
+
+                // Skip empty snippets (resulting from splitting, comments, or blank lines)
+                if (trimmedStatement.isBlank()) continue;
+
+                // 2. Re-add a semicolon for JShell to recognize it as a complete statement/expression
+                String snippetCode = trimmedStatement.endsWith(";") ? trimmedStatement : trimmedStatement + ";";
+
+                // 3. Execute JShell snippet for the statement sequentially.
+                //outputStream.flush();
+            List<SnippetEvent> statementEvents = jshell.eval(snippetCode);
+                events.addAll(statementEvents);
+                // Check for errors on this statement
+                for (SnippetEvent event : statementEvents) {
+                    if (event.status() == jdk.jshell.Snippet.Status.REJECTED || event.exception() != null) {
+                        currentSuccess = false;
+                    }
+                }
+            }
+            success[0]=currentSuccess;
             System.out.println("events.size() = " + events.size());
 
             if (events.isEmpty()) {
@@ -331,12 +355,12 @@ public class NotebookEngine {
                     success[0] = false;
                 }
 
-                // Expression result
-                if (event.value() != null && !event.value().isEmpty()) {
-                    output.append("Expressions value: ")
-                            .append(event.value()).append("\n");
-                    engine.debug("Expressions value: " + event.value());
-                }
+//                // Expression result
+//                if (event.value() != null && !event.value().isEmpty()) {
+//                    output.append("Expressions value: ")
+//                            .append(event.value()).append("\n");
+//                    engine.debug("Expressions value: " + event.value());
+//                }
             }
 
             // Capture STDOUT
