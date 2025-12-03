@@ -22,11 +22,14 @@ import static com.vessel.util.SyntaxService.computeHighlighting;
 
 public class CodeCellController extends GenericCellController {
 
-    @FXML private VBox outputBox; // New outputbox -> JShell output goes in here
-    @FXML private Button runBtn; // The button that toggles between Run/Cancel
+    @FXML
+    private VBox outputBox; // New outputbox -> JShell output goes in here
+    @FXML
+    private Button runBtn; // The button that toggles between Run/Cancel
 
     private int executionCount = 0;
-    @FXML private Label executionCountLabel;
+    @FXML
+    private Label executionCountLabel;
 
     // Field to hold the FontIcon for dynamic icon swapping
     private FontIcon runIcon;
@@ -59,9 +62,11 @@ public class CodeCellController extends GenericCellController {
 
         runBtn.setOnAction(e -> toggleExecution());
 
-        // Listener for syntax highlighting (Using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
+        // Listener for syntax highlighting (Using richtext's richChanges() listener
+        // instead cuz more performant for syntax highlighting)
         codeArea.richChanges()
-                .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))  // filter to only fire when text actually changes - ignores caret movement and stuff
+                .filter(ch -> !ch.getInserted().equals(ch.getRemoved())) // filter to only fire when text actually
+                                                                         // changes - ignores caret movement and stuff
                 .subscribe(change -> codeArea.setStyleSpans(0, computeHighlighting(codeArea.getText())));
 
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
@@ -78,7 +83,6 @@ public class CodeCellController extends GenericCellController {
         });
 
     }
-
 
     private void displayOutput(RotateTransition spin) {
         spin.stop();
@@ -110,8 +114,7 @@ public class CodeCellController extends GenericCellController {
             Label err = new Label("Error:\n" + shellResult.error().trim());
             err.getStyleClass().add("output-label");
             outputBox.getChildren().add(err);
-        }
-        else if (shellResult.output().trim().isEmpty()) {
+        } else if (shellResult.output().trim().isEmpty()) {
             Label noOutputLabel = new Label("(No output to print)");
             noOutputLabel.getStyleClass().addAll("output-label", "output-label-muted");
             outputBox.getChildren().add(noOutputLabel);
@@ -129,7 +132,8 @@ public class CodeCellController extends GenericCellController {
             resultArea.setPrefRowCount(Math.max(1, lineCount));
             resultArea.setWrapText(true);
             Platform.runLater(() -> adjustOutputAreaHeight(resultArea));
-            resultArea.widthProperty().addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
+            resultArea.widthProperty()
+                    .addListener((obs, o, n) -> Platform.runLater(() -> adjustOutputAreaHeight(resultArea)));
             outputBox.getChildren().add(resultArea);
             fadeIn(resultArea);
         }
@@ -141,7 +145,8 @@ public class CodeCellController extends GenericCellController {
         helper.setFont(area.getFont());
         helper.setWrappingWidth(area.getWidth() - 10); // -10 fudge for padding/border
         String text = area.getText();
-        if (text == null || text.isEmpty()) text = " ";
+        if (text == null || text.isEmpty())
+            text = " ";
 
         // Line height for dynamic fudge:
         helper.setText("Ay");
@@ -160,8 +165,7 @@ public class CodeCellController extends GenericCellController {
         node.layout();
         Timeline fade = new Timeline(
                 new KeyFrame(Duration.millis(0), new KeyValue(node.opacityProperty(), 0)),
-                new KeyFrame(Duration.millis(400), new KeyValue(node.opacityProperty(), 1))
-        );
+                new KeyFrame(Duration.millis(400), new KeyValue(node.opacityProperty(), 1)));
         fade.play();
     }
 
@@ -194,16 +198,17 @@ public class CodeCellController extends GenericCellController {
             protected Void call() throws Exception {
                 // to avoid nullpointerexceptions
                 if (engine == null) {
-                    throw new IllegalStateException("NotebookEngine is not attached to this cell (Backend issue, restart kernel or reload the app)");
+                    throw new IllegalStateException(
+                            "NotebookEngine is not attached to this cell (Backend issue, restart kernel or reload the app)");
                 }
-                engine.execute(cellModel);   // fills cellModel.getExecutionResult()
-                return null;                 // matches Task<Void>
+                engine.execute(cellModel); // fills cellModel.getExecutionResult()
+                return null; // matches Task<Void>
             }
         };
 
         shellTask.setOnSucceeded(e -> {
             spin.stop();
-            displayOutput();      // reads cellModel.getExecutionResult()
+            displayOutput(); // reads cellModel.getExecutionResult()
             setRunButtonState(false);
         });
 
@@ -222,8 +227,7 @@ public class CodeCellController extends GenericCellController {
 
             Throwable ex = shellTask.getException();
             Label err = new Label(
-                    "[Backend execution failed: " + (ex != null ? ex.getMessage() : "Unknown error") + "]"
-            );
+                    "[Backend execution failed: " + (ex != null ? ex.getMessage() : "Unknown error") + "]");
             err.getStyleClass().add("output-label");
             outputBox.getChildren().add(err);
 
@@ -232,30 +236,30 @@ public class CodeCellController extends GenericCellController {
 
         new Thread(shellTask).start();
 
-// Execution thread
-//        executionThread = new Thread(() -> {
-//            try {
-//                engine.execute(cellModel);
-//                // --------------------------------------------------
-//
-//                if (!Thread.currentThread().isInterrupted()) {
-//                    Platform.runLater(() -> {
-//                        displayOutput(spin);
-//                        setRunButtonState(false);
-//                    });
-//                }
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                Platform.runLater(() -> {
-//                    outputBox.getChildren().clear();
-//                    Label cancelledLabel = new Label("[Execution Cancelled]");
-//                    cancelledLabel.getStyleClass().add("execution-cancelled");
-//                    outputBox.getChildren().add(cancelledLabel);
-//                    setRunButtonState(false);
-//                });
-//            }
-//        });
-//        executionThread.start();
+        // Execution thread
+        // executionThread = new Thread(() -> {
+        // try {
+        // engine.execute(cellModel);
+        // // --------------------------------------------------
+        //
+        // if (!Thread.currentThread().isInterrupted()) {
+        // Platform.runLater(() -> {
+        // displayOutput(spin);
+        // setRunButtonState(false);
+        // });
+        // }
+        // } catch (InterruptedException e) {
+        // Thread.currentThread().interrupt();
+        // Platform.runLater(() -> {
+        // outputBox.getChildren().clear();
+        // Label cancelledLabel = new Label("[Execution Cancelled]");
+        // cancelledLabel.getStyleClass().add("execution-cancelled");
+        // outputBox.getChildren().add(cancelledLabel);
+        // setRunButtonState(false);
+        // });
+        // }
+        // });
+        // executionThread.start();
     }
 
     private void toggleExecution() {
@@ -269,7 +273,9 @@ public class CodeCellController extends GenericCellController {
 
     /**
      * Updates the run button's icon and tooltip based on the running state.
-     * @param isRunning True if execution is starting, False if it has finished or been cancelled.
+     * 
+     * @param isRunning True if execution is starting, False if it has finished or
+     *                  been cancelled.
      */
     private void setRunButtonState(boolean isRunning) {
         if (isRunning) {

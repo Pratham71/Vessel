@@ -1,0 +1,205 @@
+classDiagram
+    %% === Main Application Layer ===
+    class Main {
+        -NotebookController controller
+        +start(Stage stage)
+        +stop()
+        +main(String[] args)
+    }
+
+    %% === UI Controllers ===
+    class NotebookController {
+        -VBox codeCellContainer
+        -ChoiceBox~CellType~ cellLanguage
+        -Label javaVersionLabel
+        -Menu insertMenu
+        -Scene scene
+        -NotebookPersistence persistence
+        -Notebook currentNotebook
+        +initialize()
+        +setScene(Scene scene)
+        +addCell(CellType type)
+        +createCellUI(CellType type, NotebookCell cell) VBox
+        +syncModelFromUI()
+        +saveProject()
+        +openProject()
+        +renderNotebook()
+        +getCurrentNotebook() Notebook
+    }
+
+    class GenericCellController {
+        #VBox root
+        #ChoiceBox~CellType~ cellLanguage
+        #CodeArea codeArea
+        #VBox parentContainer
+        #NotebookCell cellModel
+        #NotebookEngine engine
+        -Label promptLabel
+        -Button deleteBtn
+        -Button clearBtn
+        #initialize()
+        -adjustCodeAreaHeight()
+        +setNotebookController(NotebookController)
+        +setNotebookCell(NotebookCell cell)
+        +getNotebookCell() NotebookCell
+        +setEngine(NotebookEngine engine)
+        +setCellType(CellType type)
+        #deleteCell()
+    }
+
+    class CodeCellController {
+        -VBox outputBox
+        -Button runBtn
+        -int executionCount
+        -Label executionCountLabel
+        -FontIcon runIcon
+        -FontIcon stopIcon
+        -Task~Void~ shellTask
+        #initialize()
+        +setNotebookCell(NotebookCell cell)
+        -displayOutput()
+        -displayOutput(RotateTransition spin)
+        -adjustOutputAreaHeight(TextArea area)
+        -fadeIn(Region node)
+        -executeCode()
+        -toggleExecution()
+        -setRunButtonState(boolean isRunning)
+        +incrementAndDisplayExecutionCount()
+    }
+
+    class SystemThemeDetector {
+        <<enumeration>> Theme
+        +getSystemTheme() Theme
+    }
+
+    %% === Model Layer ===
+    class Notebook {
+        -String name
+        -List~NotebookCell~ cells
+        -NotebookEngine engine
+        +Notebook(String name)
+        +addCell(NotebookCell cell)
+        +removeCell(String cellId)
+        +getCell(String cellId) NotebookCell
+        +getCells() List~NotebookCell~
+        +setName(String name)
+        +getName() String
+        +getEngine() NotebookEngine
+        +shutdownEngine()
+        +initEngineIfNull()
+    }
+
+    class NotebookCell {
+        -String id
+        -CellType cellType
+        -String content
+        -int executionCount
+        -ExecutionResult executionResult
+        -LocalDateTime createdAt
+        -LocalDateTime lastModifiedAt
+        +getId() String
+        +getType() CellType
+        +setType(CellType type)
+        +getContent() String
+        +setContent(String content)
+        +getExecutionResult() ExecutionResult
+        +setExecutionResult(ExecutionResult result)
+        +getExecutionCount() int
+        +incrementExecutionCount()
+        +dumpContent()
+    }
+
+    class CellType {
+        <<enumeration>>
+        CODE
+        MARKDOWN
+        TEXT
+        -String displayName
+        +toString() String
+    }
+
+    %% === Kernel Layer ===
+    class NotebookEngine {
+        -JShell jshell
+        -ByteArrayOutputStream jshellBuffer
+        -PrintStream jshellPrintStream
+        -ReentrantLock executionLock
+        -boolean isExecuting
+        -ExecutorService executorService
+        -int totalExecutions
+        -long totalExecutionTime
+        -LinkedList~ExecutionResult~ history
+        +NotebookEngine()
+        +execute(NotebookCell cell) Void
+        -executeInternal(String code) ExecutionResult
+        -loadInitSnippets(JShell jshell, List~String~ snippets)
+        +resetKernel()
+        +interrupt()
+        +getVariables() List~String~
+        +getImports() List~String~
+        +getMethods() List~String~
+        +getStatistics() Map~String,Object~
+        +shutdown()
+        +isExecuting() boolean
+    }
+
+    class ExecutionResult {
+        <<record>>
+        +String output
+        +String error
+        +long executionTimeMs
+        +boolean success
+    }
+
+    %% === Persistence Layer ===
+    class NotebookPersistence {
+        -String ROOT
+        -Gson gson
+        +NotebookPersistence()
+        -ensureRoot()
+        -sanitize(String name) String
+        +save(Notebook notebook) boolean
+        +saveToPath(Notebook notebook, String path) boolean
+        +load(String name) Notebook
+        +loadFromPath(String path) Notebook
+    }
+
+    %% === Util Layer ===
+    class SyntaxService {
+        <<utility>>
+        +computeHighlighting(String code) StyleSpans
+    }
+
+    class log {
+        <<utility>>
+        +get(String name) log
+        +info(String message)
+        +debug(String message)
+        +warning(String message)
+        +error(String message, Exception e)
+        +severe(String message)
+    }
+
+    %% === Relationships ===
+    Main --> NotebookController : creates
+    NotebookController --> Notebook : manages
+    NotebookController --> NotebookPersistence : uses
+    NotebookController --> GenericCellController : creates
+    NotebookController --> CodeCellController : creates
+    GenericCellController <|-- CodeCellController : extends
+    
+    Notebook "1" *-- "many" NotebookCell : contains
+    Notebook "1" *-- "1" NotebookEngine : owns
+    NotebookCell --> CellType : has
+    NotebookCell --> ExecutionResult : stores
+    
+    CodeCellController --> NotebookEngine : executes code
+    GenericCellController --> NotebookCell : controls
+    
+    NotebookEngine --> ExecutionResult : produces
+    NotebookEngine --> log : uses
+    
+    NotebookPersistence --> Notebook : saves/loads
+    
+    CodeCellController --> SyntaxService : uses
+    NotebookController --> SystemThemeDetector : uses

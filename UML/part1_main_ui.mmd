@@ -1,0 +1,35 @@
+classDiagram
+    %% === Part 1: Main Application & Notebook Controller ===
+    
+    class Main {
+        <<com.vessel>>
+        -NotebookController controller
+        +start(Stage stage)
+        +stop()
+        +main(String[] args)
+    }
+    
+    class NotebookController {
+        <<com.vessel.ui>>
+        -VBox codeCellContainer
+        -ChoiceBox~CellType~ cellLanguage
+        -Label javaVersionLabel
+        -Menu insertMenu
+        -Scene scene
+        -NotebookPersistence persistence
+        -Notebook currentNotebook
+        +initialize()
+        +setScene(Scene scene)
+        +addCell(CellType type)
+        +createCellUI(CellType type, NotebookCell cell) VBox
+        +syncModelFromUI()
+        +saveProject()
+        +openProject()
+        +renderNotebook()
+        +getCurrentNotebook() Notebook
+    }
+
+    Main --> NotebookController : loads & manages
+    
+    style Main fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style NotebookController fill:#e1f5ff,stroke:#01579b,stroke-width:2px

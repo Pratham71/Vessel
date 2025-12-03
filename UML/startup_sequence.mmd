@@ -1,0 +1,120 @@
+sequenceDiagram
+    actor User
+    participant Main
+    participant Loader as FXMLLoader
+    participant NC as NotebookController
+    participant NB as Notebook
+    participant Engine as NotebookEngine
+    participant JShell as JShell
+    participant GCC as GenericCellController
+    participant CCC as CodeCellController
+    
+    User->>Main: Launch application
+    activate Main
+    
+    Main->>Main: main(args)
+    Main->>Main: launch(args)
+    Main->>Main: start(Stage stage)
+    
+    Main->>Loader: new FXMLLoader("/Notebook.fxml")
+    activate Loader
+    Loader-->>Main: loader
+    deactivate Loader
+    
+    Main->>Loader: load()
+    activate Loader
+    Note over Loader: Parses Notebook.fxml
+    Loader->>NC: Create NotebookController instance
+    activate NC
+    Loader->>NC: Inject @FXML fields
+    Loader->>NC: Call initialize()
+    
+    NC->>NB: new Notebook("untitled")
+    activate NB
+    
+    NB->>NB: initEngineIfNull()
+    NB->>Engine: new NotebookEngine()
+    activate Engine
+    
+    Engine->>Engine: Create ExecutorService
+    Engine->>Engine: Create ByteArrayOutputStream buffer
+    Engine->>JShell: JShell.builder().out(stream).err(stream).build()
+    activate JShell
+    JShell-->>Engine: jshell instance
+    deactivate JShell
+    
+    Engine->>Engine: loadInitSnippets(jshell, INIT_SNIPPETS)
+    loop For each init snippet
+        Engine->>JShell: eval(snippet)
+        Note over JShell: Load imports, print methods, utility functions
+    end
+    
+    Engine-->>NB: Initialized NotebookEngine
+    deactivate Engine
+    
+    NB-->>NC: Notebook instance
+    deactivate NB
+    
+    NC->>NC: Setup cellLanguage ChoiceBox
+    NC->>NC: Setup javaVersionLabel
+    NC->>NC: Populate insertMenu dynamically
+    
+    NC->>NC: addCell(CellType.CODE)
+    NC->>NC: createCellUI(CellType.CODE, cellModel)
+    
+    NC->>Loader: new FXMLLoader("/CodeCell.fxml")
+    activate Loader
+    Loader->>CCC: Create CodeCellController
+    activate CCC
+    Loader->>CCC: Inject @FXML fields
+    Loader->>CCC: Call initialize()
+    
+    CCC->>GCC: super.initialize()
+    activate GCC
+    
+    GCC->>GCC: Setup cellLanguage dropdown
+    GCC->>GCC: Add textProperty listener for cell model sync
+    GCC->>GCC: Setup promptLabel visibility
+    GCC->>GCC: Add cell expansion logic (adjustCodeAreaHeight)
+    GCC->>GCC: Setup delete/clear button actions
+    
+    GCC-->>CCC: Base initialization complete
+    deactivate GCC
+    
+    CCC->>CCC: Setup syntax highlighting listener
+    CCC->>CCC: Setup line numbers (setParagraphGraphicFactory)
+    CCC->>CCC: Configure run button action
+    
+    CCC-->>Loader: Initialized CodeCellController
+    Loader-->>NC: VBox cell with controller
+    deactivate Loader
+    deactivate CCC
+    
+    NC->>CCC: setEngine(currentNotebook.getEngine())
+    NC->>CCC: setNotebookCell(cellModel)
+    NC->>CCC: setNotebookController(this)
+    NC->>CCC: setParentContainer(codeCellContainer)
+    NC->>CCC: setRoot(cell)
+    NC->>CCC: setCellType(CellType.CODE)
+    
+    NC->>NC: codeCellContainer.getChildren().add(cell)
+    
+    NC-->>Loader: Initialized Notebook UI
+    Loader-->>Main: Parent root
+    deactivate NC
+    deactivate Loader
+    
+    Main->>Main: Create Scene(root, 1000, 650)
+    Main->>NC: controller.setScene(scene)
+    activate NC
+    NC->>NC: Apply system theme stylesheet
+    NC-->>Main: Scene configured
+    deactivate NC
+    
+    Main->>Main: stage.setScene(scene)
+    Main->>Main: stage.setTitle("Vessel Notebook")
+    Main->>Main: stage.show()
+    
+    deactivate Main
+    
+    Note over User,JShell: Application is now running with one empty code cell

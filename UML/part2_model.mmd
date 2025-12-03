@@ -1,0 +1,55 @@
+classDiagram
+    %% === Part 2: Data Model Layer ===
+
+    class Notebook {
+        <<com.vessel.model>>
+        -String name
+        -List~NotebookCell~ cells
+        -NotebookEngine engine
+        +Notebook(String name)
+        +addCell(NotebookCell cell)
+        +removeCell(String cellId)
+        +getCell(String cellId) NotebookCell
+        +getCells() List~NotebookCell~
+        +setName(String name)
+        +getName() String
+        +getEngine() NotebookEngine
+        +shutdownEngine()
+        +initEngineIfNull()
+    }
+
+    class NotebookCell {
+        <<com.vessel.model>>
+        -String id
+        -CellType cellType
+        -String content
+        -int executionCount
+        -ExecutionResult executionResult
+        -LocalDateTime createdAt
+        -LocalDateTime lastModifiedAt
+        +getId() String
+        +getType() CellType
+        +setType(CellType type)
+        +getContent() String
+        +setContent(String content)
+        +getExecutionResult() ExecutionResult
+        +setExecutionResult(ExecutionResult result)
+        +getExecutionCount() int
+        +incrementExecutionCount()
+    }
+
+    class CellType {
+        <<enumeration>>
+        CODE
+        MARKDOWN
+        TEXT
+        -String displayName
+        +toString() String
+    }
+
+    Notebook "1" *-- "many" NotebookCell : contains
+    NotebookCell --> CellType : has type
+
+    style Notebook fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style NotebookCell fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style CellType fill:#f3e5f5,stroke:#4a148c,stroke-width:2px

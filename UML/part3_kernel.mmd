@@ -1,0 +1,40 @@
+classDiagram
+    %% === Part 3: Kernel & Execution Layer ===
+
+    class NotebookEngine {
+        <<com.vessel.Kernel>>
+        -JShell jshell
+        -ByteArrayOutputStream jshellBuffer
+        -PrintStream jshellPrintStream
+        -ReentrantLock executionLock
+        -boolean isExecuting
+        -ExecutorService executorService
+        -int totalExecutions
+        -long totalExecutionTime
+        -LinkedList~ExecutionResult~ history
+        +NotebookEngine()
+        +execute(NotebookCell cell) Void
+        -executeInternal(String code) ExecutionResult
+        -loadInitSnippets(JShell jshell, List~String~ snippets)
+        +resetKernel()
+        +interrupt()
+        +getVariables() List~String~
+        +getImports() List~String~
+        +getMethods() List~String~
+        +getStatistics() Map~String,Object~
+        +shutdown()
+        +isExecuting() boolean
+    }
+
+    class ExecutionResult {
+        <<record>>
+        +String output
+        +String error
+        +long executionTimeMs
+        +boolean success
+    }
+
+    NotebookEngine --> ExecutionResult : produces
+
+    style NotebookEngine fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style ExecutionResult fill:#fff3e0,stroke:#e65100,stroke-width:2px

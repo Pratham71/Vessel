@@ -3,6 +3,7 @@ package com.vessel.ui;
 import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -15,19 +16,24 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.HBox;
 
-
 public class GenericCellController {
-    @FXML private Label promptLabel;
-    @FXML private Button deleteBtn;
-    @FXML private Button clearBtn;
+    @FXML
+    private Label promptLabel;
+    @FXML
+    private Button deleteBtn;
+    @FXML
+    private Button clearBtn;
 
     private NotebookController notebookController;
 
     // === INHERITED BY SUBCLASSES ===
 
-    @FXML protected VBox root; // This is the root of the cell
-    @FXML protected ChoiceBox<CellType> cellLanguage;
-    @FXML protected CodeArea codeArea;
+    @FXML
+    protected VBox root; // This is the root of the cell
+    @FXML
+    protected ChoiceBox<CellType> cellLanguage;
+    @FXML
+    protected CodeArea codeArea;
 
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
@@ -41,16 +47,18 @@ public class GenericCellController {
         // --- CELL MODEL LISTENERS ---
         // Listener for updating cell model's content field
         codeArea.textProperty().addListener((obs, old, newText) -> {
-            if (cellModel != null) cellModel.setContent(newText);
+            if (cellModel != null)
+                cellModel.setContent(newText);
         });
 
         // Listener for setting cell model's "type" on type change (in the dropbox)
         cellLanguage.setOnAction(e -> {
-            if (cellModel != null) cellModel.setType(cellLanguage.getValue());
+            if (cellModel != null)
+                cellModel.setType(cellLanguage.getValue());
         });
 
         // --- INITIAL PROMPT ---
-        promptLabel.setMouseTransparent(true);  // let clicks go to the CodeArea
+        promptLabel.setMouseTransparent(true); // let clicks go to the CodeArea
 
         // show prompt only when empty
         codeArea.textProperty().addListener((obs, oldText, newText) -> {
@@ -58,9 +66,31 @@ public class GenericCellController {
             promptLabel.setVisible(empty);
         });
 
+        // --- AUTOMATIC CELL EXPANSION ---
+        // Adjust CodeArea height dynamically so cell grows vertically instead of
+        // scrolling
+        codeArea.textProperty().addListener((obs, oldText, newText) -> adjustCodeAreaHeight());
+        Platform.runLater(this::adjustCodeAreaHeight);
+
         // --- BUTTON LISTENERS --
         deleteBtn.setOnAction(e -> confirmDelete());
         clearBtn.setOnAction(e -> confirmClear());
+    }
+
+    /**
+     * Adjusts the CodeArea height based on the number of paragraphs.
+     * Makes the cell grow vertically downward instead of scrolling internally.
+     */
+    private void adjustCodeAreaHeight() {
+        int paragraphCount = codeArea.getParagraphs().size();
+        double lineHeight = 20.0;
+        double minHeight = lineHeight * 3; // At least 3 lines
+        double calculatedHeight = paragraphCount * lineHeight + 10; // +10 for padding
+        double newHeight = Math.max(minHeight, calculatedHeight);
+
+        codeArea.setPrefHeight(newHeight);
+        codeArea.setMinHeight(minHeight);
+        codeArea.setMaxHeight(Double.MAX_VALUE); // Allow unlimited growth
     }
 
     public void setNotebookController(NotebookController controller) {
@@ -111,6 +141,7 @@ public class GenericCellController {
             notebookController.getNotebook().removeCell(cellModel.getId());
         }
     }
+
     private void confirmDelete() {
         try {
             Alert alert = generateAlert();

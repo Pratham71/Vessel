@@ -1,0 +1,52 @@
+classDiagram
+    %% === Part 4: Cell Controllers & Helpers ===
+
+    class GenericCellController {
+        <<com.vessel.ui>>
+        #VBox root
+        #ChoiceBox~CellType~ cellLanguage
+        #CodeArea codeArea
+        #VBox parentContainer
+        #NotebookCell cellModel
+        #NotebookEngine engine
+        #initialize()
+        -adjustCodeAreaHeight()
+        +setNotebookController(NotebookController)
+        +setNotebookCell(NotebookCell cell)
+        +getNotebookCell() NotebookCell
+        +setEngine(NotebookEngine engine)
+        +setCellType(CellType type)
+        #deleteCell()
+    }
+
+    class CodeCellController {
+        <<com.vessel.ui>>
+        -VBox outputBox
+        -Button runBtn
+        -int executionCount
+        -Label executionCountLabel
+        -Task~Void~ shellTask
+        #initialize()
+        +setNotebookCell(NotebookCell cell)
+        -displayOutput()
+        -displayOutput(RotateTransition spin)
+        -adjustOutputAreaHeight(TextArea area)
+        -fadeIn(Region node)
+        -executeCode()
+        -toggleExecution()
+        -setRunButtonState(boolean isRunning)
+        +incrementAndDisplayExecutionCount()
+    }
+
+    class SystemThemeDetector {
+        <<com.vessel.ui>>
+        <<enumeration>> Theme
+        +getSystemTheme() Theme
+    }
+
+    GenericCellController <|-- CodeCellController : extends
+    CodeCellController ..> SystemThemeDetector : uses
+
+    style GenericCellController fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style CodeCellController fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style SystemThemeDetector fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px

@@ -1,0 +1,100 @@
+sequenceDiagram
+    actor User
+    participant UI as CodeCellController
+    participant Cell as NotebookCell
+    participant Engine as NotebookEngine
+    participant JShell as JShell
+    participant Task as ExecutorService
+    
+    User->>UI: Clicks Run Button
+    activate UI
+    
+    UI->>UI: toggleExecution()
+    UI->>UI: executeCode()
+    
+    UI->>UI: incrementAndDisplayExecutionCount()
+    UI->>Cell: incrementExecutionCount()
+    UI->>UI: setRunButtonState(true)
+    Note over UI: Changes button to Stop icon
+    
+    UI->>UI: Display spinner animation
+    
+    UI->>Task: Create Task<Void>
+    activate Task
+    
+    Task->>Engine: execute(cellModel)
+    activate Engine
+    
+    Engine->>Engine: Validate code (check dangerous patterns)
+    
+    alt Code is valid
+        Engine->>Engine: executionLock.tryLock()
+        
+        alt Lock acquired
+            Engine->>Engine: Set isExecuting = true
+            Engine->>Task: Submit executeInternal(code)
+            
+            Task->>Engine: executeInternal(code)
+            activate Engine
+            
+            Engine->>Engine: Reset jshellBuffer
+            Engine->>JShell: eval(code)
+            activate JShell
+            
+            JShell-->>Engine: List<SnippetEvent>
+            deactivate JShell
+            
+            Engine->>Engine: Process events (check status, diagnostics, exceptions)
+            Engine->>Engine: Capture STDOUT from buffer
+            Engine->>Engine: Calculate execution time
+            
+            Engine-->>Task: Return ExecutionResult
+            deactivate Engine
+            
+            Task->>Cell: setExecutionResult(result)
+            
+            Task-->>UI: onSucceeded callback
+            deactivate Task
+            
+            UI->>UI: spin.stop()
+            UI->>UI: displayOutput()
+            activate UI
+            
+            UI->>Cell: getExecutionResult()
+            Cell-->>UI: ExecutionResult
+            
+            alt Success with output
+                UI->>UI: Create TextArea with output
+                UI->>UI: adjustOutputAreaHeight(resultArea)
+                UI->>UI: fadeIn(resultArea)
+                UI->>UI: Display in outputBox
+            else Error
+                UI->>UI: Create Label with error message
+                UI->>UI: Display in outputBox
+            else No output
+                UI->>UI: Create Label "(No output to print)"
+                UI->>UI: Display in outputBox
+            end
+            
+            deactivate UI
+            
+            UI->>UI: setRunButtonState(false)
+            Note over UI: Changes button back to Run icon
+            
+            Engine->>Engine: Set isExecuting = false
+            Engine->>Engine: executionLock.unlock()
+            
+        else Lock not acquired
+            Engine->>Cell: setExecutionResult(error: "Another cell is running")
+            Engine-->>UI: Return
+        end
+        
+    else Code validation failed
+        Engine->>Cell: setExecutionResult(error message)
+        Engine-->>UI: Return
+    end
+    
+    deactivate Engine
+    deactivate UI
+    
+    Note over User,JShell: User sees output displayed in the cell

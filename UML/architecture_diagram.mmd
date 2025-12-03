@@ -1,0 +1,95 @@
+graph TB
+    subgraph "Presentation Layer (JavaFX UI)"
+        Main[Main.java<br/>Application Entry Point]
+        NC[NotebookController<br/>Main UI Controller]
+        GCC[GenericCellController<br/>Base Cell Controller]
+        CCC[CodeCellController<br/>Code Cell with Execution]
+        TCC[TextCell<br/>Markdown/Plain Text]
+        STD[SystemThemeDetector<br/>Theme Detection]
+    end
+    
+    subgraph "Model Layer (Domain Objects)"
+        NB[Notebook<br/>Container for cells]
+        Cell[NotebookCell<br/>Individual cell data]
+        CT[CellType Enum<br/>CODE, MARKDOWN, TEXT]
+        ER[ExecutionResult<br/>Output data record]
+    end
+    
+    subgraph "Kernel Layer (Execution Engine)"
+        NE[NotebookEngine<br/>JShell wrapper with thread safety]
+        JS[JShell<br/>Java Read-Eval-Print-Loop]
+        Exec[ExecutorService<br/>Thread pool for async execution]
+        Lock[ReentrantLock<br/>Thread synchronization]
+    end
+    
+    subgraph "Persistence Layer (Data Storage)"
+        NP[NotebookPersistence<br/>Save/Load operations]
+        Gson[Gson Library<br/>JSON serialization]
+        FS[File System<br/>notebooks/*.json]
+    end
+    
+    subgraph "Utility Layer"
+        SS[SyntaxService<br/>Code highlighting]
+        Log[log<br/>Logging utility]
+    end
+    
+    subgraph "FXML Resources"
+        NFXML[Notebook.fxml<br/>Main window layout]
+        CFXML[CodeCell.fxml<br/>Code cell layout]
+        TFXML[TextCell.fxml<br/>Text cell layout]
+        CSS[light.css / dark.css<br/>Themes]
+    end
+    
+    %% Presentation Layer connections
+    Main --> NC
+    NC --> GCC
+    GCC <--> CCC
+    GCC <--> TCC
+    NC --> STD
+    
+    %% UI to Model
+    NC --> NB
+    GCC --> Cell
+    CCC --> Cell
+    Cell --> CT
+    Cell --> ER
+    NB --> Cell
+    
+    %% Kernel connections
+    NB --> NE
+    CCC --> NE
+    NE --> JS
+    NE --> Exec
+    NE --> Lock
+    NE --> ER
+    
+    %% Persistence connections
+    NC --> NP
+    NP --> Gson
+    NP --> FS
+    Gson --> NB
+    
+    %% Utility connections
+    CCC --> SS
+    NE --> Log
+    
+    %% FXML Resources
+    Main -.loads.-> NFXML
+    NC -.loads.-> CFXML
+    NC -.loads.-> TFXML
+    NC -.applies.-> CSS
+    
+    %% Styling
+    classDef presentation fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef model fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef kernel fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef persistence fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef utility fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef resource fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    
+    class Main,NC,GCC,CCC,TCC,STD presentation
+    class NB,Cell,CT,ER model
+    class NE,JS,Exec,Lock kernel
+    class NP,Gson,FS persistence
+    class SS,Log utility
+    class NFXML,CFXML,TFXML,CSS resource

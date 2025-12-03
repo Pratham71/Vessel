@@ -58,29 +58,34 @@ import javafx.stage.Window;
 
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
-    @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
-    @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
-    @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
-    @FXML private Menu insertMenu;
-    //    private boolean darkMode = false; // default theme is light mode
+    @FXML
+    private VBox codeCellContainer; // that blocks containers made where user actually writes
+    @FXML
+    private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
+    @FXML
+    private Label javaVersionLabel; // displays java version of the user in the toolbar
+    @FXML
+    private Menu insertMenu;
+    // private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
 
-
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
         this.scene = scene;
         // Set initial theme
-        scene.getStylesheets().add(getClass().getResource((theme == SystemThemeDetector.Theme.LIGHT ? "/light.css" : "/dark.css")).toExternalForm());
+        scene.getStylesheets().add(getClass()
+                .getResource((theme == SystemThemeDetector.Theme.LIGHT ? "/light.css" : "/dark.css")).toExternalForm());
     }
 
     @FXML
-    private void initialize() {// called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
+    private void initialize() {// called automatically after FXML loads, sets default lang to Java Code, and
+                               // shows java version in toolbar
 
         // Notebook init.
-        currentNotebook = new Notebook("untitled"); //  hardcoded right now
+        currentNotebook = new Notebook("untitled"); // hardcoded right now
 
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
@@ -100,12 +105,12 @@ public class NotebookController {
     // -------------------- Cell Creation --------------------
 
     // it creates a new cell container with proper formatting and light border
-     private void addCell(CellType initialType) {
-         NotebookCell cellModel = new NotebookCell();
-         cellModel.setType(initialType);
-         currentNotebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
-         codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
-     }
+    private void addCell(CellType initialType) {
+        NotebookCell cellModel = new NotebookCell();
+        cellModel.setType(initialType);
+        currentNotebook.addCell(cellModel); // <-- IMPORTANT (this was missing)
+        codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
+    }
 
     // Parameterless overloading (used by .fxml files)
     @FXML
@@ -122,17 +127,17 @@ public class NotebookController {
             VBox cell = loader.load();
 
             GenericCellController controller = loader.getController();
-            if (controller instanceof CodeCellController ) {
+            if (controller instanceof CodeCellController) {
                 controller.setEngine(currentNotebook.getEngine());
             }
             controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setNotebookController(this);
             controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             controller.setRoot(cell); // pass root for removal
-            controller.setCellType(type); //Init language
+            controller.setCellType(type); // Init language
             cell.setUserData(controller);
             return cell;
-        }catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
             e.printStackTrace();
@@ -156,17 +161,47 @@ public class NotebookController {
         return currentNotebook;
     }
 
-
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
-    @FXML private void cutCell() { System.out.println("Cut cell"); }
-    @FXML private void copyCell() { System.out.println("Copy cell"); }
-    @FXML private void pasteCell() { System.out.println("Paste cell"); }
-    @FXML private void moveUpCell() { System.out.println("Move cell up"); }
-    @FXML private void moveDownCell() { System.out.println("Move cell down"); }
-    @FXML private void runCell() { System.out.println("Run all cells"); }
-    @FXML private void pauseCell() { System.out.println("Pause all cells"); }
-    @FXML private void refreshCell() { System.out.println("Refresh all cells"); }
+    @FXML
+    private void cutCell() {
+        System.out.println("Cut cell");
+    }
+
+    @FXML
+    private void copyCell() {
+        System.out.println("Copy cell");
+    }
+
+    @FXML
+    private void pasteCell() {
+        System.out.println("Paste cell");
+    }
+
+    @FXML
+    private void moveUpCell() {
+        System.out.println("Move cell up");
+    }
+
+    @FXML
+    private void moveDownCell() {
+        System.out.println("Move cell down");
+    }
+
+    @FXML
+    private void runCell() {
+        System.out.println("Run all cells");
+    }
+
+    @FXML
+    private void pauseCell() {
+        System.out.println("Pause all cells");
+    }
+
+    @FXML
+    private void refreshCell() {
+        System.out.println("Refresh all cells");
+    }
 
     // -------------------- File Actions --------------------
     // Saving project to system
@@ -183,7 +218,8 @@ public class NotebookController {
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
         File file = fileChooser.showSaveDialog(codeCellContainer.getScene().getWindow());
-        if (file == null) return; // user canceled
+        if (file == null)
+            return; // user canceled
 
         // wrap save logic in Task
         Task<Boolean> saveTask = new Task<Boolean>() {
@@ -209,7 +245,8 @@ public class NotebookController {
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
         File file = fileChooser.showOpenDialog(codeCellContainer.getScene().getWindow());
-        if (file == null) return;
+        if (file == null)
+            return;
         Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
         if (loaded != null) {
             if (currentNotebook != null) {
@@ -234,20 +271,52 @@ public class NotebookController {
 
     // -------------------- Menu Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
-    @FXML private void exportPDF() { System.out.println("Export PDF"); }
-    @FXML private void undoAction() { System.out.println("Undo"); }
-    @FXML private void redoAction() { System.out.println("Redo"); }
-    @FXML private void toggleToolbar() { System.out.println("Toggle Toolbar"); }
-    @FXML private void zoomIn() { System.out.println("Zoom In"); }
-    @FXML private void zoomOut() { System.out.println("Zoom Out"); }
-    @FXML private void showAbout() { System.out.println("Show About"); }
-    @FXML private void showDocs() { System.out.println("Show Documentation"); }
+    @FXML
+    private void exportPDF() {
+        System.out.println("Export PDF");
+    }
+
+    @FXML
+    private void undoAction() {
+        System.out.println("Undo");
+    }
+
+    @FXML
+    private void redoAction() {
+        System.out.println("Redo");
+    }
+
+    @FXML
+    private void toggleToolbar() {
+        System.out.println("Toggle Toolbar");
+    }
+
+    @FXML
+    private void zoomIn() {
+        System.out.println("Zoom In");
+    }
+
+    @FXML
+    private void zoomOut() {
+        System.out.println("Zoom Out");
+    }
+
+    @FXML
+    private void showAbout() {
+        System.out.println("Show About");
+    }
+
+    @FXML
+    private void showDocs() {
+        System.out.println("Show Documentation");
+    }
 
     // -------------------- Helpers --------------------
     // simple method to toggle theme
     @FXML
     private void toggleTheme() {
-        if (scene == null) return;
+        if (scene == null)
+            return;
 
         scene.getStylesheets().clear();
         if (theme == SystemThemeDetector.Theme.DARK) {

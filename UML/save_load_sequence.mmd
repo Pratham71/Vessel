@@ -1,0 +1,131 @@
+sequenceDiagram
+    actor User
+    participant NC as NotebookController
+    participant NB as Notebook
+    participant Cell as NotebookCell
+    participant NP as NotebookPersistence
+    participant Gson
+    participant FS as FileSystem
+    
+    rect rgb(200, 220, 255)
+        Note over User,FS: === SAVE OPERATION ===
+        
+        User->>NC: Clicks "Save" menu item
+        activate NC
+        
+        NC->>NC: saveProject()
+        NC->>NC: syncModelFromUI()
+        
+        Note over NC: Iterate through UI cells and update model
+        loop For each cell VBox in codeCellContainer
+            NC->>NC: Get GenericCellController from cell
+            NC->>NC: controller.getNotebookCell()
+            NC->>NB: addCell(cell)
+        end
+        
+        NC->>NC: Show FileChooser dialog
+        NC->>User: Display "Save Notebook" dialog
+        User-->>NC: Select file location and name
+        
+        NC->>NC: Create Task<Boolean> for async save
+        NC->>NP: saveToPath(currentNotebook, file.getAbsolutePath())
+        activate NP
+        
+        NP->>Gson: toJson(notebook)
+        activate Gson
+        
+        Note over Gson: Serialize Notebook object
+        Gson->>NB: getName()
+        Gson->>NB: getCells()
+        
+        loop For each NotebookCell
+            Gson->>Cell: getId(), getType(), getContent()
+            Gson->>Cell: getExecutionCount(), getExecutionResult()
+            Gson->>Cell: createdAt, lastModifiedAt
+        end
+        
+        Gson-->>NP: JSON string
+        deactivate Gson
+        
+        NP->>FS: writeFile(fullPath, json)
+        activate FS
+        FS-->>NP: Success
+        deactivate FS
+        
+        NP-->>NC: true (success)
+        deactivate NP
+        
+        NC->>NC: Log "save done!"
+        
+        deactivate NC
+    end
+    
+    rect rgb(200, 255, 220)
+        Note over User,FS: === LOAD OPERATION ===
+        
+        User->>NC: Clicks "Open" menu item
+        activate NC
+        
+        NC->>NC: openProject()
+        NC->>NC: Show FileChooser dialog
+        NC->>User: Display "Open Notebook" dialog
+        User-->>NC: Select .json file
+        
+        NC->>NP: loadFromPath(file.getAbsolutePath())
+        activate NP
+        
+        NP->>FS: readFile(fullPath)
+        activate FS
+        FS-->>NP: JSON string
+        deactivate FS
+        
+        NP->>Gson: fromJson(json, Notebook.class)
+        activate Gson
+        
+        Gson->>NB: Create Notebook instance
+        activate NB
+        Gson->>NB: Set name
+        
+        loop For each cell in JSON
+            Gson->>Cell: Create NotebookCell instance
+            activate Cell
+            Gson->>Cell: Set id, cellType, content
+            Gson->>Cell: Set executionCount, executionResult
+            Gson->>Cell: Set createdAt, lastModifiedAt
+            Cell-->>NB: NotebookCell
+            deactivate Cell
+            NB->>NB: Add cell to list
+        end
+        
+        NB-->>Gson: Notebook instance
+        deactivate NB
+        
+        Gson-->>NP: Deserialized Notebook
+        deactivate Gson
+        
+        NP-->>NC: Loaded Notebook
+        deactivate NP
+        
+        NC->>NC: Check if currentNotebook exists
+        alt currentNotebook exists
+            NC->>NB: shutdownEngine()
+        end
+        
+        NC->>NC: currentNotebook = loaded
+        NC->>NB: initEngineIfNull()
+        
+        NC->>NC: renderNotebook()
+        NC->>NC: codeCellContainer.getChildren().clear()
+        
+        loop For each NotebookCell in loaded notebook
+            NC->>NC: createCellUI(cell.getType(), cell)
+            Note over NC: Creates GenericCellController or CodeCellController
+            NC->>NC: codeCellContainer.getChildren().add(cellUI)
+        end
+        
+        NC->>NC: Log "loaded ok"
+        
+        deactivate NC
+    end
+    
+    Note over User,FS: Notebook successfully saved/loaded with all cell content and state preserved
