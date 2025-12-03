@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant User
+    participant UI as :CodeCellController
+    participant Model as :NotebookCell
+    participant Engine as :NotebookEngine
+    
+    Note over User, Engine: Communication / Interaction View
+    
+    User->>UI: 1: clickRun()
+    activate UI
+    
+    UI->>Model: 2: incrementCount()
+    UI->>UI: 3: setBusyState()
+    
+    UI->>Engine: 4: execute(cell)
+    activate Engine
+    
+    Engine->>Engine: 5: eval(code)
+    Engine-->>Model: 6: setResult()
+    
+    Engine-->>UI: 7: return
+    deactivate Engine
+    
+    UI->>UI: 8: displayOutput()
+    deactivate UI

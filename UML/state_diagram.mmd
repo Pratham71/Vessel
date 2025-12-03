@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> Idle
+    
+    Idle --> Queued : User Clicks Run
+    Queued --> Executing : Engine Available
+    
+    state Executing {
+        [*] --> Compiling
+        Compiling --> Running : Valid Syntax
+        Compiling --> Failed : Syntax Error
+        Running --> Success : Completed
+        Running --> Failed : Runtime Exception
+        Running --> Interrupted : User Cancelled
+    }
+    
+    Success --> DisplayResults : Has Output
+    Failed --> DisplayError : Show Error
+    Interrupted --> DisplayCancelled : Show Cancelled
+    
+    DisplayResults --> Idle
+    DisplayError --> Idle
+    DisplayCancelled --> Idle
+    
+    note right of Idle : Ready for input
+    note right of Executing : Locked by Engine

@@ -1,6 +1,8 @@
 package com.vessel; // com.vessel is folder(package) inside which we have all the files
+
 // some javafx classes are imported
 // Main.java
+
 import com.vessel.ui.NotebookController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -39,4 +41,3 @@ public class Main extends Application {
         launch(args);
     }
 }
-

@@ -15,6 +15,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.HBox;
+import javafx.scene.input.ScrollEvent;
 
 public class GenericCellController {
     @FXML
@@ -75,6 +76,15 @@ public class GenericCellController {
         // --- BUTTON LISTENERS --
         deleteBtn.setOnAction(e -> confirmDelete());
         clearBtn.setOnAction(e -> confirmClear());
+
+        // --- SCROLL EVENT HANDLING ---
+        // Prevent CodeArea from trapping scroll events so the main window can scroll
+        codeArea.addEventFilter(ScrollEvent.SCROLL, e -> {
+            e.consume();
+            if (parentContainer != null) {
+                parentContainer.fireEvent(e.copyFor(parentContainer, parentContainer));
+            }
+        });
     }
 
     /**
@@ -206,5 +216,17 @@ public class GenericCellController {
             alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
         }
         return alert;
-    }
-}
+    }}
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    
+        
+    

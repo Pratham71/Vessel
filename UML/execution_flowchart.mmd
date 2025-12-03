@@ -1,0 +1,36 @@
+flowchart TD
+    Start([User Clicks Run]) --> IsEmpty{Is Code Empty?}
+    
+    IsEmpty -- Yes --> EmptyErr[Show 'Empty Code Cell' Error] --> EndNode([End])
+    IsEmpty -- No --> Security{Contains Dangerous<br/>Patterns?}
+    
+    Security -- Yes --> SecErr[Block Execution &<br/>Show Security Warning] --> EndNode
+    Security -- No --> Lock{Acquire Execution<br/>Lock?}
+    
+    Lock -- No --> BusyErr[Show 'Cell Running'<br/>Warning] --> EndNode
+    Lock -- Yes --> InitExec[Set isExecuting = true]
+    
+    InitExec --> Async[Submit to ExecutorService]
+    
+    subgraph "Background Thread"
+        Async --> ResetBuf[Reset Output Buffer]
+        ResetBuf --> JShell["JShell.eval(code)"]
+        JShell --> Events{Events Generated?}
+        
+        Events -- Success --> CaptureOut[Capture STDOUT]
+        Events -- Error --> CaptureErr[Capture Compilation/<br/>Runtime Errors]
+        
+        CaptureOut --> Result[Create ExecutionResult]
+        CaptureErr --> Result
+    end
+    
+    Result --> UIUpdate[Update UI on JavaFX Thread]
+    
+    UIUpdate --> Display{Has Output?}
+    Display -- Yes --> ShowOut[Render Output TextArea]
+    Display -- No --> ShowNoOut["Show '(No output)'"]
+    
+    ShowOut --> Unlock[Release Lock]
+    ShowNoOut --> Unlock
+    
+    Unlock --> EndNode

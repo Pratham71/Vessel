@@ -1,0 +1,38 @@
+classDiagram
+    %% Object Diagram (Snapshot)
+    
+    class NotebookInstance {
+        name = "MyProject"
+        engine = EngineInstance
+    }
+    
+    class Cell1 {
+        id = "uuid-1234"
+        type = CODE
+        content = "System.out.println(\"Hello\");"
+        executionCount = 1
+    }
+    
+    class Cell2 {
+        id = "uuid-5678"
+        type = MARKDOWN
+        content = "# Documentation"
+    }
+    
+    class EngineInstance {
+        isExecuting = false
+        totalExecutions = 1
+    }
+    
+    class Result1 {
+        output = "Hello\n"
+        success = true
+        time = 15ms
+    }
+    
+    NotebookInstance *-- Cell1
+    NotebookInstance *-- Cell2
+    NotebookInstance *-- EngineInstance
+    Cell1 -- Result1 : has result
+    
+    note "Snapshot at Runtime"

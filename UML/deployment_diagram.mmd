@@ -1,0 +1,20 @@
+graph TD
+    subgraph "User Workstation (Windows)"
+        subgraph "JVM (Java Virtual Machine)"
+            App["Vessel Application<br/>(JavaFX)"]
+            
+            subgraph "Embedded Kernel"
+                JShell["JShell Instance"]
+            end
+            
+            App --> JShell
+        end
+        
+        FileSystem["File System<br/>(JSON Storage)"]
+        
+        App -->|Read/Write| FileSystem
+    end
+    
+    style App fill:#e1f5ff,stroke:#01579b
+    style JShell fill:#fff3e0,stroke:#e65100
+    style FileSystem fill:#e8f5e9,stroke:#1b5e20

@@ -1,0 +1,46 @@
+graph LR
+    User((User))
+    
+    subgraph "Vessel Notebook"
+        UC1(Create New Notebook)
+        UC2(Open Notebook)
+        UC3(Save Notebook)
+        UC4(Add Code Cell)
+        UC5(Add Markdown Cell)
+        UC6(Edit Cell Content)
+        UC7(Delete Cell)
+        UC8(Reorder Cells)
+        UC9(Run Code Cell)
+        UC10(Stop Execution)
+        UC11(View Output)
+        UC12(Toggle Theme)
+    end
+
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+    User --> UC8
+    User --> UC9
+    User --> UC10
+    User --> UC12
+
+    UC9 -.->|include| UC11
+    UC2 -.->|include| UC11
+
+    style User fill:#fff,stroke:#333,stroke-width:2px
+    style UC1 rx:20,ry:20
+    style UC2 rx:20,ry:20
+    style UC3 rx:20,ry:20
+    style UC4 rx:20,ry:20
+    style UC5 rx:20,ry:20
+    style UC6 rx:20,ry:20
+    style UC7 rx:20,ry:20
+    style UC8 rx:20,ry:20
+    style UC9 rx:20,ry:20
+    style UC10 rx:20,ry:20
+    style UC11 rx:20,ry:20
+    style UC12 rx:20,ry:20
