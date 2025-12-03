@@ -19,7 +19,8 @@
 
                 <!-- File Menu -->
                 <Menu text="File"> <!--text="<label shown to user>", onAction="#openProject" // it calls openProject method in NotebookController when clicked-->
-                    <MenuItem text="Open" onAction="#openProject"/>
+                    <MenuItem text="New Notebook" onAction="#newNotebook"/>
+                    <MenuItem text="Open Project" onAction="#openProject"/>
                     <MenuItem text="Save Project" onAction="#saveProject"/>
                     <MenuItem text="Export as PDF" onAction="#exportPDF"/>
                 </Menu>

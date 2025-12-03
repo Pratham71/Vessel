@@ -57,6 +57,12 @@ import javafx.concurrent.Task;
 import javafx.stage.Window;
 
 public class NotebookController {
+    @FXML
+    private void newNotebook() {
+        System.out.println("New Notebook created");
+        codeCellContainer.getChildren().clear();
+        addCell();
+    }
     // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
