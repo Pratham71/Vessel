@@ -31,6 +31,7 @@ public class CodeCellController extends GenericCellController {
     // Field to hold the FontIcon for dynamic icon swapping
     private FontIcon runIcon;
     private FontIcon stopIcon;
+    private NotebookController notebookController;
 
     // Field to hold the thread/task of the current execution
     private Task<Void> shellTask;
@@ -41,6 +42,10 @@ public class CodeCellController extends GenericCellController {
         if (cell.getExecutionResult() != null && !cell.getContent().isBlank()) {
             displayOutput();
         }
+    }
+
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
     }
 
     @FXML
