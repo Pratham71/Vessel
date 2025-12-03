@@ -32,7 +32,9 @@ public class GenericCellController {
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
     protected NotebookEngine engine;
-
+    public void updateEngine(NotebookEngine newEngine) {
+        this.engine = newEngine;
+    }
     // Called before the specific cell type is initialized
     protected void initialize() {
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing

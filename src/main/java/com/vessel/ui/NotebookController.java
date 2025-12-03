@@ -37,6 +37,7 @@ package com.vessel.ui;
 * #TODO: (Optional) Landing page on launching app -> shows previous notebooks
 */
 
+import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
@@ -299,6 +300,33 @@ public class NotebookController {
         mainToolbar.getItems().remove(index);
         mainToolbar.getItems().add(index, notebookNameLabel);
     }
+    //shell controls
+    @FXML
+    private void startShell() {
+        System.out.println("Shell: Starting JShell Engine...");
+        getCurrentNotebook().initEngineIfNull();
+    }
+
+    @FXML
+    private void shutdownShell() {
+        System.out.println("Shell: Shutting Down JShell Engine...");
+        getCurrentNotebook().shutdownEngine();
+    }
+
+    @FXML
+    private void restartShell() {
+        System.out.println("Shell: Restarting JShell Engine...");
+        getCurrentNotebook().shutdownEngine();
+        getCurrentNotebook().initEngineIfNull();
+        NotebookEngine newEngine = getCurrentNotebook().getEngine();
+        for (javafx.scene.Node node : codeCellContainer.getChildren()) {
+            Object controller = node.getUserData(); // Or similar method if you stored the controller
+            if (controller instanceof GenericCellController) {
+                ((GenericCellController) controller).updateEngine(newEngine);
+            }
+            System.out.println("Shell: Engine restart complete. Cell controllers updated.");
+            }
+        }
 
     public Notebook getCurrentNotebook() {
         return currentNotebook;
