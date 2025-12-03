@@ -217,7 +217,6 @@ If your library is not available online (for example, `ikonli-core.jar` in `/lib
 
 ## Overview of Project Structre
 ```
-```
 Vessel
 │
 ├─ .idea/
@@ -268,6 +267,4 @@ Vessel
 ├─ .gitignore
 ├─ README.md
 └─ EXPLANATION.md
-
-```
 ---
