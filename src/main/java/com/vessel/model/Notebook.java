@@ -55,6 +55,14 @@ public class Notebook {
         this.name = name;
     }
 
+    // inserts a cell at a specific index
+    public void addCellAt(int index, NotebookCell cell) {
+        if (index < 0 || index > cells.size()) {
+            cells.add(cell);
+        } else {
+            cells.add(index, cell);
+        }
+    }
 
     // Return all cells for rendering
     public List<NotebookCell> getCells() {

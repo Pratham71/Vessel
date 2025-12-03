@@ -14,6 +14,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.HBox;
+import com.vessel.Kernel.ExecutionResult;
+
 
 
 public class GenericCellController {
@@ -99,6 +101,28 @@ public class GenericCellController {
     // Only difference is non code cells cant RUN the engine
     public void setEngine(NotebookEngine engine) {
         this.engine = engine;
+    }
+
+    public void updateOutput(ExecutionResult res) { }     // shared updateOutput() will be overridden by child classes (e.g., CodeCellController)
+
+    // returns the vbox ui root of this cell (used by global toolbar actions)
+    public VBox getRoot() {
+        return root;
+    }
+
+    private boolean isSelected = false; // tracks whether this cell is currently selected by the user in the ui
+    // returns true if this cell is the globally selected one
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    // sets this cell as selected or unselected
+    // also updates the ui border so user can visually see which cell is active
+    public void setSelected(boolean selected) {
+        this.isSelected = selected;
+        if (root != null) {
+            root.setStyle(selected ? "-fx-border-color: #4a90e2; -fx-border-width: 2;" : "");
+        }
     }
 
     protected void deleteCell() {

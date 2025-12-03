@@ -12,8 +12,8 @@ package com.vessel.Kernel;
  * Records are immutable and perfect for simple data containers.
  *
  * @param output The standard output/printed content from execution
- * @param error Error messages if execution failed (empty string if successful)
+ * @param errors Error messages if execution failed (empty string if successful)
  * @param executionTimeMs Time taken to execute in milliseconds
  * @param success True if execution completed without errors, false otherwise
  */
-public record ExecutionResult(String output, String error, long executionTimeMs, boolean success) {}
+public record ExecutionResult(String output, String errors, long executionTimeMs, boolean success) {}

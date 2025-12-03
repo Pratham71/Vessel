@@ -41,6 +41,7 @@ import com.vessel.model.CellType;
 import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
 import com.vessel.persistence.NotebookPersistence;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
@@ -55,6 +56,14 @@ import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 import java.io.*; // reading and writing project files
 import javafx.concurrent.Task;
 import javafx.stage.Window;
+import com.vessel.Kernel.NotebookEngine;
+
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+
 
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
@@ -67,7 +76,36 @@ public class NotebookController {
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
+    private final NotebookEngine engine = new NotebookEngine(); // global notebook engine instance used to run all jshell executions across all cells
+    private Future<?> runAllFuture;     // future object returned by the "run all" task so we can pause/cancel it later
+    private final ExecutorService toolbarExecutor = Executors.newSingleThreadExecutor(); // single-thread executor used only for global toolbar actions like run all / pause all
+    private NotebookCell clipboardCell = null; // stores copied or cut cell temporarily
 
+
+    private void removeCellFromUI(GenericCellController controller) {// removes a cell's vbox from the ui
+        codeCellContainer.getChildren().remove(controller.getRoot());
+    }
+
+    // returns the cell controller that is currently selected by the user
+    // used by global actions like cut, copy, paste, move up/down
+    private GenericCellController getSelectedCell() {
+        for (var node : codeCellContainer.getChildren()) {
+            GenericCellController c = (GenericCellController) node.getUserData();
+            if (c != null && c.isSelected()) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    // removes selection highlight from all cells in the notebook
+    // ensures only one cell can be selected at a time
+    private void clearAllSelections() {
+        for (var node : codeCellContainer.getChildren()) {
+            GenericCellController c = (GenericCellController) node.getUserData();
+            if (c != null) c.setSelected(false);
+        }
+    }
 
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
@@ -130,7 +168,11 @@ public class NotebookController {
             controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             controller.setRoot(cell); // pass root for removal
             controller.setCellType(type); //Init language
-            cell.setUserData(controller);
+            cell.setUserData(controller); // clicking the cell should mark it as the globally selected cell
+            cell.setOnMouseClicked(e -> { // clears selection for all other cells and highlights only this one
+                clearAllSelections();
+                controller.setSelected(true);
+            });
             return cell;
         }catch (IOException e) {
             throw new RuntimeException(e);
@@ -159,14 +201,121 @@ public class NotebookController {
 
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
-    @FXML private void cutCell() { System.out.println("Cut cell"); }
-    @FXML private void copyCell() { System.out.println("Copy cell"); }
-    @FXML private void pasteCell() { System.out.println("Paste cell"); }
-    @FXML private void moveUpCell() { System.out.println("Move cell up"); }
-    @FXML private void moveDownCell() { System.out.println("Move cell down"); }
-    @FXML private void runCell() { System.out.println("Run all cells"); }
-    @FXML private void pauseCell() { System.out.println("Pause all cells"); }
-    @FXML private void refreshCell() { System.out.println("Refresh all cells"); }
+    // holds a single copied / cut cell model
+
+    // removes the currently selected cell from both ui + notebook model
+    // and stores it in a temporary clipboard for pasting later
+    @FXML private void cutCell() {
+        GenericCellController selected = getSelectedCell();
+        if (selected == null) return;
+        clipboardCell = selected.getNotebookCell(); // store model
+        removeCellFromUI(selected);
+        currentNotebook.removeCell(clipboardCell.getId());
+    }
+
+    // copies the selected cell model into a temporary clipboard
+    // does not remove it from the notebook
+    @FXML private void copyCell() {
+        GenericCellController selected = getSelectedCell();
+        if (selected == null) return;
+        // deep copy to avoid modifying original
+        NotebookCell clone = new NotebookCell();
+        clone.setType(selected.getNotebookCell().getType());
+        clone.setContent(selected.getNotebookCell().getContent());
+        clipboardCell = clone;
+    }
+
+    // inserts a new cell below the currently selected one using clipboard contents
+    @FXML private void pasteCell() {
+        if (clipboardCell == null) return;
+        GenericCellController selected = getSelectedCell();
+        int index = (selected == null)
+                ? currentNotebook.getCells().size()
+                : codeCellContainer.getChildren().indexOf(selected.getRoot()) + 1;
+        NotebookCell clone = new NotebookCell();
+        clone.setType(clipboardCell.getType());
+        clone.setContent(clipboardCell.getContent());
+        currentNotebook.addCellAt(index, clone);
+        VBox ui = createCellUI(clone.getType(), clone);
+        codeCellContainer.getChildren().add(index, ui);
+    }
+    @FXML private void moveUpCell() {
+        GenericCellController selected = getSelectedCell();
+        if (selected == null) return;
+        VBox ui = selected.getRoot();
+        int index = codeCellContainer.getChildren().indexOf(ui);
+        if (index <= 0) return; // already at top
+        // swap in model
+        Collections.swap(currentNotebook.getCells(), index, index - 1);
+        // swap in ui
+        codeCellContainer.getChildren().remove(ui);
+        codeCellContainer.getChildren().add(index - 1, ui);
+    }
+    @FXML private void moveDownCell() {
+        GenericCellController selected = getSelectedCell();
+        if (selected == null) return;
+        VBox ui = selected.getRoot();
+        int index = codeCellContainer.getChildren().indexOf(ui);
+        if (index >= codeCellContainer.getChildren().size() - 1) return; // already at bottom
+        // swap in model
+        Collections.swap(currentNotebook.getCells(), index, index + 1);
+        // swap in ui
+        codeCellContainer.getChildren().remove(ui);
+        codeCellContainer.getChildren().add(index + 1, ui); }
+
+    @FXML private void runCell() {
+        // prevent starting another run-all if one is already in progress
+        if (runAllFuture != null && !runAllFuture.isDone()) {
+            System.out.println("run-all already in progress, ignoring click");
+            return;
+        }
+        runAllFuture = toolbarExecutor.submit(() -> {
+            System.out.println("=== running all cells ===");
+            for (var node : codeCellContainer.getChildren()) {
+                if (!(node instanceof VBox cellBox)) continue;
+                var controller = (GenericCellController) cellBox.getUserData();
+                // only code cells have executable java code; skip markdown/text cells
+                if (!(controller instanceof CodeCellController codeController)) {
+                    continue;
+                }
+                NotebookCell cell = codeController.getNotebookCell();
+                Platform.runLater(codeController::showExecutingState);
+                engine.execute(cell);
+                // grab the result that engine stored in the cell and push it to the ui
+                var result = cell.getExecutionResult();
+                Platform.runLater(() -> codeController.updateOutput(result));
+
+                // if user presses pause
+                if (Thread.currentThread().isInterrupted()) {
+                    System.out.println("run-all interrupted, stopping loop");
+                    return;
+                }
+            }
+            System.out.println("=== run-all finished ===");
+        });
+    }
+
+    // pauses any ongoing "run all" execution by cancelling the future
+    // also interrupts the jshell kernel so the currently running cell stops immediately
+    @FXML private void pauseCell() {
+        System.out.println("Pausing kernel...");
+        if (runAllFuture != null) {
+            runAllFuture.cancel(true);
+        }
+        engine.interrupt(); // stops JShell execution
+        System.out.println("Execution interrupted."); }
+
+    // clears only the output areas of every cell but keeps the input code intact
+    @FXML private void refreshCell() {
+        System.out.println("Resetting kernel...");
+        engine.resetKernel();
+        for (var node : codeCellContainer.getChildren()) {
+            if (node instanceof VBox cellBox) {
+                CodeCellController controller = (CodeCellController) cellBox.getUserData();
+                controller.clearOutputOnly();
+            }
+        }
+    }
 
     // -------------------- File Actions --------------------
     // Saving project to system

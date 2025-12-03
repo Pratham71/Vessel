@@ -7,6 +7,7 @@ import com.vessel.model.NotebookCell;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -17,6 +18,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
+import com.vessel.Kernel.ExecutionResult;
 
 import static com.vessel.util.SyntaxService.computeHighlighting;
 
@@ -107,7 +109,7 @@ public class CodeCellController extends GenericCellController {
         }
 
         if (!shellResult.success()) {
-            Label err = new Label("Error:\n" + shellResult.error().trim());
+            Label err = new Label("Error:\n" + shellResult.errors().trim());
             err.getStyleClass().add("output-label");
             outputBox.getChildren().add(err);
         }
@@ -285,4 +287,40 @@ public class CodeCellController extends GenericCellController {
         executionCount++;
         executionCountLabel.setText("[" + executionCount + "]");
     }
+
+    // shows a temporary "executing..." message while a cell is running
+    public void showExecutingState() {
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+        Label l = new Label("Executing…");
+        l.setStyle("-fx-text-fill: #bbbbbb;");
+        outputBox.getChildren().add(l);
+    }
+
+    // updates the output area after execution finishes
+    @Override
+    public void updateOutput(ExecutionResult res) {
+        outputBox.setVisible(true);
+        outputBox.getChildren().clear();
+        TextArea area = new TextArea(
+                res.output() + "\n" +
+                        (res.errors().isEmpty() ? "" : ("\nErrors:\n" + res.errors()))
+        );
+        area.setEditable(false);
+        area.setWrapText(true);
+        area.getStyleClass().add("read-only-output");
+        area.setPrefRowCount(4);
+        VBox.setVgrow(area, Priority.NEVER);
+        outputBox.setPadding(new Insets(10, 10, 10, 10));
+        outputBox.setMinHeight(Region.USE_PREF_SIZE);
+        outputBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        outputBox.getChildren().add(area);
+    }
+
+    // clears only the output section (used when kernel resets)
+    public void clearOutputOnly() {
+        outputBox.setVisible(false);
+        outputBox.getChildren().clear();
+    }
+
 }
