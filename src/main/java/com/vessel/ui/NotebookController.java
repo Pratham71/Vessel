@@ -48,9 +48,9 @@ import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser; // For opening/saving project files
+import javafx.stage.Stage;
 
 import java.io.*; // reading and writing project files
-import javafx.concurrent.Task;
 
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
@@ -63,6 +63,7 @@ public class NotebookController {
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
+    private NotebookController notebookController;
 
     // im purely putting this for better performance
     private static boolean markdownEngineWarmedUp = false;
@@ -81,6 +82,11 @@ public class NotebookController {
         // Set initial theme
         scene.getStylesheets().add(getClass().getResource((theme == SystemThemeDetector.Theme.LIGHT ? "/light.css" : "/dark.css")).toExternalForm());
     }
+
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
+    }
+
 
     @FXML
     private void initialize() {// called automatically after FXML loads, sets default lang to Java Code, and shows java version in toolbar
@@ -222,35 +228,33 @@ public class NotebookController {
     // Saving project to system
     @FXML
     private void saveProject() {
-        // sync UI → model
         syncModelFromUI();
+        // case 1: notebook already has a saved file path
+        if (currentNotebook.getFilePath() != null) {
+            persistence.saveToPath(currentNotebook, currentNotebook.getFilePath());
+            currentNotebook.markSaved(); // mark clean
+            System.out.println("Saved to existing file: " + currentNotebook.getFilePath());
+            return;
+        }
+        //case 2: it's a new notebook --> show Save As dialog
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Notebook");
-        // open in /notebooks by default
         fileChooser.setInitialDirectory(new File("notebooks"));
         fileChooser.setInitialFileName(currentNotebook.getName() + ".json");
-        // allow only json files
         fileChooser.getExtensionFilters()
                 .add(new FileChooser.ExtensionFilter("Vessel Notebook (*.json)", "*.json"));
         File file = fileChooser.showSaveDialog(codeCellContainer.getScene().getWindow());
-        if (file == null) return; // user canceled
+        if (file == null) return;
+        // save and remember path
+        persistence.saveToPath(currentNotebook, file.getAbsolutePath());
+        currentNotebook.setFilePath(file.getAbsolutePath());
+        currentNotebook.markSaved();
 
-        // wrap save logic in Task
-        Task<Boolean> saveTask = new Task<Boolean>() {
-            @Override
-            protected Boolean call() throws Exception {
-                return persistence.saveToPath(currentNotebook, file.getAbsolutePath());
-            }
-        };
-
-        saveTask.setOnSucceeded(e -> System.out.println("save done!"));
-        saveTask.setOnFailed(e -> System.out.println("save failed."));
-
-        new Thread(saveTask).start();
+        System.out.println("Saved new file: " + file.getAbsolutePath());
     }
 
+
     // opens already existing project
-    // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
         FileChooser fileChooser = new FileChooser();
@@ -262,6 +266,7 @@ public class NotebookController {
         if (file == null) return;
         Notebook loaded = persistence.loadFromPath(file.getAbsolutePath());
         if (loaded != null) {
+            loaded.setFilePath(file.getAbsolutePath());
             if (currentNotebook != null) {
                 currentNotebook.shutdownEngine();
             }
@@ -281,6 +286,37 @@ public class NotebookController {
             codeCellContainer.getChildren().add(createCellUI(cell.getType(), cell));
         }
     }
+
+    // called by Main.java after loading the scene
+    public void attachCloseHandler(Stage stage) {
+        stage.setOnCloseRequest(event -> {
+            // if notebook is clean (no changes), close normally
+            if (!currentNotebook.isUsed()) {
+                return;
+            }
+            // otherwise ask user
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Unsaved Changes");
+            alert.setHeaderText("This notebook has unsaved changes. Save before closing?");
+
+            ButtonType saveBtn = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+            ButtonType dontSaveBtn = new ButtonType("Don't Save", ButtonBar.ButtonData.NO);
+            ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(saveBtn, dontSaveBtn, cancelBtn);
+
+            var result = alert.showAndWait().orElse(cancelBtn);
+
+            if (result == saveBtn) {
+                saveProject();
+            } else if (result == cancelBtn) {
+                event.consume(); // BLOCK closing
+            }
+        });
+    }
+
+
+
+
 
     // -------------------- Menu Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
