@@ -61,7 +61,13 @@
             </MenuBar>
 
 
-            <ToolBar fx:id="actionToolbar">
+            <ToolBar fx:id="mainToolbar"> <Label fx:id="notebookNameLabel" text="Untitled Notebook"
+                                                   style="-fx-font-weight: bold; -fx-font-size: 16px;"
+                                                   onMouseClicked="#editNotebookName">
+                <HBox.margin>
+                    <Insets right="20" />
+                </HBox.margin>
+            </Label>
                 <!-- this toolbar has buttons so each button has some onAction which trigger some method in the controller; also some ikonli library properties which is inside <graphic>-->
                 <!-- tooltip here shows small cursor hover text to users as in what this button do-->
                 <Button onAction="#addCell">

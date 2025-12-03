@@ -48,6 +48,9 @@ import javafx.scene.Scene; // UI scene
 import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
 import javafx.stage.FileChooser; // For opening/saving project files
+import javafx.scene.control.ToolBar;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
 import javafx.geometry.Insets;
 import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
@@ -68,6 +71,9 @@ public class NotebookController {
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
     @FXML private Menu insertMenu;
+    @FXML private ToolBar mainToolbar;
+    @FXML private Label notebookNameLabel;
+    private String currentNotebookName = "Untitled Notebook"; // Data storage for the name
     //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
@@ -106,12 +112,12 @@ public class NotebookController {
     // -------------------- Cell Creation --------------------
 
     // it creates a new cell container with proper formatting and light border
-     private void addCell(CellType initialType) {
-         NotebookCell cellModel = new NotebookCell();
-         cellModel.setType(initialType);
-         currentNotebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
-         codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
-     }
+    private void addCell(CellType initialType) {
+        NotebookCell cellModel = new NotebookCell();
+        cellModel.setType(initialType);
+        currentNotebook.addCell(cellModel);   // <-- IMPORTANT (this was missing)
+        codeCellContainer.getChildren().add(createCellUI(initialType, cellModel));
+    }
 
     // Parameterless overloading (used by .fxml files)
     @FXML
@@ -128,7 +134,7 @@ public class NotebookController {
             VBox cell = loader.load();
 
             GenericCellController controller = loader.getController();
-            if (controller instanceof CodeCellController ) {
+            if (controller instanceof CodeCellController) {
                 controller.setEngine(currentNotebook.getEngine());
             }
             controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
@@ -138,7 +144,7 @@ public class NotebookController {
             controller.setCellType(type); //Init language
             cell.setUserData(controller);
             return cell;
-        }catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
             e.printStackTrace();
@@ -263,6 +269,35 @@ public class NotebookController {
             scene.getStylesheets().add(getClass().getResource("/dark.css").toExternalForm());
             theme = SystemThemeDetector.Theme.DARK;
         }
+    }
+    // makes notebook name editable
+    @FXML
+    private void editNotebookName() {
+        TextField nameField = new TextField(currentNotebookName);
+        nameField.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
+        int index = mainToolbar.getItems().indexOf(notebookNameLabel);
+        if (index != -1) {
+            mainToolbar.getItems().remove(index);
+            mainToolbar.getItems().add(index, nameField);
+            nameField.requestFocus();
+            nameField.selectAll();
+            nameField.setOnAction(e -> saveNotebookName(nameField, index));
+            nameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (!newVal)
+                    saveNotebookName(nameField, index);
+            });
+        }
+    }
+
+    private void saveNotebookName(TextField field, int index) {
+        String newName = field.getText().trim();
+        if (newName.isEmpty()) {
+            newName = "Untitled Notebook";
+        }
+        currentNotebookName = newName;
+        notebookNameLabel.setText(newName);
+        mainToolbar.getItems().remove(index);
+        mainToolbar.getItems().add(index, notebookNameLabel);
     }
 
     public Notebook getCurrentNotebook() {
