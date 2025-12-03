@@ -77,10 +77,9 @@ public class Notebook {
         if(this.engine.isExecuting()){
             this.engine.interrupt();
         }
-
-            this.engine.shutdown();
-            this.engine = null;
-        }
+        this.engine.shutdown();
+        this.engine = null;
+    }
     public void initEngineIfNull() {
         if (this.engine == null) {
             this.engine = new NotebookEngine();

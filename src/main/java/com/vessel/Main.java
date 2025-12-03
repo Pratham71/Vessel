@@ -19,6 +19,7 @@ public class Main extends Application {
         Scene scene = new Scene(root, 1000, 650);
 
         controller = loader.getController();
+        controller.setupNotebookNameDisplay();
         controller.setScene(scene);
 
         stage.setScene(scene);

@@ -34,12 +34,6 @@
                     <MenuItem text="Paste" onAction="#pasteCell"/>
                 </Menu>
 
-                <Menu text="Shell">
-                    <MenuItem text="Start Shell" onAction="#startShell"/>
-                    <MenuItem text="Shutdown Shell" onAction="#shutdownShell"/>
-                    <MenuItem text="Restart Shell" onAction="#restartShell"/>
-                </Menu>
-
                 <!-- View Menu -->
                 <Menu text="View">
                     <MenuItem text="Toggle Toolbar" onAction="#toggleToolbar"/>
@@ -67,13 +61,7 @@
             </MenuBar>
 
 
-            <ToolBar fx:id="mainToolbar"> <Label fx:id="notebookNameLabel" text="Untitled Notebook"
-                                                   style="-fx-font-weight: bold; -fx-font-size: 16px;"
-                                                   onMouseClicked="#editNotebookName">
-                <HBox.margin>
-                    <Insets right="20" />
-                </HBox.margin>
-            </Label>
+            <ToolBar fx:id="mainToolbar">
                 <!-- this toolbar has buttons so each button has some onAction which trigger some method in the controller; also some ikonli library properties which is inside <graphic>-->
                 <!-- tooltip here shows small cursor hover text to users as in what this button do-->
                 <Button onAction="#addCell">
@@ -120,7 +108,13 @@
                     <graphic><FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon"/></graphic>
                     <tooltip><Tooltip text="Refresh"/></tooltip>
                 </Button>
-
+                <Label fx:id="notebookNameLabel" text="Untitled Notebook"
+                       style="-fx-font-weight: bold; -fx-font-size: 16px;"
+                       onMouseClicked="#editNotebookName">
+                    <HBox.margin>
+                        <Insets right="20" />
+                    </HBox.margin>
+                </Label>
                 <Region HBox.hgrow="ALWAYS"/>
                 <!-- HBox is flexible empty space to push items to right side of the toolbar-->
                 <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->

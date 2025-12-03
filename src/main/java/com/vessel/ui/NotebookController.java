@@ -52,6 +52,7 @@ import javafx.stage.FileChooser; // For opening/saving project files
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
@@ -80,6 +81,7 @@ public class NotebookController {
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
+    private StackPane notebookNameContainer;
 
 
     // Pass scene reference from Main.java
@@ -271,34 +273,36 @@ public class NotebookController {
             theme = SystemThemeDetector.Theme.DARK;
         }
     }
-    // makes notebook name editable
+    // NotebookController.java - REPLACE existing editNotebookName
     @FXML
     private void editNotebookName() {
         TextField nameField = new TextField(currentNotebookName);
-        nameField.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
-        int index = mainToolbar.getItems().indexOf(notebookNameLabel);
-        if (index != -1) {
-            mainToolbar.getItems().remove(index);
-            mainToolbar.getItems().add(index, nameField);
+        nameField.getStyleClass().add("notebook-name-field");
+        if (notebookNameContainer.getChildren().contains(notebookNameLabel)) {
+            notebookNameContainer.getChildren().clear();
+            notebookNameContainer.getChildren().add(nameField);
             nameField.requestFocus();
             nameField.selectAll();
-            nameField.setOnAction(e -> saveNotebookName(nameField, index));
+            nameField.setOnAction(e -> saveNotebookName(nameField));
             nameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                 if (!newVal)
-                    saveNotebookName(nameField, index);
+                    saveNotebookName(nameField);
             });
         }
     }
 
-    private void saveNotebookName(TextField field, int index) {
+    private void saveNotebookName(TextField field) {
         String newName = field.getText().trim();
         if (newName.isEmpty()) {
             newName = "Untitled Notebook";
         }
         currentNotebookName = newName;
         notebookNameLabel.setText(newName);
-        mainToolbar.getItems().remove(index);
-        mainToolbar.getItems().add(index, notebookNameLabel);
+        getCurrentNotebook().setName(newName);
+        if (notebookNameContainer.getChildren().contains(field)) {
+            notebookNameContainer.getChildren().clear();
+            notebookNameContainer.getChildren().add(notebookNameLabel);
+        }
     }
     //shell controls
     @FXML
@@ -312,7 +316,6 @@ public class NotebookController {
         System.out.println("Shell: Shutting Down JShell Engine...");
         getCurrentNotebook().shutdownEngine();
     }
-
     @FXML
     private void restartShell() {
         System.out.println("Shell: Restarting JShell Engine...");
@@ -320,14 +323,31 @@ public class NotebookController {
         getCurrentNotebook().initEngineIfNull();
         NotebookEngine newEngine = getCurrentNotebook().getEngine();
         for (javafx.scene.Node node : codeCellContainer.getChildren()) {
-            Object controller = node.getUserData(); // Or similar method if you stored the controller
+            Object controller = node.getUserData();
             if (controller instanceof GenericCellController) {
                 ((GenericCellController) controller).updateEngine(newEngine);
             }
-            System.out.println("Shell: Engine restart complete. Cell controllers updated.");
-            }
         }
-
+        System.out.println("Shell: Engine restart complete. Cell controllers updated.");
+    }
+    public void setupNotebookNameDisplay() {
+        notebookNameLabel.getStyleClass().add("notebook-name");
+        notebookNameLabel.setWrapText(true);
+        notebookNameLabel.setAlignment(Pos.CENTER);
+        notebookNameContainer = new StackPane(notebookNameLabel);
+        notebookNameContainer.getStyleClass().add("notebook-name-wrapper");
+        Region spacerLeft = new Region();
+        Region spacerRight = new Region();
+        HBox.setHgrow(spacerLeft, Priority.ALWAYS);
+        HBox.setHgrow(spacerRight, Priority.ALWAYS);
+        int index = mainToolbar.getItems().indexOf(notebookNameLabel);
+        if (index != -1) {
+            mainToolbar.getItems().remove(index);
+            mainToolbar.getItems().add(index, spacerLeft);
+            mainToolbar.getItems().add(index + 1, notebookNameContainer);
+            mainToolbar.getItems().add(index + 2, spacerRight);
+        }
+    }
     public Notebook getCurrentNotebook() {
         return currentNotebook;
     }
