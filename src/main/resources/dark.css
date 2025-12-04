@@ -81,20 +81,31 @@
 /* --- Buttons Styling --- */
 
 /* Targets all Button components. */
-.button {
-    /* Sets the default background color for toolbar buttons. */
-    -fx-background-color: #333333;
-    /* Sets the button text to white. */
+/* Normal buttons and toggle buttons share the same base look */
+.button,
+.toggle-button {
+    -fx-background-color: #3a3a3a;
     -fx-text-fill: #ffffff;
-    /* Ensures no default border is shown. */
     -fx-border-color: transparent;
+    -fx-padding: 4 6 4 6;
 }
 
-/* Targets a Button when the mouse is hovering over it. */
-.button:hover {
-    /* Lightens the background slightly for visual feedback. */
+/* Extra styling for cell toolbar buttons (run, move, clear, delete, preview) */
+.toolbar-button .font-icon{
+    -fx-icon-size: 16;
+}
+
+.button:hover,
+.toggle-button:hover {
     -fx-background-color: #4a4a4a;
 }
+
+
+/* Preview ON state: slightly different background */
+.preview-toggle:selected {
+    -fx-background-color: #505b7a;
+}
+
 
 /* ============================
    CHOICEBOX DROPDOWN
@@ -104,6 +115,7 @@
 .choice-box .context-menu {
     -fx-background-color: #2a2a2a;      /* dark dropdown */
     -fx-border-color: #444;
+    -fx-min-width: 120;
 }
 
 /* Each dropdown option */
@@ -126,6 +138,7 @@
     -fx-background-color: #3a3a3a;
     /* Sets the color of the dropdown arrow/mark to white. */
     -fx-mark-color: white;
+    -fx-min-width: 120;
 }
 
 /* Targets the label displaying the currently selected item in the ChoiceBox. */
@@ -212,6 +225,19 @@
 .paren, .brace, .bracket { -fx-fill: #ffffff; }
 .semicolon { -fx-fill: #ffcb8b; }
 .code-area .plain { -fx-fill: #ECECEC; } /*plain text -> white*/
+
+/* --- Markdown Syntax Highlighting --- */
+
+.md-heading { -fx-fill: #89ddff; -fx-font-weight: bold; }
+.md-bold    { -fx-fill: #f78c6c; -fx-font-weight: bold; }
+.md-italic  { -fx-fill: #f78c6c; -fx-font-style: italic; }
+.md-code    { -fx-fill: #b1ee5e;}
+.md-link    { -fx-fill: #82aaff; -fx-underline: true; }
+.md-strike { -fx-fill: #808080; -fx-strikethrough: true; }
+.md-ulist   { -fx-fill: #c792ea; }
+.md-olist   { -fx-fill: #ffcb6b; }
+
+.md-quote   { -fx-fill: #7f848e; -fx-font-style: italic; }
 
 /* --- CodeCell output --- */
 /* Code cell output area style */

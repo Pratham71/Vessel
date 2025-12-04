@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import org.fxmisc.richtext.CodeArea?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.vessel.ui.TextCellController"
+      spacing="5"
+      style="-fx-max-width: 1000px; -fx-pref-width: 1000px;"
+      alignment="CENTER">
+
+    <padding>
+        <Insets top="8" right="8" bottom="8" left="8"/>
+    </padding>
+
+    <HBox spacing="8">
+        <!-- Cell type dropdown -->
+        <ChoiceBox fx:id="cellLanguage"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <!-- Markdown preview toggle -->
+        <ToggleButton fx:id="previewToggle"
+                      visible="false"
+                      managed="false"
+                      graphicTextGap="0"
+                      styleClass="toolbar-button preview-toggle">
+            <graphic>
+                <FontIcon iconLiteral="fas-eye" styleClass="font-icon"/>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Toggle preview"/>
+            </tooltip>
+        </ToggleButton>
+
+        <!-- Move up -->
+        <Button fx:id="moveUpBtn" graphicTextGap="0" styleClass="toolbar-button">
+            <graphic>
+                <FontIcon iconLiteral="fas-arrow-up" styleClass="font-icon"/>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Move cell up"/>
+            </tooltip>
+        </Button>
+
+        <!-- Move down -->
+        <Button fx:id="moveDownBtn" graphicTextGap="0" styleClass="toolbar-button">
+            <graphic>
+                <FontIcon iconLiteral="fas-arrow-down" styleClass="font-icon"/>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Move cell down"/>
+            </tooltip>
+        </Button>
+
+        <!-- Clear -->
+        <Button fx:id="clearBtn" graphicTextGap="0" styleClass="toolbar-button">
+            <graphic>
+                <FontIcon iconLiteral="fas-eraser" styleClass="font-icon"/>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Clear cell"/>
+            </tooltip>
+        </Button>
+
+        <!-- Delete -->
+        <Button fx:id="deleteBtn" graphicTextGap="0" styleClass="toolbar-button">
+            <graphic>
+                <FontIcon iconLiteral="fas-trash" styleClass="font-icon"/>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Delete cell"/>
+            </tooltip>
+        </Button>
+    </HBox>
+
+    <!-- Editor area: StackPane so we can swap in WebView for markdown preview -->
+    <StackPane fx:id="editorStack">
+        <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS"/>
+        <Label fx:id="promptLabel"
+               text="Enter text here"
+               styleClass="prompt-label"/>
+    </StackPane>
+</VBox>

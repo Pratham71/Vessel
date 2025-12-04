@@ -41,6 +41,7 @@ import com.vessel.model.CellType;
 import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
 import com.vessel.persistence.NotebookPersistence;
+import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
@@ -114,23 +115,24 @@ public class NotebookController {
     }
 
     // Factory method that dumps out the VBox (div) housing the code cell
-    private VBox createCellUI(CellType type, NotebookCell cellModel) {
+    private Pane createCellUI(CellType type, NotebookCell cellModel) {
         try {
             final String fxml = (type == CellType.CODE) ? "/CodeCell.fxml" : "/TextCell.fxml";
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            VBox cell = loader.load();
+            Pane cell = loader.load();
 
             GenericCellController controller = loader.getController();
-            if (controller instanceof CodeCellController ) {
-                controller.setEngine(currentNotebook.getEngine());
+            if (controller instanceof CodeCellController codeController) {
+                codeController.setEngine(currentNotebook.getEngine());
             }
             controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setNotebookController(this);
             controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             controller.setRoot(cell); // pass root for removal
             controller.setCellType(type); //Init language
-            cell.setUserData(controller);
+
+            cell.setUserData(controller); // Bind the controller to the physical cell VBox/HBox itself
             return cell;
         }catch (IOException e) {
             throw new RuntimeException(e);
@@ -140,10 +142,56 @@ public class NotebookController {
         return null;
     }
 
+    // Called by GenericCellController when the per-cell dropdown changes
+    public void switchCellType(GenericCellController oldController, CellType newType) {
+        if (oldController == null) return;
+
+        int caretPos = oldController.getCaretPosition();
+        IndexRange sel = oldController.getSelection();
+
+        NotebookCell model = oldController.getNotebookCell();
+        if (model == null) return;
+
+        // Update the model's type (just made it redundant for safety)
+        model.setType(newType);
+
+        Pane oldRoot = (Pane) oldController.getRoot();
+        if (oldRoot == null) return;
+
+        int index = codeCellContainer.getChildren().indexOf(oldRoot);
+        if (index < 0) return;
+
+        Pane newRoot = createCellUI(newType, model);
+        if (newRoot == null) return;
+
+        GenericCellController newController = (GenericCellController) newRoot.getUserData();
+
+        // Restore caret/selection on the new CodeArea
+        newController.restoreCaret(caretPos, sel);
+
+        newRoot.setOpacity(0);
+
+        var fadeOut = new FadeTransition(javafx.util.Duration.millis(250), oldRoot);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+
+        fadeOut.setOnFinished(e -> {
+            // Now replace old with new
+            codeCellContainer.getChildren().set(index, newRoot);
+
+            var fadeIn = new FadeTransition(javafx.util.Duration.millis(250), newRoot);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
+
+        fadeOut.play();
+    }
+
     private void syncModelFromUI() {
         currentNotebook.getCells().clear();
         for (var node : codeCellContainer.getChildren()) {
-            if (node instanceof VBox cellBox) {
+            if (node instanceof Pane cellBox) {
                 // retrieve the controller for this cell
                 var controller = (GenericCellController) cellBox.getUserData();
                 NotebookCell cell = controller.getNotebookCell();
