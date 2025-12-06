@@ -217,30 +217,54 @@ If your library is not available online (for example, `ikonli-core.jar` in `/lib
 
 ## Overview of Project Structre
 ```
-vessel/
+Vessel
 │
-├── lib/
-│   ├── ikonli-core-12.3.1.jar
-│   ├── ikonli-fontawesome5-pack-12.3.1.jar
-│   └── ikonli-javafx-12.3.1.jar
+├─ .idea/
+├─ logs/
+├─ notebooks/
+├─ readme.meta
+├─ target/
 │
-├── misc_images/
-├── notebooks/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── vessel/
-│   │   │           ├── model/
-│   │   │           ├── kernel/
-│   │   │           ├── frontendhelpers/
-│   │   │           └── ...
-│   │   └── resources/   ← ✅ Add any FXML, config, or assets here
-│   │
+├─ src
+│  └─ main
+│     ├─ java
+│     │  └─ com.vessel
+│     │     ├─ core
+│     │     │  └─ log
+│     │     │     └─ log-usage.md
+│     │     │
+│     │     ├─ Kernel
+│     │     │  ├─ ExecutionResult
+│     │     │  └─ NotebookEngine
+│     │     │
+│     │     ├─ model
+│     │     │  ├─ CellType
+│     │     │  ├─ Notebook
+│     │     │  └─ NotebookCell
+│     │     │
+│     │     ├─ persistence
+│     │     │  ├─ NotebookPersistence
+│     │     │  └─ persistence.md
+│     │     │
+│     │     ├─ ui
+│     │     │  ├─ CodeCellController
+│     │     │  ├─ GenericCellController
+│     │     │  ├─ NotebookController
+│     │     │  └─ SystemThemeDetector
+│     │     │
+│     │     └─ util
+│     │        ├─ SyntaxService
+│     │        └─ Backend-Readme.md
+│     │
+│     └─ resources
+│        ├─ CodeCell.fxml
+│        ├─ Notebook.fxml
+│        ├─ dark.css
+│        ├─ light.css
+│        └─ icon.png
 │
-├── target/
-├── pom.xml   ← Required for Maven build (Right click on it and select '+add as maven project.')
-├── README.md
-└── .gitignore
-```
+├─ pom.xml
+├─ .gitignore
+├─ README.md
+└─ EXPLANATION.md
 ---
