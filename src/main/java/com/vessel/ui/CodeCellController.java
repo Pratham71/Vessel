@@ -233,31 +233,6 @@ public class CodeCellController extends GenericCellController {
         });
 
         new Thread(shellTask).start();
-
-// Execution thread
-//        executionThread = new Thread(() -> {
-//            try {
-//                engine.execute(cellModel);
-//                // --------------------------------------------------
-//
-//                if (!Thread.currentThread().isInterrupted()) {
-//                    Platform.runLater(() -> {
-//                        displayOutput(spin);
-//                        setRunButtonState(false);
-//                    });
-//                }
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                Platform.runLater(() -> {
-//                    outputBox.getChildren().clear();
-//                    Label cancelledLabel = new Label("[Execution Cancelled]");
-//                    cancelledLabel.getStyleClass().add("execution-cancelled");
-//                    outputBox.getChildren().add(cancelledLabel);
-//                    setRunButtonState(false);
-//                });
-//            }
-//        });
-//        executionThread.start();
     }
 
     private void toggleExecution() {

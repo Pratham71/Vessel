@@ -305,9 +305,20 @@ public class NotebookController {
             scene.getStylesheets().add(getClass().getResource("/dark.css").toExternalForm());
             theme = SystemThemeDetector.Theme.DARK;
         }
+
+        // refresh markdown previews in all text cells
+        for (var node : codeCellContainer.getChildren()) {
+            if (node.getUserData() instanceof TextCellController textCtrl) {
+                textCtrl.refreshPreview();
+            }
+        }
     }
 
     public Notebook getCurrentNotebook() {
         return currentNotebook;
+    }
+
+    public SystemThemeDetector.Theme getTheme() {
+        return theme;
     }
 }

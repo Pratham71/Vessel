@@ -18,10 +18,8 @@ import javafx.scene.layout.HBox;
 
 
 public class GenericCellController {
-
-    private NotebookController notebookController;
-
     // === INHERITED BY SUBCLASSES ===
+    protected NotebookController notebookController;
 
     @FXML protected Button deleteBtn;
     @FXML protected Button clearBtn;

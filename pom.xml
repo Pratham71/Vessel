@@ -82,6 +82,12 @@
             <version>2.10.1</version>
         </dependency>
 
+        <!-- ✅ Flexmark (for markdown preview) -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.8</version>
+        </dependency>
 
     </dependencies>
 

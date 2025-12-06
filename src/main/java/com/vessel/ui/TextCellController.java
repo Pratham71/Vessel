@@ -3,11 +3,16 @@ package com.vessel.ui;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
 import com.vessel.util.SyntaxService;
+import javafx.application.Platform;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 import java.util.Collection;
 
@@ -96,27 +101,76 @@ public class TextCellController extends GenericCellController {
     }
 
     private void showPreview() {
-        if (markdownPreview == null) {
-            markdownPreview = new WebView();
-            markdownPreview.setContextMenuEnabled(false);
-        }
+        ensurePreviewCreated();
 
-        String content = codeArea.getText();
-        String html =
-                "<html><head><meta charset='UTF-8'></head><body><pre>"
-                        + escapeHtml(content)
-                        + "</pre></body></html>";
+        // get current theme from NotebookController
+        SystemThemeDetector.Theme theme =
+                (notebookController != null) ? notebookController.getTheme()
+                        : SystemThemeDetector.getSystemTheme();
+
+        String md = codeArea.getText();
+        String html = SyntaxService.renderMarkdownToHtml(md, theme);
 
         markdownPreview.getEngine().loadContent(html);
 
-        if (!editorStack.getChildren().contains(markdownPreview)) {
-            editorStack.getChildren().add(markdownPreview);
-        }
-
         codeArea.setVisible(false);
         codeArea.setManaged(false);
+
         markdownPreview.setVisible(true);
         markdownPreview.setManaged(true);
+    }
+
+    public void refreshPreview() {
+        // only if preview is currently visible
+        if (markdownPreview == null || !markdownPreview.isVisible()) {
+            return;
+        }
+
+        SystemThemeDetector.Theme theme =
+                (notebookController != null) ? notebookController.getTheme()
+                        : SystemThemeDetector.getSystemTheme();
+
+        String md = codeArea.getText();
+        String html = SyntaxService.renderMarkdownToHtml(md, theme);
+        markdownPreview.getEngine().loadContent(html);
+    }
+
+    private void ensurePreviewCreated() {
+        if (markdownPreview != null) return;
+
+        markdownPreview = new WebView();
+        markdownPreview.setContextMenuEnabled(false);
+
+        // window starts small then height will be updated from JS bridge
+        markdownPreview.setMinHeight(0);
+        markdownPreview.setPrefHeight(0);
+        markdownPreview.setMaxHeight(Region.USE_PREF_SIZE);
+
+        WebEngine engine = markdownPreview.getEngine();
+        engine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+            if (state == Worker.State.SUCCEEDED) {
+                Object winObj = engine.executeScript("window");
+                if (winObj instanceof JSObject win) {
+                    win.setMember("java", new PreviewBridge());
+                    engine.executeScript("updateHeight()");
+                }
+            }
+        });
+
+        editorStack.getChildren().add(markdownPreview);
+        markdownPreview.setVisible(false);
+        markdownPreview.setManaged(false);
+    }
+
+    public class PreviewBridge {
+        public void resize(double height) {
+            Platform.runLater(() -> {
+                double h = Math.max(32, height + 1); // small safety margin
+                markdownPreview.setPrefHeight(h);
+                markdownPreview.setMinHeight(h);
+                markdownPreview.setMaxHeight(h);
+            });
+        }
     }
 
     private void showEditorOnly() {
@@ -127,14 +181,6 @@ public class TextCellController extends GenericCellController {
             markdownPreview.setVisible(false);
             markdownPreview.setManaged(false);
         }
-    }
-
-    private String escapeHtml(String raw) {
-        if (raw == null) return "";
-        return raw
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
     }
 
     private void moveCell(int delta) {

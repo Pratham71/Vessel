@@ -67,7 +67,7 @@
         </Button>
     </HBox>
 
-    <StackPane>
+    <StackPane styleClass="editor-stack">
         <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS" />
         <Label fx:id="promptLabel" styleClass="prompt-label" text="Enter Java code here"/>
     </StackPane>

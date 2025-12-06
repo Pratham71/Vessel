@@ -77,8 +77,8 @@
         </Button>
     </HBox>
 
-    <!-- Editor area: StackPane so we can swap in WebView for markdown preview -->
-    <StackPane fx:id="editorStack">
+    <!-- stackpane id added so we can swap in webview for markdown preview -->
+    <StackPane fx:id="editorStack" styleClass="editor-stack">
         <CodeArea fx:id="codeArea" styleClass="code-area" VBox.vgrow="ALWAYS"/>
         <Label fx:id="promptLabel"
                text="Enter text here"

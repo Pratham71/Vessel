@@ -122,8 +122,6 @@
     -fx-background-color: #ffffff;
     -fx-font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
     -fx-font-size: 15px;
-    -fx-border-color: #c0c0c0;
-    -fx-border-width: 1.5px;
     -fx-highlight-fill: #87b7ff;
     -fx-highlight-text-fill: #000000;
     -fx-min-height: 120px;
@@ -203,6 +201,23 @@
 .md-olist   { -fx-fill: #b26a00; }
 
 .md-quote   { -fx-fill: #555555; -fx-font-style: italic; }
+
+/* --- Markdown WebView preview box --- */
+.web-view.markdown-preview {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #c0c0c0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.editor-stack {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #c0c0c0;
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 4;
+    -fx-padding: 0;
+}
 
 /* --- CodeCell output --- */
 .output-area {
