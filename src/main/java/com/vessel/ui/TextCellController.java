@@ -32,20 +32,22 @@ public class TextCellController extends GenericCellController {
         // Generic wiring: cellLanguage, delete/clear, prompt, content binding
         super.initialize();
 
-        System.out.println("previewToggle style classes = " + previewToggle.getStyleClass());
-        previewToggle.selectedProperty().addListener((obs, o, n) ->
-                System.out.println("preview selected = " + n));
-
         // For now, move up/down buttons are just stubs
         moveUpBtn.setOnAction(e -> moveCell(-1));
         moveDownBtn.setOnAction(e -> moveCell(1));
 
         // Preview toggle for markdown
         previewToggle.setOnAction(e -> {
-            if (previewToggle.isSelected()) {
+            boolean selected = previewToggle.isSelected();
+
+            if (selected) {
                 showPreview();
             } else {
                 showEditorOnly();
+            }
+
+            if (cellModel != null) {
+                cellModel.setMarkdownPreviewOn(selected);
             }
         });
     }
@@ -55,6 +57,15 @@ public class TextCellController extends GenericCellController {
         super.setNotebookCell(cell);
         if (cell.getType() != null) {
             setCellType(cell.getType());
+        }
+
+        if (cell.getType() == CellType.MARKDOWN && cell.isMarkdownPreviewOn()) {
+            // ensure toggle shows ON and preview is visible
+            previewToggle.setSelected(true);   // will also show selected CSS
+            showPreview();
+        } else {
+            previewToggle.setSelected(false);
+            showEditorOnly();
         }
     }
 
