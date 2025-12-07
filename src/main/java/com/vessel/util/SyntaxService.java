@@ -1,5 +1,6 @@
 package com.vessel.util;
 
+import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
@@ -156,6 +157,7 @@ public class SyntaxService {
         String bg     = dark ? "#1e1e1e" : "#ffffff";
         String fg     = dark ? "#e0e0e0" : "#1e1e1e";
         String codeBg = dark ? "#252526" : "#f3f3f3";
+        String tableBg = dark ? "#2c2c2c" : "#dadada";
         String border = dark ? "#3a3a3a" : "#cccccc";
         String link   = dark ? "#82aaff" : "#0066cc";
 
@@ -229,6 +231,7 @@ public class SyntaxService {
 
                  th {
                    font-weight: 1000;
+                   background-color: %s;
                  }
                </style>
                <script>
@@ -244,15 +247,16 @@ public class SyntaxService {
              <body>%s</body>
            </html>
            """.formatted(
-                bg,      // body background
-                fg,      // body text
-                link,    // link color
-                codeBg,  // inline code bg
-                codeBg,  // pre bg
-                border,  // pre border
-                border,  // blockquote left border
+                bg, // body background
+                fg, // body text
+                link, // link color
+                codeBg, // inline code bg
+                codeBg, // pre bg
+                border, // pre border
+                border, // blockquote left border
                 "#b0b0b0", // blockquote text color
-                border,  // table cell border
+                border, // table cell border
+                tableBg, // table header
                 bodyHtml // markdown content
         );
     }

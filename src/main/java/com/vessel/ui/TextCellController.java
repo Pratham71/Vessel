@@ -32,6 +32,10 @@ public class TextCellController extends GenericCellController {
         // Generic wiring: cellLanguage, delete/clear, prompt, content binding
         super.initialize();
 
+        System.out.println("previewToggle style classes = " + previewToggle.getStyleClass());
+        previewToggle.selectedProperty().addListener((obs, o, n) ->
+                System.out.println("preview selected = " + n));
+
         // For now, move up/down buttons are just stubs
         moveUpBtn.setOnAction(e -> moveCell(-1));
         moveDownBtn.setOnAction(e -> moveCell(1));

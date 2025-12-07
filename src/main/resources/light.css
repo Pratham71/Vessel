@@ -322,7 +322,7 @@
 
 .button,
 .toggle-button {
-    -fx-background-color: #e1e1e1;     /* matches existing .button in light.css */
+    -fx-background-color: #e1e1e1;
     -fx-text-fill: #333333;
     -fx-border-color: transparent;
     -fx-padding: 2 6 2 6;
@@ -339,10 +339,10 @@
     -fx-background-color: #cfcfcf;     /* slightly darker than normal, already used */
 }
 
-/* Preview ON state: subtle blue tint */
-.preview-toggle:selected {
-    -fx-background-color: #cbe4ff;     /* same family as your menu hover blue */
+.toggle-button:selected {
+    -fx-background-color: #0045ff;
 }
+
 /* Styling for the Execution Count Label - Light Mode */
 .execution-count-label {
     /* Keep the font size consistent */

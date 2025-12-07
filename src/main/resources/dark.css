@@ -82,6 +82,7 @@
 
 /* Targets all Button components. */
 /* Normal buttons and toggle buttons share the same base look */
+
 .button,
 .toggle-button {
     -fx-background-color: #3a3a3a;
@@ -101,9 +102,8 @@
 }
 
 
-/* Preview ON state: slightly different background */
-.preview-toggle:selected {
-    -fx-background-color: #505b7a;
+.toggle-button:selected {
+    -fx-background-color: #0045ff;
 }
 
 
@@ -355,15 +355,6 @@
 
 .dialog-pane .graphic-container {
     -fx-background-color: transparent;
-}
-
-.button {
-    -fx-background-color: #3a3a3a;
-    -fx-text-fill: #d4d4d4;
-}
-
-.button:hover {
-    -fx-background-color: #555555;
 }
 
 /* Styling for the Execution Count Label */
