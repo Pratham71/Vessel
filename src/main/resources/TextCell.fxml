@@ -83,5 +83,19 @@
         <Label fx:id="promptLabel"
                text="Enter text here"
                styleClass="prompt-label"/>
+
+        <!-- Nested stackpane for preview loading screen -->
+        <StackPane fx:id="previewLoadingOverlay"
+                   visible="false"
+                   managed="false"
+                   styleClass="preview-loading-overlay">
+            <HBox spacing="8" styleClass="preview-loading-box">
+                <FontIcon fx:id="previewSpinnerIcon"
+                          iconLiteral="fas-spinner"
+                          styleClass="output-spinner"/>
+                <Label text="Loading preview..."
+                       styleClass="output-label-loading"/>
+            </HBox>
+        </StackPane>
     </StackPane>
 </VBox>

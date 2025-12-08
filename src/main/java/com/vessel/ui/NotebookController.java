@@ -48,14 +48,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene; // UI scene
 import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser; // For opening/saving project files
-import javafx.geometry.Insets;
-import javafx.scene.layout.Priority;
-import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
 import javafx.concurrent.Task;
-import javafx.stage.Window;
 
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
@@ -69,6 +66,16 @@ public class NotebookController {
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
 
+    // im purely putting this for better performance
+    private static boolean markdownEngineWarmedUp = false;
+
+    private void warmupMarkdownEngine() {
+        if (markdownEngineWarmedUp) return;
+        markdownEngineWarmedUp = true;
+
+        WebView dummy = new WebView();
+        dummy.getEngine().loadContent("<html><body>warmup</body></html>");
+    }
 
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
@@ -96,6 +103,7 @@ public class NotebookController {
 
         // Create default code cell on startup
         addCell(CellType.CODE);
+        warmupMarkdownEngine();
     }
 
     // -------------------- Cell Creation --------------------

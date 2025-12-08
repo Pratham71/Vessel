@@ -254,6 +254,24 @@
     -fx-padding: 0;
 }
 
+.preview-loading-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-alignment: CENTER;
+}
+
+.preview-loading-overlay .preview-loading-box {
+    -fx-alignment: CENTER;
+    -fx-padding: 6 10 6 10;
+}
+
+.preview-loading-overlay .output-spinner {
+    -fx-icon-size: 30;
+}
+
+.preview-loading-overlay .output-label-loading {
+    -fx-font-size: 29px;
+}
+
 /* --- CodeCell output --- */
 /* Code cell output area style */
 
