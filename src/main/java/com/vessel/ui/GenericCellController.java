@@ -110,7 +110,7 @@ public class GenericCellController {
         if (cellLanguage != null) {
             cellLanguage.setValue(type);
         }
-        // Remember and update model
+
         if (cellModel != null) {
             cellModel.setType(type);
         }

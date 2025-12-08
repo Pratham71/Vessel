@@ -37,6 +37,10 @@ public class TextCellController extends GenericCellController {
     protected void initialize() {
         super.initialize();
 
+        codeArea.richChanges()
+                .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
+                .subscribe(ch -> applyHighlighting());
+
         previewSpin = new RotateTransition(Duration.seconds(1), previewSpinnerIcon);
         previewSpin.setByAngle(360);
         previewSpin.setCycleCount(RotateTransition.INDEFINITE);
@@ -84,29 +88,28 @@ public class TextCellController extends GenericCellController {
             setPreviewToggleVisible(true);
 
             codeArea.setStyleSpans(0, SyntaxService.computeMarkdownHighlighting(codeArea.getText()));
-            enableMarkdownHighlighting();
         } else {
             promptLabel.setText("Enter text here");
             setPreviewToggleVisible(false);
-            disableMarkdownHighlighting();
             hidePreview();
         }
+
+        applyHighlighting();
     }
     /* --------- Syntax Highlighting ---------- */
 
-    private void disableMarkdownHighlighting() {
+    private void applyHighlighting() {
         String text = codeArea.getText();
-        var builder = new org.fxmisc.richtext.model.StyleSpansBuilder<Collection<String>>();
-        builder.add(java.util.Collections.singleton("plain"), text.length());
-        codeArea.setStyleSpans(0, builder.create());
-    }
 
-    private void enableMarkdownHighlighting() {
-        codeArea.richChanges()
-                .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-                .subscribe(ch -> codeArea.setStyleSpans(
-                        0, SyntaxService.computeMarkdownHighlighting(codeArea.getText())
-                ));
+        if (cellModel != null && cellModel.getType() == CellType.MARKDOWN) {
+            codeArea.setStyleSpans(0,
+                    SyntaxService.computeMarkdownHighlighting(text));
+        } else {
+            var builder =
+                    new org.fxmisc.richtext.model.StyleSpansBuilder<java.util.Collection<String>>();
+            builder.add(java.util.Collections.singleton("plain"), text.length());
+            codeArea.setStyleSpans(0, builder.create());
+        }
     }
 
     /* --------- Preview handling ---------- */
