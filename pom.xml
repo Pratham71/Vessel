@@ -40,6 +40,11 @@
             <artifactId>javafx-media</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
         <!-- ✅ RichTextFX + Flowless + ReactFX + UndoFX + WellBehavedFX -->
         <dependency>
@@ -77,6 +82,12 @@
             <version>2.10.1</version>
         </dependency>
 
+        <!-- ✅ Flexmark (for markdown preview) -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.8</version>
+        </dependency>
 
     </dependencies>
 

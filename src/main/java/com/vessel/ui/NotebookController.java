@@ -4,13 +4,11 @@ package com.vessel.ui;
 /*
 * ESSENTIAL/SEMI-ESSENTIAL STUFF
 * #TODO: Add move cell logic to cells
-* #TODO: Add logic to all global buttons (eg run all button)
 * #TODO: Add a menu tab for shell controls, to start, shutdown and restart shell
 * #TODO: Add logic to all menu buttons - ESPECIALLY undo/redo, zoom in/out etc
 *       - if any of them are too difficult to implement then remove from menubar
 * #TODO: Add indicators for shell status
 * #TODO: Make cell's horizontal scrollbar visible (currently invisible)
-* #TODO: Style scrollbars to be a dark color instead of white - looks VERY off (for dark.css/darkmode only)
 * #TODO: Add keyboard shortcut functionality - undo/redo, cntrl + S to save etc
 *
 * #TODO: autosave - if user tries to close an already SAVED file with new changes, it should auto-save before closing
@@ -41,20 +39,18 @@ import com.vessel.model.CellType;
 import com.vessel.model.Notebook;
 import com.vessel.model.NotebookCell;
 import com.vessel.persistence.NotebookPersistence;
+import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML; // methods linked with FXML basically all those we wrote in Notebook.fxml file those fx:id, is pulled here with this
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene; // UI scene
 import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser; // For opening/saving project files
-import javafx.geometry.Insets;
-import javafx.scene.layout.Priority;
-import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
 import javafx.concurrent.Task;
-import javafx.stage.Window;
 
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
@@ -68,6 +64,16 @@ public class NotebookController {
     private final NotebookPersistence persistence = new NotebookPersistence();
     private Notebook currentNotebook;
 
+    // im purely putting this for better performance
+    private static boolean markdownEngineWarmedUp = false;
+
+    private void warmupMarkdownEngine() {
+        if (markdownEngineWarmedUp) return;
+        markdownEngineWarmedUp = true;
+
+        WebView dummy = new WebView();
+        dummy.getEngine().loadContent("<html><body>warmup</body></html>");
+    }
 
     // Pass scene reference from Main.java
     public void setScene(Scene scene) { // detects and adds system theme stylesheet
@@ -95,6 +101,7 @@ public class NotebookController {
 
         // Create default code cell on startup
         addCell(CellType.CODE);
+        warmupMarkdownEngine();
     }
 
     // -------------------- Cell Creation --------------------
@@ -114,23 +121,24 @@ public class NotebookController {
     }
 
     // Factory method that dumps out the VBox (div) housing the code cell
-    private VBox createCellUI(CellType type, NotebookCell cellModel) {
+    private Pane createCellUI(CellType type, NotebookCell cellModel) {
         try {
             final String fxml = (type == CellType.CODE) ? "/CodeCell.fxml" : "/TextCell.fxml";
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            VBox cell = loader.load();
+            Pane cell = loader.load();
 
             GenericCellController controller = loader.getController();
-            if (controller instanceof CodeCellController ) {
-                controller.setEngine(currentNotebook.getEngine());
+            if (controller instanceof CodeCellController codeController) {
+                codeController.setEngine(currentNotebook.getEngine());
             }
-            controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setNotebookController(this);
+            controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             controller.setRoot(cell); // pass root for removal
             controller.setCellType(type); //Init language
-            cell.setUserData(controller);
+
+            cell.setUserData(controller); // Bind the controller to the physical cell VBox/HBox itself
             return cell;
         }catch (IOException e) {
             throw new RuntimeException(e);
@@ -140,10 +148,52 @@ public class NotebookController {
         return null;
     }
 
+    public void switchCellType(GenericCellController oldController, CellType newType) {
+        if (oldController == null) return;
+
+        int caretPos = oldController.getCaretPosition();
+        IndexRange sel = oldController.getSelection();
+
+        NotebookCell model = oldController.getNotebookCell();
+        if (model == null) return;
+
+        model.setType(newType);
+
+        Pane oldRoot = (Pane) oldController.getRoot();
+        if (oldRoot == null) return;
+
+        int index = codeCellContainer.getChildren().indexOf(oldRoot);
+        if (index < 0) return;
+
+        Pane newRoot = createCellUI(newType, model);
+        if (newRoot == null) return;
+
+        GenericCellController newController = (GenericCellController) newRoot.getUserData();
+
+        newController.restoreCaret(caretPos, sel);
+
+        newRoot.setOpacity(0);
+
+        var fadeOut = new FadeTransition(javafx.util.Duration.millis(250), oldRoot);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+
+        fadeOut.setOnFinished(e -> {
+            codeCellContainer.getChildren().set(index, newRoot);
+
+            var fadeIn = new FadeTransition(javafx.util.Duration.millis(250), newRoot);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
+
+        fadeOut.play();
+    }
+
     private void syncModelFromUI() {
         currentNotebook.getCells().clear();
         for (var node : codeCellContainer.getChildren()) {
-            if (node instanceof VBox cellBox) {
+            if (node instanceof Pane cellBox) {
                 // retrieve the controller for this cell
                 var controller = (GenericCellController) cellBox.getUserData();
                 NotebookCell cell = controller.getNotebookCell();
@@ -257,9 +307,20 @@ public class NotebookController {
             scene.getStylesheets().add(getClass().getResource("/dark.css").toExternalForm());
             theme = SystemThemeDetector.Theme.DARK;
         }
+
+        // refresh markdown previews in all text cells
+        for (var node : codeCellContainer.getChildren()) {
+            if (node.getUserData() instanceof TextCellController textCtrl) {
+                textCtrl.refreshPreview();
+            }
+        }
     }
 
     public Notebook getCurrentNotebook() {
         return currentNotebook;
+    }
+
+    public SystemThemeDetector.Theme getTheme() {
+        return theme;
     }
 }
