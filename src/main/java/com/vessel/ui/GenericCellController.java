@@ -110,21 +110,6 @@ public class GenericCellController {
         return root;
     }
 
-    private boolean isSelected = false; // tracks whether this cell is currently selected by the user in the ui
-    // returns true if this cell is the globally selected one
-    public boolean isSelected() {
-        return isSelected;
-    }
-
-    // sets this cell as selected or unselected
-    // also updates the ui border so user can visually see which cell is active
-    public void setSelected(boolean selected) {
-        this.isSelected = selected;
-        if (root != null) {
-            root.setStyle(selected ? "-fx-border-color: #4a90e2; -fx-border-width: 2;" : "");
-        }
-    }
-
     protected void deleteCell() {
         if (parentContainer != null && root != null) {
             parentContainer.getChildren().remove(root);

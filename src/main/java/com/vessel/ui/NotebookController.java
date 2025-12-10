@@ -91,9 +91,6 @@ public class NotebookController {
     private GenericCellController getSelectedCell() {
         for (var node : codeCellContainer.getChildren()) {
             GenericCellController c = (GenericCellController) node.getUserData();
-            if (c != null && c.isSelected()) {
-                return c;
-            }
         }
         return null;
     }
@@ -103,7 +100,6 @@ public class NotebookController {
     private void clearAllSelections() {
         for (var node : codeCellContainer.getChildren()) {
             GenericCellController c = (GenericCellController) node.getUserData();
-            if (c != null) c.setSelected(false);
         }
     }
 
@@ -171,7 +167,6 @@ public class NotebookController {
             cell.setUserData(controller); // clicking the cell should mark it as the globally selected cell
             cell.setOnMouseClicked(e -> { // clears selection for all other cells and highlights only this one
                 clearAllSelections();
-                controller.setSelected(true);
             });
             return cell;
         }catch (IOException e) {
