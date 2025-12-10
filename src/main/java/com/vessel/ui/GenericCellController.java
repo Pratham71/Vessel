@@ -45,6 +45,7 @@ public class GenericCellController {
 
                 CellType newType = (CellType) cellLanguage.getValue();
                 cellModel.setType(newType);
+                markNotebookUsed(); // mark notebook as modified
 
                 // Ask the notebook to switch this cell's UI to the new type
                 if (notebookController != null && root != null) {
@@ -67,12 +68,6 @@ public class GenericCellController {
         });
 
         // Listener for setting cell model's "type" on type change (in the dropbox)
-        cellLanguage.setOnAction(e -> {
-            if (cellModel != null) {
-                cellModel.setType(cellLanguage.getValue());
-                markNotebookUsed(); // mark notebook as modified
-            }
-        });
 
 
         // --- INITIAL PROMPT ---
