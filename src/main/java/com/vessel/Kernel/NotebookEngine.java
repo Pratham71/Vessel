@@ -1,10 +1,3 @@
-/**
- * TODO - Implement NotebookEnigne to frontend via Notebook Class
- * TODO - Link to Notebook.Json
- */
-
-
-
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
@@ -160,10 +153,12 @@ public class NotebookEngine {
     // Thread safe execution.
     public Void execute(NotebookCell cell) {
         String code = cell.getContent();
+        System.out.println(code);
 
-//     Vallidation
-        if (code == null || code.trim().isBlank()) {
-            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
+    //  if code is null, return out of execution.
+        if (code == null) {
+            cell.setExecutionResult(new ExecutionResult("", "", 0, true));
+            return null;
         }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
@@ -274,15 +269,36 @@ public class NotebookEngine {
                         .append(String.format("%.1f", memoryUserPercentage))
                         .append("%\n\n");
             }
+            // Split code into JShell snippets, but keep class/method bodies together
+            List<String> snippets = splitIntoSnippets(code);
 
-            // Execute JShell snippet
-            //outputStream.flush();
-            List<SnippetEvent> events = jshell.eval(code);
+// list will accumulate all events from all snippets
+            List<SnippetEvent> events = new ArrayList<>();
+            boolean currentSuccess = true;
+
+            for (String snippetCode : snippets) {
+                String trimmed = snippetCode.trim();
+                if (trimmed.isBlank()) continue;
+
+                // Execute JShell snippet sequentially
+                List<SnippetEvent> statementEvents = jshell.eval(snippetCode);
+                events.addAll(statementEvents);
+
+                // Check for errors on this snippet
+                for (SnippetEvent event : statementEvents) {
+                    if (event.status() == jdk.jshell.Snippet.Status.REJECTED || event.exception() != null) {
+                        currentSuccess = false;
+                    }
+                }
+            }
+
+            success[0] = currentSuccess;
             System.out.println("events.size() = " + events.size());
 
             if (events.isEmpty()) {
                 errors.append(" No output (empty snippet)");
             }
+
 
             // Process each event
             for (SnippetEvent event : events) {
@@ -329,13 +345,6 @@ public class NotebookEngine {
 
                     engine.error("Runtime exception caught: ", exception);
                     success[0] = false;
-                }
-
-                // Expression result
-                if (event.value() != null && !event.value().isEmpty()) {
-                    output.append("Expressions value: ")
-                            .append(event.value()).append("\n");
-                    engine.debug("Expressions value: " + event.value());
                 }
             }
 
@@ -495,29 +504,51 @@ public class NotebookEngine {
         return stats;
     }
 
-//    private void addToHistory(String code, ExecutionResult result) {
-//        history.add(new ExecutionResult(
-//                code,
-//                result.output(),
-//                result.executionTimeMs(),
-//                result.success()
-//        ));
-//
-//        engine.info(" Adding " + code + " to history");
-//
-//        if (history.size() > MAX_HISTORY) {
-//            history.removeFirst();
-//        }
-//    }
-//
-//    public List<ExecutionResult> getHistory() {
-//        return new ArrayList<ExecutionResult>(history);
-//    }
-//
-//    public void clearHistory() {
-//        history.clear();
-//        engine.info(" Clearing history...");
-//    }
+    private List<String> splitIntoSnippets(String code) {
+        List<String> snippets = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        int parenDepth = 0;   // ()
+        int braceDepth = 0;   // {}
+        int bracketDepth = 0; // []
+
+        for (int i = 0; i < code.length(); i++) {
+            char c = code.charAt(i);
+            current.append(c);
+
+            if (c == '(') parenDepth++;
+            if (c == ')') parenDepth--;
+            if (c == '{') braceDepth++;
+            if (c == '}') braceDepth--;
+            if (c == '[') bracketDepth++;
+            if (c == ']') bracketDepth--;
+
+            // 1) split on ';' when not nested
+            if (c == ';' && parenDepth == 0 && braceDepth == 0 && bracketDepth == 0) {
+                snippets.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+
+            // 2) ALSO split after '}' when back at top level
+            if (c == '}' && braceDepth == 0 && parenDepth == 0 && bracketDepth == 0) {
+                String snippet = current.toString().trim();
+                if (!snippet.isEmpty()) {
+                    snippets.add(snippet);
+                }
+                current.setLength(0);
+            }
+        }
+
+        String remaining = current.toString().trim();
+        if (!remaining.isEmpty()) {
+            snippets.add(remaining);
+        }
+
+        return snippets;
+    }
+
+
 
     // Cleanup and close jshell safely
     public void shutdown() {
@@ -539,8 +570,6 @@ public class NotebookEngine {
             jshell.close();
             engine.info(" Shutting down JShell...");
         }
-
-        //clearHistory();
 
         engine.info(" NotebookEngine shutdown complete.");
     }
