@@ -18,8 +18,7 @@
 /* --- Header (MenuBar & ToolBar) Styling --- */
 
 /* Targets both the MenuBar and ToolBar components in the header VBox. */
-.menu-bar,
-.tool-bar {
+.menu-bar, .tool-bar {
     -fx-background-color: #2b2b2b;
 }
 
@@ -63,17 +62,32 @@
 
 /* --- Buttons Styling --- */
 
-/* Targets all Button components. */
 .button {
     -fx-background-color: #333333;
-    -fx-text-fill: #ffffff;
-    -fx-border-color: transparent;
 }
 
-/* Targets a Button when the mouse is hovering over it. */
-.button:hover {
+.button,
+.toggle-button {
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: transparent;
+    -fx-padding: 4 6 4 6;
+}
+
+.toolbar-button .font-icon{
+    -fx-icon-size: 16;
+}
+
+.button:hover,
+.toggle-button:hover {
     -fx-background-color: #4a4a4a;
 }
+
+
+.toggle-button:selected {
+    -fx-background-color: #0045ff;
+}
+
 
 /* ============================
    CHOICEBOX DROPDOWN
@@ -83,6 +97,7 @@
 .choice-box .context-menu {
     -fx-background-color: #2a2a2a;
     -fx-border-color: #444;
+    -fx-min-width: 120;
 }
 
 /* Each dropdown option */
@@ -103,6 +118,7 @@
 .choice-box {
     -fx-background-color: #3a3a3a;
     -fx-mark-color: white;
+    -fx-min-width: 120;
 }
 
 /* Targets the label displaying the currently selected item in the ChoiceBox. */
@@ -130,8 +146,7 @@
 /* Implied Text/Code Cell Editor Styles (for content that would be dynamically loaded) */
 
 /* Targets TextArea and TextField components, used for input/code editing. */
-.text-area,
-.text-field {
+.text-area, .text-field {
     -fx-background-color: #212225;
     -fx-control-inner-background: #212225;
     -fx-text-fill: #ECECEC;
@@ -147,14 +162,11 @@
     -fx-background-color: #212225;
     -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
     -fx-font-size: 15px;
-    -fx-border-color: #555555;
-    -fx-border-width: 1.5px;
     -fx-highlight-fill: #1756b6;
     -fx-highlight-text-fill: #fff;
     -fx-min-height: 120px;
     -fx-padding: 10 12 10 5;
 }
-
 .code-area .caret {
     -fx-stroke: #ECECEC;
 }
@@ -179,40 +191,61 @@
     -fx-font-size: 16px;
 }
 
-.keyword {
-    -fx-fill: #c792ea;
-    -fx-font-weight: bold;
+.keyword   { -fx-fill: #c792ea;   -fx-font-weight: bold; }
+.comment   { -fx-fill: #676e95;   -fx-font-style: italic;  }
+.string    { -fx-fill: #ecc48d; }
+.char      { -fx-fill: #ffa657; }
+.number    { -fx-fill: #a3be8c; }
+.paren, .brace, .bracket { -fx-fill: #ffffff; }
+.semicolon { -fx-fill: #ffcb8b; }
+.code-area .plain { -fx-fill: #ECECEC; }
+
+/* --- Markdown Syntax Highlighting --- */
+
+.md-heading { -fx-fill: #89ddff; -fx-font-weight: bold; }
+.md-bold    { -fx-fill: #f78c6c; -fx-font-weight: bold; }
+.md-italic  { -fx-fill: #f78c6c; -fx-font-style: italic; }
+.md-code    { -fx-fill: #b1ee5e;}
+.md-link    { -fx-fill: #82aaff; -fx-underline: true; }
+.md-strike { -fx-fill: #808080; -fx-strikethrough: true; }
+.md-ulist   { -fx-fill: #c792ea; }
+.md-olist   { -fx-fill: #ffcb6b; }
+
+.md-quote   { -fx-fill: #7f848e; -fx-font-style: italic; }
+
+/* --- Markdown WebView preview box --- */
+.web-view.markdown-preview {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
 }
 
-.comment {
-    -fx-fill: #676e95;
-    -fx-font-style: italic;
+.editor-stack {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #555555;
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 4;
+    -fx-padding: 0;
 }
 
-.string {
-    -fx-fill: #ecc48d;
+.preview-loading-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-alignment: CENTER;
 }
 
-.char {
-    -fx-fill: #ffa657;
+.preview-loading-overlay .preview-loading-box {
+    -fx-alignment: CENTER;
+    -fx-padding: 6 10 6 10;
 }
 
-.number {
-    -fx-fill: #a3be8c;
+.preview-loading-overlay .output-spinner {
+    -fx-icon-size: 30;
 }
 
-.paren,
-.brace,
-.bracket {
-    -fx-fill: #ffffff;
-}
-
-.semicolon {
-    -fx-fill: #ffcb8b;
-}
-
-.code-area .plain {
-    -fx-fill: #ECECEC;
+.preview-loading-overlay .output-label-loading {
+    -fx-font-size: 29px;
 }
 
 /* --- CodeCell output --- */
@@ -228,7 +261,6 @@
     -fx-min-height: 0px;
     -fx-pref-height: -1;
     -fx-effect: null;
-
 }
 
 /* for errors */
@@ -259,14 +291,37 @@
     -fx-highlight-fill: #555555;
     -fx-highlight-text-fill: white;
 }
-
 /* Spinner styling */
 .output-spinner {
     -fx-fill: #d4d4d4;
     -fx-padding: 0 8 0 0;
 }
+/* scrollbar styling*/
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.85;
+}
+.scroll-bar .track {
+    -fx-background-color: #212121;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #555555;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+}
 
-/* Main Dialog Background (Darkest Shade) */
+.scroll-bar .thumb:hover {
+    -fx-background-color: #777777;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 8px;
+    -fx-max-width: 8px;
+}
+/* 1. Main Dialog Background (Darkest Shade) */
 .dialog-pane {
     -fx-background-color: #2a2a2a;
     -fx-text-fill: #d4d4d4;
@@ -297,7 +352,7 @@
 }
 
 /* Target the internal container of the ButtonBar to remove any internal spacing/padding */
-.dialog-pane>.button-bar>.container {
+.dialog-pane > .button-bar > .container {
     -fx-padding: 0;
 }
 
@@ -318,15 +373,6 @@
     -fx-background-color: transparent;
 }
 
-.button {
-    -fx-background-color: #3a3a3a;
-    -fx-text-fill: #d4d4d4;
-}
-
-.button:hover {
-    -fx-background-color: #555555;
-}
-
 /* Styling for the Execution Count Label */
 .execution-count-label {
     -fx-font-size: 1.5em;
@@ -345,10 +391,17 @@
     -fx-font-size: 14px;
     -fx-font-family: 'Fira Mono', 'Consolas', monospace;
 }
+.notebook-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
 
-/* Hide the vertical scrollbar for the CodeArea */
-.code-area .scroll-bar:vertical {
-    -fx-opacity: 0;
-    -fx-pref-width: 0;
-    -fx-max-width: 0;
+.notebook-name-field {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-alignment: center;
+    -fx-padding: 4 10 4 10;
 }
