@@ -34,6 +34,13 @@
                     <MenuItem text="Paste" onAction="#pasteCell"/>
                 </Menu>
 
+                <!-- Shell Controls  -->
+                <Menu text="Shell">
+                    <MenuItem text="Start Shell" onAction="#startShell"/>
+                    <MenuItem text="Shutdown Shell" onAction="#shutdownShell"/>
+                    <MenuItem text="Restart Shell" onAction="#restartShell"/>
+                </Menu>
+
                 <!-- View Menu -->
                 <Menu text="View">
                     <MenuItem text="Toggle Toolbar" onAction="#toggleToolbar"/>
