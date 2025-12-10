@@ -62,12 +62,6 @@ import javafx.concurrent.Task;
 import javafx.stage.Window;
 
 public class NotebookController {
-    @FXML
-    private void newNotebook() {
-        System.out.println("New Notebook created");
-        codeCellContainer.getChildren().clear();
-        addCell();
-    }
     // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
@@ -80,7 +74,9 @@ public class NotebookController {
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
     private final NotebookPersistence persistence = new NotebookPersistence();
+
     private Notebook currentNotebook;
+    @FXML
     private StackPane notebookNameContainer;
 
 
@@ -233,6 +229,9 @@ public class NotebookController {
             currentNotebook = loaded;
             currentNotebook.initEngineIfNull();
             renderNotebook();
+
+            currentNotebookName = currentNotebook.getName();
+            notebookNameLabel.setText(currentNotebookName);
             System.out.println("loaded ok");
         } else {
             System.out.println("load failed");
@@ -258,6 +257,15 @@ public class NotebookController {
     @FXML private void showAbout() { System.out.println("Show About"); }
     @FXML private void showDocs() { System.out.println("Show Documentation"); }
 
+    @FXML
+    private void newNotebook() {
+        codeCellContainer.getChildren().clear();
+
+        currentNotebookName = "Untitled Notebook";
+        notebookNameLabel.setText(currentNotebookName);
+
+        addCell();
+    }
     // -------------------- Helpers --------------------
     // simple method to toggle theme
     @FXML
@@ -273,20 +281,24 @@ public class NotebookController {
             theme = SystemThemeDetector.Theme.DARK;
         }
     }
-    // NotebookController.java - REPLACE existing editNotebookName
     @FXML
     private void editNotebookName() {
         TextField nameField = new TextField(currentNotebookName);
         nameField.getStyleClass().add("notebook-name-field");
+
+        nameField.setMinWidth(150);
+        nameField.setMaxWidth(400);
+        nameField.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
         if (notebookNameContainer.getChildren().contains(notebookNameLabel)) {
             notebookNameContainer.getChildren().clear();
             notebookNameContainer.getChildren().add(nameField);
             nameField.requestFocus();
             nameField.selectAll();
+
             nameField.setOnAction(e -> saveNotebookName(nameField));
             nameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
-                if (!newVal)
-                    saveNotebookName(nameField);
+                if (!newVal) saveNotebookName(nameField);
             });
         }
     }
@@ -330,24 +342,7 @@ public class NotebookController {
         }
         System.out.println("Shell: Engine restart complete. Cell controllers updated.");
     }
-    public void setupNotebookNameDisplay() {
-        notebookNameLabel.getStyleClass().add("notebook-name");
-        notebookNameLabel.setWrapText(true);
-        notebookNameLabel.setAlignment(Pos.CENTER);
-        notebookNameContainer = new StackPane(notebookNameLabel);
-        notebookNameContainer.getStyleClass().add("notebook-name-wrapper");
-        Region spacerLeft = new Region();
-        Region spacerRight = new Region();
-        HBox.setHgrow(spacerLeft, Priority.ALWAYS);
-        HBox.setHgrow(spacerRight, Priority.ALWAYS);
-        int index = mainToolbar.getItems().indexOf(notebookNameLabel);
-        if (index != -1) {
-            mainToolbar.getItems().remove(index);
-            mainToolbar.getItems().add(index, spacerLeft);
-            mainToolbar.getItems().add(index + 1, notebookNameContainer);
-            mainToolbar.getItems().add(index + 2, spacerRight);
-        }
-    }
+
     public Notebook getCurrentNotebook() {
         return currentNotebook;
     }

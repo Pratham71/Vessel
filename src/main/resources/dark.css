@@ -377,21 +377,17 @@
     -fx-font-size: 14px;
     -fx-font-family: 'Fira Mono', 'Consolas', monospace;
 }
-.notebook-name-wrapper {
-    -fx-padding: 5px 10px;
-    -fx-border-radius: 4px;
-    -fx-border-width: 1px;
+.notebook-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 0 10 0 10;
     -fx-alignment: center;
-    -fx-border-color: #555555;
-}
-.label.notebook-name {
-    -fx-font-size: 14px;
-    -fx-alignment: center;
+    -fx-text-alignment: center;
 }
 
-.text-field.notebook-name-field {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-font-size: 14px;
+.notebook-name-field {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
     -fx-alignment: center;
+    -fx-padding: 4 10 4 10;
 }

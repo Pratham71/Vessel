@@ -104,23 +104,23 @@
                     <tooltip><Tooltip text="Pause"/></tooltip>
                 </Button>
 
-                <Button onAction="#refreshCell">
-                    <graphic><FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon"/></graphic>
-                    <tooltip><Tooltip text="Refresh"/></tooltip>
-                </Button>
-                <Label fx:id="notebookNameLabel" text="Untitled Notebook"
-                       style="-fx-font-weight: bold; -fx-font-size: 16px;"
-                       onMouseClicked="#editNotebookName">
-                    <HBox.margin>
-                        <Insets right="20" />
-                    </HBox.margin>
-                </Label>
-                <Region HBox.hgrow="ALWAYS"/>
-                <!-- HBox is flexible empty space to push items to right side of the toolbar-->
                 <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->
                 <ChoiceBox fx:id="cellLanguage">
                     <!-- Will be filled by initialize() in NotebookController later-->
                 </ChoiceBox>
+
+                <!-- Spacer to push center content to actual center -->
+
+                <!-- notebook name (dynamically replaced by TextField when editing) -->
+                <StackPane fx:id="notebookNameContainer" alignment="CENTER" prefWidth="300" minWidth="150" maxWidth="400">
+                    <Label fx:id="notebookNameLabel" text="Untitled Notebook"
+                           styleClass="notebook-name"
+                           onMouseClicked="#editNotebookName">
+                    </Label>
+                </StackPane>
+
+                <!-- spacer to push right items to right edge -->
+                <Region HBox.hgrow="ALWAYS"/>
 
                 <!-- Theme toggle button -->
                 <Button onAction="#toggleTheme">
