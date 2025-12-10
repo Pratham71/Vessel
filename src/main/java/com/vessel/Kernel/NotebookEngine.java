@@ -274,39 +274,36 @@ public class NotebookEngine {
                         .append(String.format("%.1f", memoryUserPercentage))
                         .append("%\n\n");
             }
-            //Split code into individual statements using the semicolon as a delimiter
-            String[] statements=code.split(";\\s*");
+            // Split code into JShell snippets, but keep class/method bodies together
+            List<String> snippets = splitIntoSnippets(code);
 
-            // list will accumulate all events from all stmts
+// list will accumulate all events from all snippets
             List<SnippetEvent> events = new ArrayList<>();
-            boolean currentSuccess=true;
+            boolean currentSuccess = true;
 
-            for (String statement:statements){
-                String trimmedStatement = statement.trim();
+            for (String snippetCode : snippets) {
+                String trimmed = snippetCode.trim();
+                if (trimmed.isBlank()) continue;
 
-                // Skip empty snippets (resulting from splitting, comments, or blank lines)
-                if (trimmedStatement.isBlank()) continue;
-
-                // 2. Re-add a semicolon for JShell to recognize it as a complete statement/expression
-                String snippetCode = trimmedStatement.endsWith(";") ? trimmedStatement : trimmedStatement + ";";
-
-                // 3. Execute JShell snippet for the statement sequentially.
-                //outputStream.flush();
-            List<SnippetEvent> statementEvents = jshell.eval(snippetCode);
+                // Execute JShell snippet sequentially
+                List<SnippetEvent> statementEvents = jshell.eval(snippetCode);
                 events.addAll(statementEvents);
-                // Check for errors on this statement
+
+                // Check for errors on this snippet
                 for (SnippetEvent event : statementEvents) {
                     if (event.status() == jdk.jshell.Snippet.Status.REJECTED || event.exception() != null) {
                         currentSuccess = false;
                     }
                 }
             }
-            success[0]=currentSuccess;
+
+            success[0] = currentSuccess;
             System.out.println("events.size() = " + events.size());
 
             if (events.isEmpty()) {
                 errors.append(" No output (empty snippet)");
             }
+
 
             // Process each event
             for (SnippetEvent event : events) {
@@ -542,6 +539,52 @@ public class NotebookEngine {
 //        history.clear();
 //        engine.info(" Clearing history...");
 //    }
+
+    private List<String> splitIntoSnippets(String code) {
+        List<String> snippets = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        int parenDepth = 0;   // ()
+        int braceDepth = 0;   // {}
+        int bracketDepth = 0; // []
+
+        for (int i = 0; i < code.length(); i++) {
+            char c = code.charAt(i);
+            current.append(c);
+
+            if (c == '(') parenDepth++;
+            if (c == ')') parenDepth--;
+            if (c == '{') braceDepth++;
+            if (c == '}') braceDepth--;
+            if (c == '[') bracketDepth++;
+            if (c == ']') bracketDepth--;
+
+            // 1) split on ';' when not nested
+            if (c == ';' && parenDepth == 0 && braceDepth == 0 && bracketDepth == 0) {
+                snippets.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+
+            // 2) ALSO split after '}' when back at top level
+            if (c == '}' && braceDepth == 0 && parenDepth == 0 && bracketDepth == 0) {
+                String snippet = current.toString().trim();
+                if (!snippet.isEmpty()) {
+                    snippets.add(snippet);
+                }
+                current.setLength(0);
+            }
+        }
+
+        String remaining = current.toString().trim();
+        if (!remaining.isEmpty()) {
+            snippets.add(remaining);
+        }
+
+        return snippets;
+    }
+
+
 
     // Cleanup and close jshell safely
     public void shutdown() {
