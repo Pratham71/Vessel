@@ -58,24 +58,10 @@ public class GenericCellController {
         // --- CELL MODEL LISTENERS ---
         // Listener for updating cell model's content field
         codeArea.textProperty().addListener((obs, old, newText) -> {
-            if (cellModel != null) {
-                cellModel.setContent(newText);
-
-                // mark notebook as having unsaved changes
-                if (notebookController != null) {
-                    notebookController.getCurrentNotebook().markUsed();
-                }
-            }
+            if (cellModel != null) cellModel.setContent(newText);
         });
 
         // Listener for setting cell model's "type" on type change (in the dropbox)
-        cellLanguage.setOnAction(e -> {
-            if (cellModel != null) {
-                cellModel.setType(cellLanguage.getValue());
-                markNotebookUsed(); // mark notebook as modified
-            }
-        });
-
 
         // --- INITIAL PROMPT ---
         promptLabel.setMouseTransparent(true);  // let clicks go to the CodeArea
@@ -149,18 +135,8 @@ public class GenericCellController {
         if (cellModel != null) {
             // also remove from notebook model
             notebookController.getNotebook().removeCell(cellModel.getId());
-            notebookController.getCurrentNotebook().markUsed();
-
         }
     }
-
-    // whenever a cell's content changes, mark notebook as used
-    protected void markNotebookUsed() {
-        if (notebookController != null) {
-            notebookController.getCurrentNotebook().markUsed();
-        }
-    }
-
     private void confirmDelete() {
         try {
             Alert alert = generateAlert();
@@ -199,7 +175,6 @@ public class GenericCellController {
                 if (response == yes) {
                     codeArea.clear();
                     clearConfirmed.set(true);
-                    markNotebookUsed();
                 }
             });
         } catch (Exception ex) {
