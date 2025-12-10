@@ -234,15 +234,16 @@
     -fx-fill: #333333;
     -fx-padding: 0 8 0 0;
 }
+
 /* 1. Main Dialog Background (Lightest Shade) */
 .dialog-pane {
-    -fx-background-color: #f9f9f9; 
+    -fx-background-color: #f9f9f9;
     -fx-text-fill: #333333;
 }
 
 /* 2. Header Panel (Slightly Lighter Shade at the Top - for subtle distinction) */
 .dialog-pane .header-panel {
-    -fx-background-color: #ffffff; 
+    -fx-background-color: #ffffff;
     -fx-text-fill: #333333;
     -fx-border-width: 0;
     -fx-padding: 10 10 0 10;
@@ -251,9 +252,9 @@
 
 /* 3. Content Area (Match the main dialog background with slight padding) */
 .dialog-pane .content {
-    -fx-background-color: #f9f9f9; 
+    -fx-background-color: #f9f9f9;
     -fx-text-fill: #333333;
-    -fx-padding: 0 0 0 0; 
+    -fx-padding: 0 0 0 0;
 }
 
 /* 4. Button Bar Area (Match main dialog background, no borders) */
@@ -265,7 +266,7 @@
 }
 
 /* 5. Target internal container of the ButtonBar to remove padding */
-.dialog-pane > .button-bar > .container {
+.dialog-pane>.button-bar>.container {
     -fx-padding: 0;
 }
 
@@ -296,18 +297,19 @@
 .button:hover {
     -fx-background-color: #cfcfcf;
 }
+
 /* Styling for the Execution Count Label - Light Mode */
 .execution-count-label {
     -fx-font-size: 1.5em;
 
     /* Text color for light background */
-    -fx-text-fill: #666666; 
+    -fx-text-fill: #666666;
 
     /* Center it vertically for better alignment with the buttons */
     -fx-alignment: CENTER;
 
     /* Add padding/margin to give it more visual presence */
-    -fx-padding: 3 10 3 10; 
+    -fx-padding: 3 10 3 10;
 }
 
 /* Container for controls (like buttons + execution count) */

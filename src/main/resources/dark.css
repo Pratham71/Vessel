@@ -18,7 +18,8 @@
 /* --- Header (MenuBar & ToolBar) Styling --- */
 
 /* Targets both the MenuBar and ToolBar components in the header VBox. */
-.menu-bar, .tool-bar {
+.menu-bar,
+.tool-bar {
     -fx-background-color: #2b2b2b;
 }
 
@@ -80,18 +81,18 @@
 
 /* Entire popup background */
 .choice-box .context-menu {
-    -fx-background-color: #2a2a2a;     
+    -fx-background-color: #2a2a2a;
     -fx-border-color: #444;
 }
 
 /* Each dropdown option */
 .choice-box .menu-item .label {
-    -fx-text-fill: #ffffff;            
+    -fx-text-fill: #ffffff;
 }
 
 /* Hover background */
 .choice-box .menu-item:hover {
-    -fx-background-color: #3d3d3d;     
+    -fx-background-color: #3d3d3d;
 }
 
 .choice-box .menu-item:hover .label {
@@ -129,8 +130,9 @@
 /* Implied Text/Code Cell Editor Styles (for content that would be dynamically loaded) */
 
 /* Targets TextArea and TextField components, used for input/code editing. */
-.text-area, .text-field {
-    -fx-background-color: #212225; 
+.text-area,
+.text-field {
+    -fx-background-color: #212225;
     -fx-control-inner-background: #212225;
     -fx-text-fill: #ECECEC;
     -fx-font-family: 'Consolas', monospace;
@@ -152,6 +154,7 @@
     -fx-min-height: 120px;
     -fx-padding: 10 12 10 5;
 }
+
 .code-area .caret {
     -fx-stroke: #ECECEC;
 }
@@ -161,7 +164,7 @@
     -fx-border-color: transparent #464862 transparent transparent;
     -fx-padding: 0 8 0 0;
     -fx-border-width: 0 1 0 0;
-    -fx-min-width: 36px;      
+    -fx-min-width: 36px;
     -fx-alignment: CENTER_RIGHT;
 }
 
@@ -176,14 +179,41 @@
     -fx-font-size: 16px;
 }
 
-.keyword   { -fx-fill: #c792ea;   -fx-font-weight: bold; }
-.comment   { -fx-fill: #676e95;   -fx-font-style: italic;  }
-.string    { -fx-fill: #ecc48d; }
-.char      { -fx-fill: #ffa657; }
-.number    { -fx-fill: #a3be8c; }
-.paren, .brace, .bracket { -fx-fill: #ffffff; }
-.semicolon { -fx-fill: #ffcb8b; }
-.code-area .plain { -fx-fill: #ECECEC; } 
+.keyword {
+    -fx-fill: #c792ea;
+    -fx-font-weight: bold;
+}
+
+.comment {
+    -fx-fill: #676e95;
+    -fx-font-style: italic;
+}
+
+.string {
+    -fx-fill: #ecc48d;
+}
+
+.char {
+    -fx-fill: #ffa657;
+}
+
+.number {
+    -fx-fill: #a3be8c;
+}
+
+.paren,
+.brace,
+.bracket {
+    -fx-fill: #ffffff;
+}
+
+.semicolon {
+    -fx-fill: #ffcb8b;
+}
+
+.code-area .plain {
+    -fx-fill: #ECECEC;
+}
 
 /* --- CodeCell output --- */
 /* Code cell output area style */
@@ -191,21 +221,21 @@
 .output-area {
     -fx-border-width: 0 1.5px 1.5px 1.5px;
     -fx-border-color: transparent #555555 #555555 #555555;
-    -fx-background-color: #212121; 
+    -fx-background-color: #212121;
     -fx-padding: 8 14 10 14;
     -fx-font-family: 'Consolas', 'Courier New', monospace;
     -fx-font-size: 15px;
     -fx-min-height: 0px;
     -fx-pref-height: -1;
-    -fx-effect: null; 
- 
+    -fx-effect: null;
+
 }
 
 /* for errors */
 .output-area .label.output-label {
     -fx-font-size: 15px;
     -fx-font-family: 'Consolas';
-    -fx-text-fill: #ff5555; 
+    -fx-text-fill: #ff5555;
 }
 
 /* for “(no output)” */
@@ -229,11 +259,13 @@
     -fx-highlight-fill: #555555;
     -fx-highlight-text-fill: white;
 }
+
 /* Spinner styling */
 .output-spinner {
-    -fx-fill: #d4d4d4; 
+    -fx-fill: #d4d4d4;
     -fx-padding: 0 8 0 0;
 }
+
 /* Main Dialog Background (Darkest Shade) */
 .dialog-pane {
     -fx-background-color: #2a2a2a;
@@ -251,9 +283,9 @@
 
 /* Content Area (Needs to be explicitly set to the darkest shade and no padding) */
 .dialog-pane .content {
-    -fx-background-color: #2a2a2a; 
+    -fx-background-color: #2a2a2a;
     -fx-text-fill: #d4d4d4;
-    -fx-padding: 0 0 0 0; 
+    -fx-padding: 0 0 0 0;
 }
 
 /* Button Bar Area (Needs to be the same darkest shade, and stripped of borders/padding) */
@@ -265,7 +297,7 @@
 }
 
 /* Target the internal container of the ButtonBar to remove any internal spacing/padding */
-.dialog-pane > .button-bar > .container {
+.dialog-pane>.button-bar>.container {
     -fx-padding: 0;
 }
 
@@ -300,7 +332,7 @@
     -fx-font-size: 1.5em;
     -fx-text-fill: #999999;
     -fx-alignment: CENTER;
-    -fx-padding: 3 10 3 10; 
+    -fx-padding: 3 10 3 10;
 }
 
 .controlsContainer {
@@ -309,7 +341,14 @@
 }
 
 .execution-cancelled {
-    -fx-text-fill: #cd681e; 
+    -fx-text-fill: #cd681e;
     -fx-font-size: 14px;
     -fx-font-family: 'Fira Mono', 'Consolas', monospace;
+}
+
+/* Hide the vertical scrollbar for the CodeArea */
+.code-area .scroll-bar:vertical {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
 }
