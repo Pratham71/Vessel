@@ -60,6 +60,7 @@ import java.awt.Desktop;
 import java.net.URI;
 
 public class NotebookController {
+    public StackPane notebookNameContainer;
     // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
@@ -140,7 +141,7 @@ public class NotebookController {
             Pane cell = loader.load();
 
             GenericCellController controller = loader.getController();
-            if (controller instanceof CodeCellControllercodeController) {
+            if (controller instanceof CodeCellController codeController) {
                 codeController.setEngine(currentNotebook.getEngine());
             }
             controller.setNotebookController(this);
