@@ -33,7 +33,9 @@ public class GenericCellController {
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
     protected NotebookEngine engine;
-
+    public void updateEngine(NotebookEngine newEngine) {
+        this.engine = newEngine;
+    }
     // Called before the specific cell type is initialized
     protected void initialize() {
         if (cellLanguage != null) {
@@ -45,7 +47,6 @@ public class GenericCellController {
 
                 CellType newType = (CellType) cellLanguage.getValue();
                 cellModel.setType(newType);
-                markNotebookUsed(); // mark notebook as modified
 
                 // Ask the notebook to switch this cell's UI to the new type
                 if (notebookController != null && root != null) {
@@ -57,18 +58,10 @@ public class GenericCellController {
         // --- CELL MODEL LISTENERS ---
         // Listener for updating cell model's content field
         codeArea.textProperty().addListener((obs, old, newText) -> {
-            if (cellModel != null) {
-                cellModel.setContent(newText);
-
-                // mark notebook as having unsaved changes
-                if (notebookController != null) {
-                    notebookController.getCurrentNotebook().markUsed();
-                }
-            }
+            if (cellModel != null) cellModel.setContent(newText);
         });
 
         // Listener for setting cell model's "type" on type change (in the dropbox)
-
 
         // --- INITIAL PROMPT ---
         promptLabel.setMouseTransparent(true);  // let clicks go to the CodeArea
@@ -142,18 +135,8 @@ public class GenericCellController {
         if (cellModel != null) {
             // also remove from notebook model
             notebookController.getNotebook().removeCell(cellModel.getId());
-            notebookController.getCurrentNotebook().markUsed();
-
         }
     }
-
-    // whenever a cell's content changes, mark notebook as used
-    protected void markNotebookUsed() {
-        if (notebookController != null) {
-            notebookController.getCurrentNotebook().markUsed();
-        }
-    }
-
     private void confirmDelete() {
         try {
             Alert alert = generateAlert();
@@ -192,7 +175,6 @@ public class GenericCellController {
                 if (response == yes) {
                     codeArea.clear();
                     clearConfirmed.set(true);
-                    markNotebookUsed();
                 }
             });
         } catch (Exception ex) {

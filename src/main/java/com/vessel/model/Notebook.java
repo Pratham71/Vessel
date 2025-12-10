@@ -27,37 +27,19 @@ public class Notebook {
     private List<NotebookCell> cells = new ArrayList<>();
     private transient NotebookEngine engine;
 
-    private boolean used = false; //check whether user has unsaved changes
-    private String filePath = null; // stores the full file path on disk where this notebook is saved.
-
-
-    public void markUsed() {
-        this.used = true;
-    }
-
-    public void markSaved() {
-        this.used = false;
-    }
-
-    // check if notebook has unsaved changes
-    public boolean isUsed() {
-        return used;
-    }
-
     public Notebook(String name) {
         this.name = name;
+
         initEngineIfNull();
     }
     // Add a new cell to the notebook
     public void addCell(NotebookCell cell) {
         cells.add(cell);
-        markUsed();
     }
 
     // Remove a cell by ID
     public void removeCell(String cellId) {
         cells.removeIf(cell -> cell.getId().equals(cellId));
-        markUsed();
     }
 
     // Get a specific cell by ID
@@ -71,7 +53,6 @@ public class Notebook {
     // updates the notebook name without creating a new object
     public void setName(String name) {
         this.name = name;
-        markUsed();
     }
 
 
@@ -88,26 +69,17 @@ public class Notebook {
     // Engine realated code:
     public NotebookEngine getEngine() { return engine; }
 
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
 
     public void shutdownEngine(){
-        if(getEngine().isExecuting()){
-            getEngine().interrupt();
+        if (this.engine == null) {
+            return;
         }
-
-        if (getEngine() != null) {
-            getEngine().shutdown();
-            engine = null;
+        if(this.engine.isExecuting()){
+            this.engine.interrupt();
         }
+        this.engine.shutdown();
+        this.engine = null;
     }
-
-
     public void initEngineIfNull() {
         if (this.engine == null) {
             this.engine = new NotebookEngine();
