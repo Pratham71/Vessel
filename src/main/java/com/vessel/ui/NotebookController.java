@@ -321,6 +321,7 @@ public class NotebookController {
     private void startShell() {
         System.out.println("Shell: Starting JShell Engine...");
         getCurrentNotebook().initEngineIfNull();
+        reattachEngineAll();
     }
 
     @FXML
@@ -333,14 +334,16 @@ public class NotebookController {
         System.out.println("Shell: Restarting JShell Engine...");
         getCurrentNotebook().shutdownEngine();
         getCurrentNotebook().initEngineIfNull();
+        reattachEngineAll();
+        System.out.println("Shell: Engine restart complete. Cell controllers updated.");
+    }
+
+    private void reattachEngineAll() {
         NotebookEngine newEngine = getCurrentNotebook().getEngine();
         for (javafx.scene.Node node : codeCellContainer.getChildren()) {
             Object controller = node.getUserData();
-            if (controller instanceof GenericCellController) {
-                ((GenericCellController) controller).updateEngine(newEngine);
-            }
+            ((GenericCellController) controller).updateEngine(newEngine);
         }
-        System.out.println("Shell: Engine restart complete. Cell controllers updated.");
     }
 
     public Notebook getCurrentNotebook() {
