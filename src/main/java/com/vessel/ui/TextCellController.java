@@ -192,6 +192,20 @@ public class TextCellController extends GenericCellController {
             codeArea.setManaged(false);
             markdownPreview.setVisible(true);
             markdownPreview.setManaged(true);
+
+            // ive added this to fix the weird excessive bottom padding bug
+            fadeIn.setOnFinished(done -> {
+                // now that the WebView is visible, ask JS to recalc height
+                WebEngine engine = markdownPreview.getEngine();
+                Platform.runLater(() -> {
+                    try {
+                        engine.executeScript("updateHeight()");
+                    } catch (Exception ignored) {
+                        // fail-safe: if JS bridge is not ready, just skip
+                    }
+                });
+            });
+
             fadeIn.play();
         });
 
@@ -251,7 +265,6 @@ public class TextCellController extends GenericCellController {
                 Object winObj = engine.executeScript("window");
                 if (winObj instanceof JSObject win) {
                     win.setMember("java", new PreviewBridge());
-                    engine.executeScript("updateHeight()");
                 }
             }
         });
@@ -261,6 +274,8 @@ public class TextCellController extends GenericCellController {
         markdownPreview.setManaged(false);
     }
 
+    // IMPORTANT: DO NOT DELETE
+    // IDE may tell u the method is unused, but its called from the html preview's <script> body
     public class PreviewBridge {
         public void resize(double height) {
             Platform.runLater(() -> {
