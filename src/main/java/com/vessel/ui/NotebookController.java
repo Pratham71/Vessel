@@ -51,6 +51,7 @@ import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
 import javafx.stage.FileChooser; // For opening/saving project files
 import javafx.geometry.Insets;
 import javafx.scene.layout.Priority;
+import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.javafx.FontIcon; // adding ikonli icons to button
 
 import java.io.*; // reading and writing project files
@@ -378,9 +379,22 @@ public class NotebookController {
 
     // -------------------- Menu Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
+    private CodeArea getFocusedCodeArea() {
+        var focused = scene.getFocusOwner();
+        if (focused instanceof CodeArea ca) {
+            return ca;
+        }
+        return null;
+    }
     @FXML private void exportPDF() { System.out.println("Export PDF"); }
-    @FXML private void undoAction() { System.out.println("Undo"); }
-    @FXML private void redoAction() { System.out.println("Redo"); }
+    @FXML private void undoAction() { CodeArea area = getFocusedCodeArea();
+        if (area != null && area.isUndoAvailable()) {
+            area.undo();
+        } }
+    @FXML private void redoAction() {  CodeArea area = getFocusedCodeArea();
+        if (area != null && area.isRedoAvailable()) {
+            area.redo();
+        } }
     @FXML private void toggleToolbar() { System.out.println("Toggle Toolbar"); }
     @FXML private void zoomIn() { System.out.println("Zoom In"); }
     @FXML private void zoomOut() { System.out.println("Zoom Out"); }
