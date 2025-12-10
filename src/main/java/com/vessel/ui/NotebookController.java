@@ -148,7 +148,6 @@ public class NotebookController {
         return null;
     }
 
-    // Called by GenericCellController when the per-cell dropdown changes
     public void switchCellType(GenericCellController oldController, CellType newType) {
         if (oldController == null) return;
 
@@ -158,7 +157,6 @@ public class NotebookController {
         NotebookCell model = oldController.getNotebookCell();
         if (model == null) return;
 
-        // Update the model's type (just made it redundant for safety)
         model.setType(newType);
 
         Pane oldRoot = (Pane) oldController.getRoot();
@@ -172,7 +170,6 @@ public class NotebookController {
 
         GenericCellController newController = (GenericCellController) newRoot.getUserData();
 
-        // Restore caret/selection on the new CodeArea
         newController.restoreCaret(caretPos, sel);
 
         newRoot.setOpacity(0);
@@ -182,7 +179,6 @@ public class NotebookController {
         fadeOut.setToValue(0.0);
 
         fadeOut.setOnFinished(e -> {
-            // Now replace old with new
             codeCellContainer.getChildren().set(index, newRoot);
 
             var fadeIn = new FadeTransition(javafx.util.Duration.millis(250), newRoot);

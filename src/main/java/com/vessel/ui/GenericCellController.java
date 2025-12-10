@@ -15,6 +15,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 public class GenericCellController {
     // === INHERITED BY SUBCLASSES ===
@@ -154,9 +156,11 @@ public class GenericCellController {
         }
     }
 
-    private void confirmClear() {
+    protected AtomicBoolean clearConfirmed = new AtomicBoolean();
+    protected void confirmClear() {
         try {
             Alert alert = generateAlert();
+            clearConfirmed.set(false);
 
             alert.setTitle("Clear Cell");
             alert.setHeaderText("Clear all text from this cell?");
@@ -168,6 +172,7 @@ public class GenericCellController {
             alert.showAndWait().ifPresent(response -> {
                 if (response == yes) {
                     codeArea.clear();
+                    clearConfirmed.set(true);
                 }
             });
         } catch (Exception ex) {

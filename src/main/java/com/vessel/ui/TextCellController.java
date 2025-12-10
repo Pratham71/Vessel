@@ -50,18 +50,13 @@ public class TextCellController extends GenericCellController {
 
         previewToggle.setOnAction(e -> {
             boolean selected = previewToggle.isSelected();
-            if(codeArea.getContent() == null || codeArea.getText().isBlank()){return;}
+            if((codeArea.getContent() == null || codeArea.getText().isBlank()) && !cellModel.isMarkdownPreviewOn()) {
+                previewToggle.setSelected(false);
+                return;
+            }
             if (selected) {
-//                codeArea.setManaged(false);
-//                if (markdownPreview != null) {
-//                    markdownPreview.setManaged(true);
-//                }
                 showPreview();
             } else {
-//                codeArea.setManaged(true);
-//                if (markdownPreview != null) {
-//                    markdownPreview.setManaged(false);
-//                }
                 hidePreview();
             }
 
@@ -103,6 +98,17 @@ public class TextCellController extends GenericCellController {
 
         applyHighlighting();
     }
+
+    // fix to make sure preview also empties and updates on clearing cell
+    @Override
+    protected void confirmClear() {
+        super.confirmClear();
+
+        if(clearConfirmed.get()) {
+            refreshPreview();
+        }
+    }
+
     /* --------- Syntax Highlighting ---------- */
 
     private void applyHighlighting() {
