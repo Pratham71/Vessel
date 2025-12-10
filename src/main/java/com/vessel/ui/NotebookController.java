@@ -4,13 +4,11 @@ package com.vessel.ui;
 /*
 * ESSENTIAL/SEMI-ESSENTIAL STUFF
 * #TODO: Add move cell logic to cells
-* #TODO: Add logic to all global buttons (eg run all button)
 * #TODO: Add a menu tab for shell controls, to start, shutdown and restart shell
 * #TODO: Add logic to all menu buttons - ESPECIALLY undo/redo, zoom in/out etc
 *       - if any of them are too difficult to implement then remove from menubar
 * #TODO: Add indicators for shell status
 * #TODO: Make cell's horizontal scrollbar visible (currently invisible)
-* #TODO: Style scrollbars to be a dark color instead of white - looks VERY off (for dark.css/darkmode only)
 * #TODO: Add keyboard shortcut functionality - undo/redo, cntrl + S to save etc
 *
 * #TODO: autosave - if user tries to close an already SAVED file with new changes, it should auto-save before closing
@@ -134,8 +132,8 @@ public class NotebookController {
             if (controller instanceof CodeCellController codeController) {
                 codeController.setEngine(currentNotebook.getEngine());
             }
-            controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setNotebookController(this);
+            controller.setNotebookCell(cellModel); // Pass cellModel object to the controller
             controller.setParentContainer(codeCellContainer); // so Delete button can remove this cell
             controller.setRoot(cell); // pass root for removal
             controller.setCellType(type); //Init language

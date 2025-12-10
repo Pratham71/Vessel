@@ -346,19 +346,22 @@
     -fx-padding: 2 6 2 6;
 }
 
-/* Extra styling for cell toolbar buttons (run, move, clear, delete, preview) */
 .toolbar-button {
     -fx-icon-size: 15;
 }
 
-/* Hover state */
 .button:hover,
 .toggle-button:hover {
-    -fx-background-color: #cfcfcf;     /* slightly darker than normal, already used */
+    -fx-background-color: #cfcfcf;
 }
 
 .toggle-button:selected {
     -fx-background-color: #0045ff;
+}
+
+.toggle-button:selected .font-icon {
+    -fx-background-color: #0045ff;
+    -fx-fill: #ffffff;
 }
 
 /* Styling for the Execution Count Label - Light Mode */

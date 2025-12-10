@@ -80,9 +80,6 @@
 
 /* --- Buttons Styling --- */
 
-/* Targets all Button components. */
-/* Normal buttons and toggle buttons share the same base look */
-
 .button,
 .toggle-button {
     -fx-background-color: #3a3a3a;
@@ -91,7 +88,6 @@
     -fx-padding: 4 6 4 6;
 }
 
-/* Extra styling for cell toolbar buttons (run, move, clear, delete, preview) */
 .toolbar-button .font-icon{
     -fx-icon-size: 16;
 }

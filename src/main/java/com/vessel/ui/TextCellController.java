@@ -17,7 +17,6 @@ import javafx.util.Duration;
 import netscape.javascript.JSObject;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.util.Collection;
 
 public class TextCellController extends GenericCellController {
 
@@ -53,8 +52,16 @@ public class TextCellController extends GenericCellController {
             boolean selected = previewToggle.isSelected();
             if(codeArea.getContent() == null || codeArea.getText().isBlank()){return;}
             if (selected) {
+//                codeArea.setManaged(false);
+//                if (markdownPreview != null) {
+//                    markdownPreview.setManaged(true);
+//                }
                 showPreview();
             } else {
+//                codeArea.setManaged(true);
+//                if (markdownPreview != null) {
+//                    markdownPreview.setManaged(false);
+//                }
                 hidePreview();
             }
 
@@ -137,23 +144,11 @@ public class TextCellController extends GenericCellController {
         String md = codeArea.getText();
         String html = SyntaxService.renderMarkdownToHtml(md, theme);
 
-        // ensurePreview() is (I *think*) computationally heavy so I added a loadscreen logic here
+        // ensurePreviewCreated() is (I *think*) computationally heavy so I added a loadscreen logic here
         Platform.runLater(() -> {
             ensurePreviewCreated();
 
-            WebEngine engine = markdownPreview.getEngine();
-            engine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
-                if (state == Worker.State.SUCCEEDED) {
-                    Platform.runLater(() -> {
-                        previewSpin.stop();
-                        previewLoadingOverlay.setVisible(false);
-                        previewLoadingOverlay.setManaged(false);
-                        fadeInPreview();
-                    });
-                }
-            });
-
-            engine.loadContent(html);
+            markdownPreview.getEngine().loadContent(html);
         });
     }
 
@@ -168,10 +163,8 @@ public class TextCellController extends GenericCellController {
         } else {
             // fallback to direct switch if stuff breaks/loading is interrupted
             codeArea.setVisible(true);
-            codeArea.setManaged(true);
             if (markdownPreview != null) {
                 markdownPreview.setVisible(false);
-                markdownPreview.setManaged(false);
             }
         }
     }
@@ -192,19 +185,6 @@ public class TextCellController extends GenericCellController {
             codeArea.setManaged(false);
             markdownPreview.setVisible(true);
             markdownPreview.setManaged(true);
-
-            // ive added this to fix the weird excessive bottom padding bug
-            fadeIn.setOnFinished(done -> {
-                // now that the WebView is visible, ask JS to recalc height
-                WebEngine engine = markdownPreview.getEngine();
-                Platform.runLater(() -> {
-                    try {
-                        engine.executeScript("updateHeight()");
-                    } catch (Exception ignored) {
-                        // fail-safe: if JS bridge is not ready, just skip
-                    }
-                });
-            });
 
             fadeIn.play();
         });
@@ -228,6 +208,7 @@ public class TextCellController extends GenericCellController {
             markdownPreview.setManaged(false);
             codeArea.setVisible(true);
             codeArea.setManaged(true);
+
             fadeIn.play();
         });
 
@@ -254,35 +235,62 @@ public class TextCellController extends GenericCellController {
         markdownPreview = new WebView();
         markdownPreview.setContextMenuEnabled(false);
 
-        // window starts minimally sized then height will be updated from JS bridge
         markdownPreview.setMinHeight(0);
-        markdownPreview.setPrefHeight(0);
-        markdownPreview.setMaxHeight(Region.USE_PREF_SIZE);
+        markdownPreview.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        markdownPreview.setMaxHeight(Region.USE_COMPUTED_SIZE);
+
+        markdownPreview.setVisible(false);
 
         WebEngine engine = markdownPreview.getEngine();
+
         engine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+            if (state == Worker.State.SCHEDULED) {
+                // reset before each load
+                Platform.runLater(() -> {
+                    markdownPreview.setMinHeight(0);
+                    markdownPreview.setPrefHeight(Region.USE_COMPUTED_SIZE);
+                    markdownPreview.setMaxHeight(Region.USE_COMPUTED_SIZE);
+                });
+            }
+
             if (state == Worker.State.SUCCEEDED) {
                 Object winObj = engine.executeScript("window");
                 if (winObj instanceof JSObject win) {
                     win.setMember("java", new PreviewBridge());
                 }
+
+                // ask JS to compute height; overlay is still visible now
+                Platform.runLater(() -> {
+                    try {
+                        engine.executeScript("updateHeight()");
+                    } catch (Exception ignored) {
+                    }
+                });
             }
         });
 
         editorStack.getChildren().add(markdownPreview);
-        markdownPreview.setVisible(false);
-        markdownPreview.setManaged(false);
     }
+
 
     // IMPORTANT: DO NOT DELETE
     // IDE may tell u the method is unused, but its called from the html preview's <script> body
     public class PreviewBridge {
         public void resize(double height) {
             Platform.runLater(() -> {
-                double h = Math.max(32, height + 1);
-                markdownPreview.setPrefHeight(h);
-                markdownPreview.setMinHeight(h);
-                markdownPreview.setMaxHeight(h);
+                // avoids pure 0 height
+                double safe = Math.max(1, height);
+
+                markdownPreview.setMinHeight(safe);
+                markdownPreview.setPrefHeight(Region.USE_COMPUTED_SIZE);
+                markdownPreview.setMaxHeight(Region.USE_COMPUTED_SIZE);
+
+                if (previewLoadingOverlay.isVisible()) {
+                    previewSpin.stop();
+                    previewLoadingOverlay.setVisible(false);
+                    previewLoadingOverlay.setManaged(false);
+                    fadeInPreview();
+                }
             });
         }
     }

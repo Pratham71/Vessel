@@ -235,13 +235,26 @@ public class SyntaxService {
                  }
                </style>
                <script>
+                 let heightTimeout = null;
+
                  function updateHeight() {
-                   var h = document.body.scrollHeight;
-                   if (window.java && window.java.resize) {
-                     window.java.resize(h);
+                   // debounce rapid calls from Java / events
+                   if (heightTimeout) {
+                     clearTimeout(heightTimeout);
                    }
+
+                   // waits a tiny bit for fonts/layout (i put 50ms for now)
+                   heightTimeout = setTimeout(function() {
+                     var h = document.body.scrollHeight;
+                     if (window.java && window.java.resize) {
+                       window.java.resize(h);
+                     }
+                   }, 50);
                  }
+
+                 // recalculate when fonts/layout change after initial load
                  window.addEventListener('load', updateHeight);
+                 window.addEventListener('resize', updateHeight);
                </script>
              </head>
              <body>%s</body>
