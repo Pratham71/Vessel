@@ -1,10 +1,3 @@
-/**
- * TODO - Implement NotebookEnigne to frontend via Notebook Class
- * TODO - Link to Notebook.Json
- */
-
-
-
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
