@@ -3,6 +3,7 @@ package com.vessel.ui;
 import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.NotebookCell;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -16,7 +17,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-
 
 public class GenericCellController {
     // === INHERITED BY SUBCLASSES ===
@@ -75,6 +75,139 @@ public class GenericCellController {
         // --- BUTTON LISTENERS --
         deleteBtn.setOnAction(e -> confirmDelete());
         clearBtn.setOnAction(e -> confirmClear());
+
+        // === AUTO-INDENT ON ENTER ===
+        codeArea.setOnKeyReleased(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+
+                // Use Platform.runLater() for consistency, although sometimes not strictly
+                // needed here
+                Platform.runLater(() -> {
+                    int caretPos = codeArea.getCaretPosition();
+
+                    // The ENTER key has already been processed by the system,
+                    // inserting the newline character (\n).
+
+                    // We need to look at the line *above* the new caret position (which is now line
+                    // 3)
+                    // to find the indentation of line 1.
+
+                    int currentParagraphIndex = codeArea.getCurrentParagraph();
+
+                    // Safety check: ensure we are not on the first line after a fresh startup
+                    if (currentParagraphIndex < 1) {
+                        return;
+                    }
+
+                    // Get the text of the line *before* the current position (the line we just
+                    // left)
+                    String previousLine = codeArea.getParagraph(currentParagraphIndex - 1).getText();
+
+                    // --- Calculate indentation ---
+                    int indentEnd = 0;
+                    for (char c : previousLine.toCharArray()) {
+                        if (c == ' ' || c == '\t') {
+                            indentEnd++;
+                        } else {
+                            break;
+                        }
+                    }
+                    // Indentation from the line we just left
+                    String indent = previousLine.substring(0, indentEnd);
+
+                    String trimmedLine = previousLine.trim();
+                    boolean shouldAddExtraIndent = trimmedLine.endsWith("{");
+
+                    if (shouldAddExtraIndent) {
+                        indent += "    "; // Add extra indent for blocks
+                    }
+
+                    // The caret is currently at the start of the new line (Line 3).
+                    // We insert the indentation string right there.
+                    codeArea.insertText(caretPos, indent);
+
+                    // Move the caret to the end of the newly inserted indentation
+                    codeArea.moveTo(caretPos + indent.length());
+                });
+            }
+        });
+
+        // === AUTO-CLOSING BRACKETS AND PARENTHESES ===
+        codeArea.setOnKeyTyped(event -> {
+            String typed = event.getCharacter();
+            int caretPos = codeArea.getCaretPosition();
+            String closing = null;
+            switch (typed) {
+                case "(":
+                    closing = ")";
+                    break;
+                case "{":
+                    closing = "}";
+                    break;
+                case "[":
+                    closing = "]";
+                    break;
+                case "\"":
+                    String textBefore = codeArea.getText(0, caretPos);
+                    long quoteCount = textBefore.chars().filter(ch -> ch == '"').count();
+                    if (quoteCount % 2 == 1)
+                        closing = "\"";
+                    break;
+                case "'":
+                    String textBefore2 = codeArea.getText(0, caretPos);
+                    long singleQuoteCount = textBefore2.chars().filter(ch -> ch == '\'').count();
+                    if (singleQuoteCount % 2 == 1)
+                        closing = "'";
+                    break;
+            }
+            if (closing != null) {
+                final String closingChar = closing;
+                Platform.runLater(() -> {
+                    int currentPos = codeArea.getCaretPosition();
+                    codeArea.insertText(currentPos, closingChar);
+                    codeArea.moveTo(currentPos);
+                });
+            }
+        });
+
+        // === DISABLE INTERNAL SCROLLING & MAKE CELL GROW ===
+        // === FIX: Use the stable totalHeightEstimateProperty() listener ===
+        codeArea.totalHeightEstimateProperty().addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> {
+
+                double contentHeight = newVal.doubleValue();
+
+                // CRITICAL FIX: REDUCE THIS BUFFER.
+                // 10 to 20 pixels is usually enough for visual comfort.
+                double safetyMargin = 20; // Reduced from 70/100 to 20
+
+                double calculatedHeight = contentHeight + safetyMargin;
+
+                double newHeight = Math.max(100, calculatedHeight);
+
+                // Apply the new, accurate height to lock the size
+                codeArea.setPrefHeight(newHeight);
+                codeArea.setMinHeight(newHeight);
+                codeArea.setMaxHeight(newHeight);
+            });
+        });
+
+        // === FIX SCROLLING ISSUE ===
+        // Consume scroll events and pass to parent ScrollPane
+        codeArea.addEventFilter(javafx.scene.input.ScrollEvent.ANY, event -> {
+            // 1. Check for Vertical Scroll (to ensure horizontal still works)
+            if (event.getDeltaY() != 0) {
+                // 2. Consume the event so the CodeArea doesn't handle it
+                event.consume();
+
+                // 3. Re-fire the event on the CodeArea's parent (VBox root of the cell)
+                // Let the JavaFX system bubble it up naturally to the main ScrollPane
+                javafx.scene.Node parent = codeArea.getParent();
+                if (parent != null) {
+                    javafx.event.Event.fireEvent(parent, event.copyFor(parent, parent));
+                }
+            }
+        });
     }
 
     public void setNotebookController(NotebookController controller) {
