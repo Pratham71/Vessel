@@ -64,6 +64,8 @@
 
 .button {
     -fx-background-color: #333333;
+}
+
 .button,
 .toggle-button {
     -fx-background-color: #3a3a3a;
