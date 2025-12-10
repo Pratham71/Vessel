@@ -1,10 +1,3 @@
-/**
- * TODO - Implement NotebookEnigne to frontend via Notebook Class
- * TODO - Link to Notebook.Json
- */
-
-
-
 package com.vessel.Kernel;
 import com.vessel.core.log;
 
@@ -160,10 +153,12 @@ public class NotebookEngine {
     // Thread safe execution.
     public Void execute(NotebookCell cell) {
         String code = cell.getContent();
+        System.out.println(code);
 
-//     Vallidation
-        if (code == null || code.trim().isBlank()) {
-            cell.setExecutionResult(new ExecutionResult("", "Empty Code Cell", 0, false));
+    //  if code is null, return out of execution.
+        if (code == null) {
+            cell.setExecutionResult(new ExecutionResult("", "", 0, true));
+            return null;
         }
 
         // checking for any dangeorus pattern which may cause the program to crashout.
@@ -351,13 +346,6 @@ public class NotebookEngine {
                     engine.error("Runtime exception caught: ", exception);
                     success[0] = false;
                 }
-
-//                // Expression result
-//                if (event.value() != null && !event.value().isEmpty()) {
-//                    output.append("Expressions value: ")
-//                            .append(event.value()).append("\n");
-//                    engine.debug("Expressions value: " + event.value());
-//                }
             }
 
             // Capture STDOUT
@@ -516,30 +504,6 @@ public class NotebookEngine {
         return stats;
     }
 
-//    private void addToHistory(String code, ExecutionResult result) {
-//        history.add(new ExecutionResult(
-//                code,
-//                result.output(),
-//                result.executionTimeMs(),
-//                result.success()
-//        ));
-//
-//        engine.info(" Adding " + code + " to history");
-//
-//        if (history.size() > MAX_HISTORY) {
-//            history.removeFirst();
-//        }
-//    }
-//
-//    public List<ExecutionResult> getHistory() {
-//        return new ArrayList<ExecutionResult>(history);
-//    }
-//
-//    public void clearHistory() {
-//        history.clear();
-//        engine.info(" Clearing history...");
-//    }
-
     private List<String> splitIntoSnippets(String code) {
         List<String> snippets = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -606,8 +570,6 @@ public class NotebookEngine {
             jshell.close();
             engine.info(" Shutting down JShell...");
         }
-
-        //clearHistory();
 
         engine.info(" NotebookEngine shutdown complete.");
     }
