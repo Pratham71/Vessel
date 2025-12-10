@@ -52,6 +52,9 @@ import javafx.stage.Stage;
 
 import java.io.*; // reading and writing project files
 
+import java.awt.Desktop;
+import java.net.URI;
+
 public class NotebookController {
     // these are those fxml elements labelled via fx:id in main.fxml file
     @FXML private VBox codeCellContainer; // that blocks containers made where user actually writes
@@ -337,8 +340,15 @@ public class NotebookController {
     @FXML private void toggleToolbar() { System.out.println("Toggle Toolbar"); }
     @FXML private void zoomIn() { System.out.println("Zoom In"); }
     @FXML private void zoomOut() { System.out.println("Zoom Out"); }
-    @FXML private void showAbout() { System.out.println("Show About"); }
-    @FXML private void showDocs() { System.out.println("Show Documentation"); }
+
+    @FXML private void showAbout() {
+        try{
+            Desktop desktop = Desktop.getDesktop();
+            desktop.browse( new URI("https://github.com/Pratham71/Vessel") );
+        } catch (Exception e){
+            e.toString();
+        }
+    }
 
     // -------------------- Helpers --------------------
     // simple method to toggle theme
