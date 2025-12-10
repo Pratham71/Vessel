@@ -1,26 +1,17 @@
-/* Dark theme */
-
 /* The .root selector targets the base container of the entire scene graph. */
 .root {
-    /* Sets the primary background color for the application to a deep dark gray. */
     -fx-background-color: #1e1e1e;
-    /* Sets the default text color to white for better contrast on the dark background. */
     -fx-text-fill: #ffffff;
-    /* Defines the preferred font family for the application. */
     -fx-font-family: "Segoe UI", "Tahoma", "Arial";
 }
 
-/* Base Label and Icon Styling */
-
 /* Targets all Label components within the application. */
 .label {
-    /* Ensures all general labels default to white text. */
     -fx-text-fill: #ffffff;
 }
 
 /* Targets elements styled with the 'font-icon' class (from Ikonli library). */
 .font-icon {
-    /* Sets the color/fill of the icons to white for visibility. */
     -fx-fill: white;
 }
 
@@ -28,7 +19,6 @@
 
 /* Targets both the MenuBar and ToolBar components in the header VBox. */
 .menu-bar, .tool-bar {
-    /* Sets the background of the entire header area to a slightly lighter dark gray. */
     -fx-background-color: #2b2b2b;
 }
 
@@ -36,7 +26,6 @@
 
 /* Targets the text labels specifically within the MenuBar. */
 .menu-bar .label {
-    /* Ensures the top-level menu titles are white. */
     -fx-text-fill: white;
 }
 
@@ -44,9 +33,7 @@
 
 /* Targets the ContextMenu component, which is used for the dropdowns. */
 .menu-bar .context-menu {
-    /* Sets the background of the dropdown box itself to a medium dark gray. */
     -fx-background-color: #3c3c3c;
-    /* Adds a subtle border around the dropdown box. */
     -fx-border-color: #555555;
 }
 
@@ -54,47 +41,53 @@
 
 /* Targets the text labels inside the MenuItems (the options like "Open", "Undo"). */
 .menu-item .label {
-    /* Sets text to white for readability on the dark dropdown background. */
     -fx-text-fill: #ffffff;
 }
 
 /* 3. Menu Item Hover State (Interaction Feedback) */
 
-/* Targets a MenuItem when the mouse is hovering over it. */
 .menu-item:hover {
-    /* Sets the background to a contrasting blue color on hover. */
     -fx-background-color: #0078d7;
 }
 
 /* Explicitly target the text when the item is hovered. */
 .menu-item:hover .label {
-    /* Ensures the text remains white (or a consistent color) on the blue background. */
     -fx-text-fill: #ffffff;
 }
 
 /* Styling for the separator line within a menu dropdown. */
 .menu-item .separator {
-    /* Sets the color of the separator line. */
     -fx-background-color: #555555;
 }
 
 /* --- Buttons Styling --- */
 
-/* Targets all Button components. */
 .button {
-    /* Sets the default background color for toolbar buttons. */
     -fx-background-color: #333333;
-    /* Sets the button text to white. */
-    -fx-text-fill: #ffffff;
-    /* Ensures no default border is shown. */
-    -fx-border-color: transparent;
 }
 
-/* Targets a Button when the mouse is hovering over it. */
-.button:hover {
-    /* Lightens the background slightly for visual feedback. */
+.button,
+.toggle-button {
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: transparent;
+    -fx-padding: 4 6 4 6;
+}
+
+.toolbar-button .font-icon{
+    -fx-icon-size: 16;
+}
+
+.button:hover,
+.toggle-button:hover {
     -fx-background-color: #4a4a4a;
 }
+
+
+.toggle-button:selected {
+    -fx-background-color: #0045ff;
+}
+
 
 /* ============================
    CHOICEBOX DROPDOWN
@@ -102,18 +95,19 @@
 
 /* Entire popup background */
 .choice-box .context-menu {
-    -fx-background-color: #2a2a2a;      /* dark dropdown */
+    -fx-background-color: #2a2a2a;
     -fx-border-color: #444;
+    -fx-min-width: 120;
 }
 
 /* Each dropdown option */
 .choice-box .menu-item .label {
-    -fx-text-fill: #ffffff;             /* white text in dark mode */
+    -fx-text-fill: #ffffff;
 }
 
 /* Hover background */
 .choice-box .menu-item:hover {
-    -fx-background-color: #3d3d3d;      /* darker highlight */
+    -fx-background-color: #3d3d3d;
 }
 
 .choice-box .menu-item:hover .label {
@@ -122,15 +116,13 @@
 
 /* Targets the ChoiceBox component (fx:id="languageChoice"). */
 .choice-box {
-    /* Sets the background for the dropdown box itself. */
     -fx-background-color: #3a3a3a;
-    /* Sets the color of the dropdown arrow/mark to white. */
     -fx-mark-color: white;
+    -fx-min-width: 120;
 }
 
 /* Targets the label displaying the currently selected item in the ChoiceBox. */
 .choice-box .label {
-    /* Ensures the selected option text is white. */
     -fx-text-fill: #ffffff;
 }
 
@@ -138,19 +130,16 @@
 
 /* Targets the ScrollPane (fx:id="codeCellArea"). */
 .scroll-pane {
-    /* Sets the scroll pane's background (useful if content doesn't fill it). */
     -fx-background-color: #1e1e1e;
 }
 
 /* Targets the 'viewport' (inner container) of the ScrollPane. */
 .scroll-pane .viewport {
-    /* Ensures the viewable area background matches the root/app background. */
     -fx-background-color: #1e1e1e;
 }
 
 /* Targets the VBox holding all the cells (fx:id="codeCellContainer"). */
 #codeCellContainer {
-    /* Explicitly sets the background for the cell container. */
     -fx-background-color: #1e1e1e;
 }
 
@@ -158,7 +147,7 @@
 
 /* Targets TextArea and TextField components, used for input/code editing. */
 .text-area, .text-field {
-    -fx-background-color: #212225; /* IntelliJ dark bg */
+    -fx-background-color: #212225;
     -fx-control-inner-background: #212225;
     -fx-text-fill: #ECECEC;
     -fx-font-family: 'Consolas', monospace;
@@ -173,8 +162,6 @@
     -fx-background-color: #212225;
     -fx-font-family: 'Consolas', 'Fira Mono', 'Courier New', monospace;
     -fx-font-size: 15px;
-    -fx-border-color: #555555;
-    -fx-border-width: 1.5px;
     -fx-highlight-fill: #1756b6;
     -fx-highlight-text-fill: #fff;
     -fx-min-height: 120px;
@@ -189,7 +176,7 @@
     -fx-border-color: transparent #464862 transparent transparent;
     -fx-padding: 0 8 0 0;
     -fx-border-width: 0 1 0 0;
-    -fx-min-width: 36px;       /* to reserve space for up to 3 digits */
+    -fx-min-width: 36px;
     -fx-alignment: CENTER_RIGHT;
 }
 
@@ -211,7 +198,55 @@
 .number    { -fx-fill: #a3be8c; }
 .paren, .brace, .bracket { -fx-fill: #ffffff; }
 .semicolon { -fx-fill: #ffcb8b; }
-.code-area .plain { -fx-fill: #ECECEC; } /*plain text -> white*/
+.code-area .plain { -fx-fill: #ECECEC; }
+
+/* --- Markdown Syntax Highlighting --- */
+
+.md-heading { -fx-fill: #89ddff; -fx-font-weight: bold; }
+.md-bold    { -fx-fill: #f78c6c; -fx-font-weight: bold; }
+.md-italic  { -fx-fill: #f78c6c; -fx-font-style: italic; }
+.md-code    { -fx-fill: #b1ee5e;}
+.md-link    { -fx-fill: #82aaff; -fx-underline: true; }
+.md-strike { -fx-fill: #808080; -fx-strikethrough: true; }
+.md-ulist   { -fx-fill: #c792ea; }
+.md-olist   { -fx-fill: #ffcb6b; }
+
+.md-quote   { -fx-fill: #7f848e; -fx-font-style: italic; }
+
+/* --- Markdown WebView preview box --- */
+.web-view.markdown-preview {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.editor-stack {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #555555;
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 4;
+    -fx-padding: 0;
+}
+
+.preview-loading-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-alignment: CENTER;
+}
+
+.preview-loading-overlay .preview-loading-box {
+    -fx-alignment: CENTER;
+    -fx-padding: 6 10 6 10;
+}
+
+.preview-loading-overlay .output-spinner {
+    -fx-icon-size: 30;
+}
+
+.preview-loading-overlay .output-label-loading {
+    -fx-font-size: 29px;
+}
 
 /* --- CodeCell output --- */
 /* Code cell output area style */
@@ -219,21 +254,20 @@
 .output-area {
     -fx-border-width: 0 1.5px 1.5px 1.5px;
     -fx-border-color: transparent #555555 #555555 #555555;
-    -fx-background-color: #212121; /* match textarea bg */
+    -fx-background-color: #212121;
     -fx-padding: 8 14 10 14;
     -fx-font-family: 'Consolas', 'Courier New', monospace;
     -fx-font-size: 15px;
     -fx-min-height: 0px;
     -fx-pref-height: -1;
-    -fx-effect: null; /* Disable shadow by default */
-    /*-fx-opacity: 0; !* Start hidden, fade in with animation *!*/
+    -fx-effect: null;
 }
 
 /* for errors */
 .output-area .label.output-label {
     -fx-font-size: 15px;
     -fx-font-family: 'Consolas';
-    -fx-text-fill: #ff5555; /* default: error red */
+    -fx-text-fill: #ff5555;
 }
 
 /* for “(no output)” */
@@ -259,7 +293,7 @@
 }
 /* Spinner styling */
 .output-spinner {
-    -fx-fill: #d4d4d4; /* match text edit color */
+    -fx-fill: #d4d4d4;
     -fx-padding: 0 8 0 0;
 }
 /* scrollbar styling*/
@@ -293,7 +327,7 @@
     -fx-text-fill: #d4d4d4;
 }
 
-/* 2. Header Panel (The Lighter Shade at the Top - If you want the title bar lighter) */
+/* Header Panel (The Lighter Shade at the Top - If you want the title bar lighter) */
 .dialog-pane .header-panel {
     -fx-background-color: #2a2a2a;
     -fx-text-fill: #d4d4d4;
@@ -302,35 +336,33 @@
     -fx-effect: none;
 }
 
-/* 3. Content Area (Needs to be explicitly set to the darkest shade and no padding) */
+/* Content Area (Needs to be explicitly set to the darkest shade and no padding) */
 .dialog-pane .content {
-    -fx-background-color: #2a2a2a; /* KEY: Match the dialog background */
+    -fx-background-color: #2a2a2a;
     -fx-text-fill: #d4d4d4;
-    -fx-padding: 0 0 0 0; /* KEY: Remove all padding to eliminate gaps */
+    -fx-padding: 0 0 0 0;
 }
 
-/* 4. Button Bar Area (Needs to be the same darkest shade, and stripped of borders/padding) */
+/* Button Bar Area (Needs to be the same darkest shade, and stripped of borders/padding) */
 .dialog-pane .button-bar {
-    -fx-background-color: #2a2a2a; /* KEY: Match the content background */
+    -fx-background-color: #2a2a2a;
     -fx-border-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0 10 10 0;
 }
 
-/* 5. Target the internal container of the ButtonBar to remove any internal spacing/padding */
+/* Target the internal container of the ButtonBar to remove any internal spacing/padding */
 .dialog-pane > .button-bar > .container {
     -fx-padding: 0;
 }
 
-/* 6. CRITICAL FIX: Target the internal separator border/region for the line above buttons */
+/* Target the internal separator border/region for the line above buttons */
 .dialog-pane .button-bar .border {
     -fx-border-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0;
     -fx-background-insets: 0;
 }
-
-/* --- Other necessary styles --- */
 
 .dialog-pane .header-text {
     -fx-fill: #d4d4d4;
@@ -341,39 +373,21 @@
     -fx-background-color: transparent;
 }
 
-.button {
-    -fx-background-color: #3a3a3a;
-    -fx-text-fill: #d4d4d4;
-}
-
-.button:hover {
-    -fx-background-color: #555555;
-}
-
 /* Styling for the Execution Count Label */
 .execution-count-label {
-    /* INCREASE THIS VALUE to make the text bigger */
     -fx-font-size: 1.5em;
-
-    /* Make sure the text color is still visible */
     -fx-text-fill: #999999;
-
-    /* Center it vertically for better alignment with the buttons */
     -fx-alignment: CENTER;
-
-    /* Add padding/margin to give it more body and visual presence */
-    /* Padding will make the clickable area (if any) or the container look larger */
-    -fx-padding: 3 10 3 10; /* Added vertical padding (3px top/bottom) */
+    -fx-padding: 3 10 3 10;
 }
 
-/* You may also want to ensure the HBox aligns all items centrally */
 .controlsContainer {
     -fx-alignment: CENTER_LEFT;
     -fx-fill-height: true;
 }
 
 .execution-cancelled {
-    -fx-text-fill: #cd681e; /* bright yellow for dark mode */
+    -fx-text-fill: #cd681e;
     -fx-font-size: 14px;
     -fx-font-family: 'Fira Mono', 'Consolas', monospace;
 }

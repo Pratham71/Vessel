@@ -8,26 +8,27 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.fxmisc.richtext.CodeArea;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
-import javafx.scene.layout.HBox;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class GenericCellController {
-    @FXML private Label promptLabel;
-    @FXML private Button deleteBtn;
-    @FXML private Button clearBtn;
-
-    private NotebookController notebookController;
-
     // === INHERITED BY SUBCLASSES ===
+    protected NotebookController notebookController;
 
-    @FXML protected VBox root; // This is the root of the cell
+    @FXML protected Button deleteBtn;
+    @FXML protected Button clearBtn;
+
+    @FXML protected Pane root; // This is the root of the cell
     @FXML protected ChoiceBox<CellType> cellLanguage;
     @FXML protected CodeArea codeArea;
+    @FXML protected Label promptLabel;
 
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
@@ -37,19 +38,44 @@ public class GenericCellController {
     }
     // Called before the specific cell type is initialized
     protected void initialize() {
-        cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
-        cellLanguage.setValue(CellType.CODE);
+        if (cellLanguage != null) {
+            cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
+            cellLanguage.setValue(CellType.CODE);
+
+            cellLanguage.setOnAction(e -> {
+                if (cellModel == null) return;
+
+                CellType newType = (CellType) cellLanguage.getValue();
+                cellModel.setType(newType);
+
+                // Ask the notebook to switch this cell's UI to the new type
+                if (notebookController != null && root != null) {
+                    notebookController.switchCellType(this, newType);
+                }
+            });
+        }
 
         // --- CELL MODEL LISTENERS ---
         // Listener for updating cell model's content field
         codeArea.textProperty().addListener((obs, old, newText) -> {
-            if (cellModel != null) cellModel.setContent(newText);
+            if (cellModel != null) {
+                cellModel.setContent(newText);
+
+                // mark notebook as having unsaved changes
+                if (notebookController != null) {
+                    notebookController.getCurrentNotebook().markUsed();
+                }
+            }
         });
 
         // Listener for setting cell model's "type" on type change (in the dropbox)
         cellLanguage.setOnAction(e -> {
-            if (cellModel != null) cellModel.setType(cellLanguage.getValue());
+            if (cellModel != null) {
+                cellModel.setType(cellLanguage.getValue());
+                markNotebookUsed(); // mark notebook as modified
+            }
         });
+
 
         // --- INITIAL PROMPT ---
         promptLabel.setMouseTransparent(true);  // let clicks go to the CodeArea
@@ -77,7 +103,9 @@ public class GenericCellController {
             codeArea.replaceText(cell.getContent());
         }
 
-        cellLanguage.setValue(cell.getType());
+        if (cellLanguage != null && cell.getType() != null) {
+            cellLanguage.setValue(cell.getType());
+        }
     }
 
     public NotebookCell getNotebookCell() {
@@ -88,12 +116,22 @@ public class GenericCellController {
         this.parentContainer = parent;
     }
 
-    public void setRoot(VBox root) {
+    public void setRoot(Pane root) {
         this.root = root;
     }
 
+    public Pane getRoot() {
+        return root;
+    }
+
     public void setCellType(CellType type) {
-        cellLanguage.setValue(type);
+        if (cellLanguage != null) {
+            cellLanguage.setValue(type);
+        }
+
+        if (cellModel != null) {
+            cellModel.setType(type);
+        }
     }
 
     // Its easier to have all cell types secretly hold an engine,
@@ -111,8 +149,18 @@ public class GenericCellController {
         if (cellModel != null) {
             // also remove from notebook model
             notebookController.getNotebook().removeCell(cellModel.getId());
+            notebookController.getCurrentNotebook().markUsed();
+
         }
     }
+
+    // whenever a cell's content changes, mark notebook as used
+    protected void markNotebookUsed() {
+        if (notebookController != null) {
+            notebookController.getCurrentNotebook().markUsed();
+        }
+    }
+
     private void confirmDelete() {
         try {
             Alert alert = generateAlert();
@@ -134,9 +182,11 @@ public class GenericCellController {
         }
     }
 
-    private void confirmClear() {
+    protected AtomicBoolean clearConfirmed = new AtomicBoolean();
+    protected void confirmClear() {
         try {
             Alert alert = generateAlert();
+            clearConfirmed.set(false);
 
             alert.setTitle("Clear Cell");
             alert.setHeaderText("Clear all text from this cell?");
@@ -148,6 +198,8 @@ public class GenericCellController {
             alert.showAndWait().ifPresent(response -> {
                 if (response == yes) {
                     codeArea.clear();
+                    clearConfirmed.set(true);
+                    markNotebookUsed();
                 }
             });
         } catch (Exception ex) {
@@ -177,5 +229,20 @@ public class GenericCellController {
             alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
         }
         return alert;
+    }
+
+    public int getCaretPosition() {
+        return codeArea.getCaretPosition();
+    }
+
+    public void restoreCaret(int caretPos, javafx.scene.control.IndexRange sel) {
+        codeArea.moveTo(caretPos);
+        if (sel != null && (sel.getStart() != sel.getEnd())) {
+            codeArea.selectRange(sel.getStart(), sel.getEnd());
+        }
+    }
+
+    public javafx.scene.control.IndexRange getSelection() {
+        return codeArea.getSelection();
     }
 }

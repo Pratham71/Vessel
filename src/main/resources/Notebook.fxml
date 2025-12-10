@@ -62,7 +62,6 @@
                 <!-- Help Menu -->
                 <Menu text="Help">
                     <MenuItem text="About" onAction="#showAbout"/>
-                    <MenuItem text="Documentation" onAction="#showDocs"/>
                 </Menu>
 
             </MenuBar>
@@ -109,6 +108,11 @@
                 <Button onAction="#pauseCell">
                     <graphic><FontIcon iconLiteral="fas-pause" iconSize="16" styleClass="font-icon"/></graphic>
                     <tooltip><Tooltip text="Pause"/></tooltip>
+                </Button>
+
+                <Button onAction="#refreshCell">
+                    <graphic><FontIcon iconLiteral="fas-sync-alt" iconSize="16" styleClass="font-icon"/></graphic>
+                    <tooltip><Tooltip text="Refresh"/></tooltip>
                 </Button>
 
                 <!-- Language dropdown, now it gives id name as languageChoice so controller can access it and also creates an arraylist of options like java, md, plaintext-->

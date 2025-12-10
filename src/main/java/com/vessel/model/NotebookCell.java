@@ -30,6 +30,7 @@ public class NotebookCell {
     private ExecutionResult executionResult;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime lastModifiedAt = LocalDateTime.now();
+    private boolean markdownPreviewOn = false;
 
     public String getId() { return id; }
     public CellType getType() { return cellType; }
@@ -61,4 +62,12 @@ public class NotebookCell {
     public ExecutionResult getExecutionResult() { return executionResult; }
     public int getExecutionCount() { return executionCount; }
     public void incrementExecutionCount() { executionCount++; }
+
+    public boolean isMarkdownPreviewOn() {
+        return markdownPreviewOn;
+    }
+
+    public void setMarkdownPreviewOn(boolean markdownPreviewOn) {
+        this.markdownPreviewOn = markdownPreviewOn;
+    }
 }

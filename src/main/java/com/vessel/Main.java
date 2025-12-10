@@ -24,6 +24,10 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.setTitle("Vessel Notebook");
         stage.show();
+
+        javafx.application.Platform.runLater(() -> {
+            controller.attachCloseHandler(stage);
+        });
     }
 
     @Override

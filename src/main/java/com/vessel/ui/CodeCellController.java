@@ -18,7 +18,7 @@ import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import static com.vessel.util.SyntaxService.computeHighlighting;
+import static com.vessel.util.SyntaxService.computeJavaHighlighting;
 
 public class CodeCellController extends GenericCellController {
 
@@ -31,6 +31,7 @@ public class CodeCellController extends GenericCellController {
     // Field to hold the FontIcon for dynamic icon swapping
     private FontIcon runIcon;
     private FontIcon stopIcon;
+    private NotebookController notebookController;
 
     // Field to hold the thread/task of the current execution
     private Task<Void> shellTask;
@@ -38,9 +39,13 @@ public class CodeCellController extends GenericCellController {
     @Override
     public void setNotebookCell(NotebookCell cell) {
         super.setNotebookCell(cell);
-        if (cell.getExecutionResult() != null && !cell.getContent().isBlank()) {
+        if (cell.getExecutionResult() != null) {
             displayOutput();
         }
+    }
+
+    public void setNotebookController(NotebookController controller) {
+        this.notebookController = controller;
     }
 
     @FXML
@@ -62,7 +67,7 @@ public class CodeCellController extends GenericCellController {
         // Listener for syntax highlighting (Using richtext's richChanges() listener instead cuz more performant for syntax highlighting)
         codeArea.richChanges()
                 .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))  // filter to only fire when text actually changes - ignores caret movement and stuff
-                .subscribe(change -> codeArea.setStyleSpans(0, computeHighlighting(codeArea.getText())));
+                .subscribe(change -> codeArea.setStyleSpans(0, computeJavaHighlighting(codeArea.getText())));
 
         codeArea.setWrapText(false); // realized IDEs kinda have infinite horizontal space for long lines of code
 
@@ -92,6 +97,7 @@ public class CodeCellController extends GenericCellController {
         // explicit check for when loading a file
         if (!outputBox.isVisible()) {
             outputBox.setVisible(true);
+            outputBox.setManaged(true);
         }
 
         // THIS IS WHERE YOUR JSHELL OUTPUT SHOULD GO!!!!
@@ -167,6 +173,7 @@ public class CodeCellController extends GenericCellController {
 
     private void executeCode() {
         outputBox.setVisible(true);
+        outputBox.setManaged(true);
         outputBox.getChildren().clear();
 
         // --- Increment execution count at start ---
@@ -231,31 +238,6 @@ public class CodeCellController extends GenericCellController {
         });
 
         new Thread(shellTask).start();
-
-// Execution thread
-//        executionThread = new Thread(() -> {
-//            try {
-//                engine.execute(cellModel);
-//                // --------------------------------------------------
-//
-//                if (!Thread.currentThread().isInterrupted()) {
-//                    Platform.runLater(() -> {
-//                        displayOutput(spin);
-//                        setRunButtonState(false);
-//                    });
-//                }
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                Platform.runLater(() -> {
-//                    outputBox.getChildren().clear();
-//                    Label cancelledLabel = new Label("[Execution Cancelled]");
-//                    cancelledLabel.getStyleClass().add("execution-cancelled");
-//                    outputBox.getChildren().add(cancelledLabel);
-//                    setRunButtonState(false);
-//                });
-//            }
-//        });
-//        executionThread.start();
     }
 
     private void toggleExecution() {
