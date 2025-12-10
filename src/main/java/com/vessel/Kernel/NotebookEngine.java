@@ -11,10 +11,11 @@ import jdk.jshell.JShell;
 import jdk.jshell.SnippetEvent;
 
 public class NotebookEngine {
+    public enum KernelStatus { STOPPED, BUSY, IDLE }
+    private volatile KernelStatus status = KernelStatus.IDLE;
+
     // === Persistent Jshell ===
     private final JShell jshell;
-
-
     // Buffers
     private ByteArrayOutputStream jshellBuffer;
     private PrintStream jshellPrintStream;
@@ -146,6 +147,7 @@ public class NotebookEngine {
         // Load Init Snippets
         loadInitSnippets(jshell, INIT_SNIPPETS);
         engine.info(" NotebookEngine initialized with persistent JShell kernel");
+        status = KernelStatus.IDLE;
     }
 
 
@@ -178,6 +180,7 @@ public class NotebookEngine {
 
         try {
             isExecuting = true;
+            status = KernelStatus.BUSY;
             engine.info(" Executing code");
 
             // Submit execution with timeout
@@ -237,6 +240,9 @@ public class NotebookEngine {
 
         } finally {
             isExecuting = false;
+            if (!executorService.isShutdown()) {
+                status = KernelStatus.IDLE;
+            }
             executionLock.unlock();
             engine.debug(" Execution lock Released.");
         }
@@ -553,6 +559,7 @@ public class NotebookEngine {
     // Cleanup and close jshell safely
     public void shutdown() {
         engine.info(" Shutting down NotebookEngine...");
+        status = KernelStatus.STOPPED;
 
         // Shutdown executor service
         executorService.shutdownNow();

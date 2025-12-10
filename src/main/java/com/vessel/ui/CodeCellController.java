@@ -198,6 +198,10 @@ public class CodeCellController extends GenericCellController {
                 if (engine == null) {
                     throw new IllegalStateException("NotebookEngine is not attached to this cell (Backend issue, restart kernel or reload the app)");
                 }
+                // tell toolbar: kernel busy
+                if (notebookController != null) {
+                    Platform.runLater(() -> notebookController.updateKernelStatusBusy());
+                }
                 engine.execute(cellModel);   // fills cellModel.getExecutionResult()
                 return null;                 // matches Task<Void>
             }
@@ -207,6 +211,9 @@ public class CodeCellController extends GenericCellController {
             spin.stop();
             displayOutput();      // reads cellModel.getExecutionResult()
             setRunButtonState(false);
+            if (notebookController != null) {
+                notebookController.updateKernelStatusIdle();
+            }
         });
 
         shellTask.setOnCancelled(e -> {
@@ -216,6 +223,9 @@ public class CodeCellController extends GenericCellController {
             cancelled.getStyleClass().add("output-label");
             outputBox.getChildren().add(cancelled);
             setRunButtonState(false);
+            if (notebookController != null) {
+                notebookController.updateKernelStatusIdle();
+            }
         });
 
         shellTask.setOnFailed(e -> {
@@ -230,6 +240,9 @@ public class CodeCellController extends GenericCellController {
             outputBox.getChildren().add(err);
 
             setRunButtonState(false);
+            if (notebookController != null) {
+                notebookController.updateKernelStatusIdle();
+            }
         });
 
         new Thread(shellTask).start();

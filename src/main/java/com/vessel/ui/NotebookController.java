@@ -48,6 +48,10 @@ import javafx.scene.control.*; // buttons, labels, textarea, ChoiceBox
 import javafx.scene.layout.*; // VBox, HBox, Priority, Insets
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser; // For opening/saving project files
+import javafx.scene.shape.Circle;
+import javafx.scene.paint.Color;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
 
 import java.io.*; // reading and writing project files
 import javafx.concurrent.Task;
@@ -58,6 +62,9 @@ public class NotebookController {
     @FXML private ChoiceBox<CellType> cellLanguage; // dropdown with 3 lang choices
     @FXML private Label javaVersionLabel; // displays java version of the user in the toolbar
     @FXML private Menu insertMenu;
+    @FXML private Circle kernelStatusDot;
+    @FXML private HBox kernelStatusBox;
+    private final Tooltip kernelStatusTooltip = new Tooltip("Kernel: idle");
     //    private boolean darkMode = false; // default theme is light mode
     private SystemThemeDetector.Theme theme = SystemThemeDetector.getSystemTheme();
     private Scene scene; // reference to the scene in Main.java so we can modify scene, here also
@@ -91,6 +98,10 @@ public class NotebookController {
         cellLanguage.setItems(FXCollections.observableArrayList(CellType.values())); // Fill the choice dropbox thing
         cellLanguage.setValue(CellType.CODE);
         javaVersionLabel.setText("Java: " + System.getProperty("java.version"));
+
+        // attach tooltip to the HBox that wraps circle + label
+        Tooltip.install(kernelStatusBox, kernelStatusTooltip);
+        updateKernelStatusIdle(); // sets color + tooltip text
 
         // Dynamically populating insert menu
         for (CellType type : CellType.values()) {
@@ -206,6 +217,24 @@ public class NotebookController {
         return currentNotebook;
     }
 
+    public void updateKernelStatusBusy() {
+        setKernelStatus(Color.YELLOW, "Kernel: busy");
+    }
+
+    public void updateKernelStatusIdle() {
+        setKernelStatus(Color.LIMEGREEN, "Kernel: idle");
+    }
+
+    public void updateKernelStatusStopped() {
+        setKernelStatus(Color.BLACK, "Kernel: stopped");
+    }
+
+    private void setKernelStatus(Color color, String text) {
+        if (kernelStatusDot != null) {
+            kernelStatusDot.setFill(color);
+        }
+        kernelStatusTooltip.setText(text);
+    }
 
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!

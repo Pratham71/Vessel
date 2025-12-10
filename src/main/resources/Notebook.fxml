@@ -6,6 +6,7 @@
 <?import javafx.geometry.Insets?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <!--imported all classes of JavaFX required for Notebook.fxml -->
+<?import javafx.scene.shape.Circle?>
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.vessel.ui.NotebookController">
     <!-- borderpane is layout with top,bottom, right,center; some predefined syntax to link FXML features, also adding fx controller ie form com.vessel.NotebookControllerroller-->
@@ -112,6 +113,11 @@
                 <ChoiceBox fx:id="cellLanguage">
                     <!-- Will be filled by initialize() in NotebookController later-->
                 </ChoiceBox>
+                <!-- Kernel status indicator group -->
+                <HBox fx:id="kernelStatusBox" alignment="CENTER_LEFT" spacing="4">
+                    <Circle fx:id="kernelStatusDot" radius="6" fill="black"/>
+                    <Label fx:id="kernelStatusLabel" text="Kernel"/>
+                </HBox>
 
                 <Region HBox.hgrow="ALWAYS"/>
                 <!-- HBox is flexible empty space to push items to right side of the toolbar-->
