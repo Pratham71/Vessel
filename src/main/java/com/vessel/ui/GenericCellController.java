@@ -16,6 +16,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GenericCellController {
@@ -33,6 +34,9 @@ public class GenericCellController {
     protected VBox parentContainer; // The notebook VBox (set by NotebookController on creation)
     protected NotebookCell cellModel;
     protected NotebookEngine engine;
+    @FXML protected Button moveUpBtn;
+    @FXML protected Button moveDownBtn;
+
     public void updateEngine(NotebookEngine newEngine) {
         this.engine = newEngine;
     }
@@ -73,6 +77,10 @@ public class GenericCellController {
         });
 
         // --- BUTTON LISTENERS --
+
+        moveUpBtn.setOnAction(e -> moveCellUp());
+        moveDownBtn.setOnAction(e -> moveCellDown());
+
         deleteBtn.setOnAction(e -> confirmDelete());
         clearBtn.setOnAction(e -> confirmClear());
 
@@ -210,6 +218,28 @@ public class GenericCellController {
         });
     }
 
+    private void moveCellUp() {
+        int index = parentContainer.getChildren().indexOf(root);
+        if (index <= 0) return; // already at top
+
+        // swap in model
+        Collections.swap(notebookController.getCurrentNotebook().getCells(), index, index - 1);
+        // swap in ui
+        parentContainer.getChildren().remove(root);
+        parentContainer.getChildren().add(index - 1, root);
+    }
+
+    private void moveCellDown() {
+        int index = parentContainer.getChildren().indexOf(root);
+        if (index >= parentContainer.getChildren().size() - 1) return; // already at bottom
+
+        // swap in model
+        Collections.swap(notebookController.getCurrentNotebook().getCells(), index, index + 1);
+        // swap in ui
+        parentContainer.getChildren().remove(root);
+        parentContainer.getChildren().add(index + 1, root);
+    }
+
     public void setNotebookController(NotebookController controller) {
         this.notebookController = controller;
     }
@@ -267,7 +297,7 @@ public class GenericCellController {
 
         if (cellModel != null) {
             // also remove from notebook model
-            notebookController.getNotebook().removeCell(cellModel.getId());
+            notebookController.getCurrentNotebook().removeCell(cellModel.getId());
         }
     }
     private void confirmDelete() {
@@ -353,4 +383,5 @@ public class GenericCellController {
     public javafx.scene.control.IndexRange getSelection() {
         return codeArea.getSelection();
     }
+
 }

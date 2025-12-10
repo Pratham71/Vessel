@@ -7,7 +7,6 @@ import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -21,8 +20,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 public class TextCellController extends GenericCellController {
 
     @FXML private ToggleButton previewToggle;
-    @FXML private Button moveUpBtn;
-    @FXML private Button moveDownBtn;
     @FXML private StackPane editorStack;
 
     @FXML private StackPane previewLoadingOverlay;
@@ -43,10 +40,6 @@ public class TextCellController extends GenericCellController {
         previewSpin = new RotateTransition(Duration.seconds(1), previewSpinnerIcon);
         previewSpin.setByAngle(360);
         previewSpin.setCycleCount(RotateTransition.INDEFINITE);
-
-        // TODO: wire stubs to main notebook cell
-        moveUpBtn.setOnAction(e -> moveCell(-1));
-        moveDownBtn.setOnAction(e -> moveCell(1));
 
         previewToggle.setOnAction(e -> {
             boolean selected = previewToggle.isSelected();
@@ -299,9 +292,5 @@ public class TextCellController extends GenericCellController {
                 }
             });
         }
-    }
-
-    private void moveCell(int delta) {
-        // TODO: hook into NotebookController later (e.g. notebookController.moveCell(cellModel, delta))
     }
 }

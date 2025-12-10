@@ -214,11 +214,6 @@ public class NotebookController {
         }
     }
 
-    public Notebook getNotebook() {
-        return currentNotebook;
-    }
-
-
     // -------------------- Toolbar Actions --------------------
     // NOTE: NEED TO ADD LOGIC FOR EACH BUTTON!
     @FXML private void cutCell() { System.out.println("Cut cell"); }

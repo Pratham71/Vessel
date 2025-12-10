@@ -49,20 +49,20 @@
                 <Tooltip text="Move cell down"/>
             </tooltip>
         </Button>
-        <Button fx:id="deleteBtn" graphicTextGap="0"  styleClass="toolbar-button">
-            <graphic>
-                <FontIcon iconLiteral="fas-trash" styleClass="font-icon" />
-            </graphic>
-            <tooltip>
-                <Tooltip text="Delete cell"/>
-            </tooltip>
-        </Button>
         <Button fx:id="clearBtn" graphicTextGap="0"  styleClass="toolbar-button">
             <graphic>
                 <FontIcon iconLiteral="fas-eraser" styleClass="font-icon" />
             </graphic>
             <tooltip>
                 <Tooltip text="Clear cell"/>
+            </tooltip>
+        </Button>
+        <Button fx:id="deleteBtn" graphicTextGap="0"  styleClass="toolbar-button">
+            <graphic>
+                <FontIcon iconLiteral="fas-trash" styleClass="font-icon" />
+            </graphic>
+            <tooltip>
+                <Tooltip text="Delete cell"/>
             </tooltip>
         </Button>
     </HBox>
