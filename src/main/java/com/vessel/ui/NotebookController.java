@@ -298,6 +298,17 @@ public class NotebookController {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Unsaved Changes");
             alert.setHeaderText("This notebook has unsaved changes. Save before closing?");
+            alert.getDialogPane().getStylesheets().clear();
+
+            boolean isDarkMode = SystemThemeDetector.getSystemTheme() == SystemThemeDetector.Theme.DARK;
+            String theme = isDarkMode ? "/dark.css" : "/light.css";
+            var cssResource = getClass().getResource(theme);
+
+            if (cssResource == null) {
+                System.err.println("ERROR: Stylesheet not found: " + theme);
+            } else {
+                alert.getDialogPane().getStylesheets().add(cssResource.toExternalForm());
+            }
 
             ButtonType saveBtn = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
             ButtonType dontSaveBtn = new ButtonType("Don't Save", ButtonBar.ButtonData.NO);
