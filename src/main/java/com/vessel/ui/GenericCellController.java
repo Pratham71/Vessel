@@ -274,9 +274,7 @@ public class GenericCellController {
     }
 
     public void setCellType(CellType type) {
-        if (cellLanguage != null) {
-            cellLanguage.setValue(type);
-        }
+        if (cellLanguage != null) cellLanguage.setValue(type);
 
         if (cellModel != null) {
             cellModel.setType(type);

@@ -42,21 +42,18 @@ public class NotebookEngine {
     // === Stats ===
     private int totalExecutions = 0;
     private long totalExecutionTime = 0;
-    private final LinkedList<ExecutionResult> history = new LinkedList<>();
-    private static final int MAX_HISTORY = 50;
-
 
     // === Init Scripts ===
     private static final List<String> IMPORT_SNIPPETS = List.of(
 
             // basic
-            "import java.io.*;",
-            "import java.util.*;",
+            "import static java.io.*;",
+            "import static java.util.*;",
 
             // math
-            "import java.lang.Math.*;",
-            "import java.math.*;",
-            "import java.lang.*;"
+            "import static java.lang.Math.*;",
+            "import static java.math.*;",
+            "import static java.lang.*;"
 
     );
 
@@ -90,8 +87,7 @@ public class NotebookEngine {
             "static String date() { return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern(\"dd-MM-yyyy\")); }",
             "static String day() { return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern(\"EEEE\")); }",
             "static String dateTime() { return \"%s | %s | %s\".formatted(day(), date(), now()); }",
-            "static int rand(int min, int max) { return java.util.concurrent.ThreadLocalRandom.current().nextInt(min, max + 1); }",
-            "static long TimeThis(Runnable r) { long t = System.nanoTime(); r.run(); return (System.nanoTime() - t) / 1_000_000; }"
+            "static int rand(int min, int max) { return java.util.concurrent.ThreadLocalRandom.current().nextInt(min, max + 1); }"
     );
 
     private static final List<String> INIT_SNIPPETS = List.of(
@@ -414,7 +410,6 @@ public class NotebookEngine {
             // Clear stats and history
             totalExecutions = 0;
             totalExecutionTime = 0;
-            history.clear();
 
             engine.info("Kernel Reset Complete.");
         } finally {
