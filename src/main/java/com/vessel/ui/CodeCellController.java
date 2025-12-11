@@ -1,5 +1,3 @@
-/*#TODO: Program cell growth logic*/
-
 package com.vessel.ui;
 
 import com.vessel.Kernel.ExecutionResult;

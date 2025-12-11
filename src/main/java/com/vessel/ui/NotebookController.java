@@ -1,40 +1,4 @@
 package com.vessel.ui;
-// importing all required javafx classes
-
-/*
-* ESSENTIAL/SEMI-ESSENTIAL STUFF
-* #TODO: Add move cell logic to cells
-* #TODO: Add a menu tab for shell controls, to start, shutdown and restart shell
-* #TODO: Add logic to all menu buttons - ESPECIALLY undo/redo, zoom in/out etc
-*       - if any of them are too difficult to implement then remove from menubar
-* #TODO: Add indicators for shell status
-* #TODO: Make cell's horizontal scrollbar visible (currently invisible)
-* #TODO: Add keyboard shortcut functionality - undo/redo, cntrl + S to save etc
-*
-* #TODO: autosave - if user tries to close an already SAVED file with new changes, it should auto-save before closing
-*       (does not apply to unsaved "untitled" files)
-*           -you can also autosave every x minutes
-* #TODO: untitled files with new content should prompt a dialogue if user tries closing app without saving it
-*       - make sure dialogue/alert is positioned on top of parent window
-* #TODO: Add logic (if present in branch) for auto indents, auto closing brackets etc.
-*
-* #TODO: Add a "New notebook" button/option to the File tab in the menubar that opens a new note book
-* #TODO: Add zoom functionality
-* #TODO: Add a editable label/button (turns to textarea on click) that shows notebook name
-* #TODO: Remove obsolete, useless, or overly complicated buttons
-*
-* MIGRATING STUFF FROM PRI'S "optimized/Frontend-uidesign" BRANCH
-* #TODO: Add/improve on automatic cell expansion logic - more lines = box grows
-*       (both input and output - output breaks sometimes with large no. of lines, with current logic)
-* #TODO: Add logic for bubbling up scroll from codeArea to parent notebook
-*       (basically when u hover mouse on codecell currently, notebook doesnt scroll - tries to scroll cell instead)
-*           - cell growth logic must work for this!
-*
-* OPTIONAL STUFF (if we have time - prioritize last)
-* #TODO: (Optional) Settings menu -> autosave time and more
-* #TODO: (Optional) Landing page on launching app -> shows previous notebooks
-*/
-
 import com.vessel.Kernel.NotebookEngine;
 import com.vessel.model.CellType;
 import com.vessel.model.Notebook;
@@ -257,7 +221,6 @@ public class NotebookController {
     }
 
     // opens already existing project
-    // #TODO: Need to be replaced by json logic
     @FXML
     private void openProject() {
         FileChooser fileChooser = new FileChooser();

@@ -1,20 +1,5 @@
 package com.vessel.model;
 
-/*
-TODO: Notebook Model (Notebook)
-
-Required:
-- Maintain notebook name (used for saving/loading)
-- Maintain List<NotebookCell>
-- addCell(cell)
-- removeCell(cellId)
-- getCell(cellId)
-- getCells()
-
-Optional:
-- Track creation date / last modified date
-*/
-
 import java.util.ArrayList;
 import java.util.List;
 

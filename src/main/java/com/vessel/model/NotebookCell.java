@@ -1,17 +1,3 @@
-/*
-TODO: Cell Model (NotebookCell)
-
-- Store unique ID (UUID)
-- Store cell type (CODE / MARKDOWN)
-- Store content (string)
-- Maintain execution count (In[n])
-- Maintain outputs: List<Output> (stdout/stderr)
-- Add timestamps: createdAt, lastModifiedAt
-
-Nice-to-have:
-- Add title field (optional)
-- Auto-update lastModifiedAt on content change
-*/
 
 package com.vessel.model;
 
